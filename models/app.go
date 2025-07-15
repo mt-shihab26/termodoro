@@ -90,17 +90,9 @@ func (m *AppModel) View() string {
 
 	instructions := instructionsStyle.Render(m.getInstructions())
 
-	statusStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("208")).
-		MarginTop(1).
-		Bold(true)
-
-	status := statusStyle.Render(m.getStatusText())
-
 	combined := lipgloss.JoinVertical(
 		lipgloss.Center,
 		content,
-		status,
 		instructions,
 	)
 
@@ -122,20 +114,14 @@ func (m *AppModel) getTimerColor() lipgloss.Color {
 	}
 }
 
-func (m *AppModel) getStatusText() string {
-	switch m.timer.State {
-	case Running:
-		return "RUNNING"
-	case Paused:
-		return "PAUSED"
-	default:
-		return "STOPPED"
-	}
-}
-
 func (m *AppModel) getInstructions() string {
+	operations := map[bool]string{
+		true:  "Pause",
+		false: "Start",
+	}
+
 	instructionTexts := []string{
-		"'SPACE': Start/Pause timer",
+		fmt.Sprintf("'SPACE': %s timer", operations[m.timer.State == Running]),
 		"'R': Reset current session",
 		"'B': Start break manually",
 		"'Q': Quit application",
