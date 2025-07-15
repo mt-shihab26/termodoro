@@ -1,4 +1,4 @@
-// Package app provides main application functionality for the Pomodoro application.
+// Package app
 package app
 
 import (
