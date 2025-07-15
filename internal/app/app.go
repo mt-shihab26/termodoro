@@ -5,7 +5,6 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/mt-shihab26/termodoro/config"
 	"github.com/mt-shihab26/termodoro/internal/session"
 	"github.com/mt-shihab26/termodoro/internal/timer"
 	"github.com/mt-shihab26/termodoro/view"
@@ -18,7 +17,7 @@ type App struct {
 	height  int
 }
 
-func New(_ *config.Config) *App {
+func New() *App {
 	s := session.New()
 	t := timer.New(s.GetDuration())
 

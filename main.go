@@ -1,25 +1,21 @@
 package main
 
 import (
-	"fmt"
-
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/mt-shihab26/termodoro/config"
 	"github.com/mt-shihab26/termodoro/internal/app"
 )
 
 func main() {
-	c := config.New()
+	app := app.New()
 
-	m := app.New(c)
-
-	p := tea.NewProgram(
-		m,
+	program := tea.NewProgram(
+		app,
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),
 	)
 
-	if _, err := p.Run(); err != nil {
-		fmt.Printf("Error: %v", err)
+	_, err := program.Run()
+	if err != nil {
+		panic(err)
 	}
 }
