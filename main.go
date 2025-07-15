@@ -8,18 +8,19 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/common-nighthawk/go-figure"
+	"github.com/mt-shihab26/termodoro/config"
 )
 
 const (
-	STOP_STATE = iota
-	TIMER_STATE
+	stopState = iota
+	timerState
 )
 
 type model struct {
-	state   uint
-	counter int
-	width   int
-	height  int
+	state  uint
+	times  int
+	width  int
+	height int
 }
 
 type tickMsg time.Time
@@ -43,9 +44,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return m, tea.Sequence(tea.ExitAltScreen, tea.Quit)
+		case " ":
+			if m.state == stopState {
+				m.state = timerState
+			} else {
+				m.state = stopState
+			}
+		case "r":
+			m.state = stopState
+			m.times = 0
 		}
 	case tickMsg:
-		m.counter++
+		if m.state == timerState {
+			m.times--
+		}
 		return m, tea.Tick(time.Second, func(t time.Time) tea.Msg {
 			return tickMsg(t)
 		})
@@ -59,7 +71,7 @@ func (m model) View() string {
 	}
 
 	// Generate ASCII art for the counter using go-figure
-	counterStr := fmt.Sprintf("%d", m.counter)
+	counterStr := fmt.Sprintf("%d", m.times)
 	bigText := figure.NewFigure(counterStr, "big", true).String()
 
 	// Style for the counter value
@@ -99,8 +111,17 @@ func (m model) View() string {
 }
 
 func main() {
+	c := &config.Config{
+		TimerDuration: 55,
+	}
+
+	m := model{
+		state: stopState,
+		times: (*c).TimerDuration,
+	}
+
 	p := tea.NewProgram(
-		model{},
+		m,
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),
 	)
