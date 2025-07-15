@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/common-nighthawk/go-figure"
 )
 
 type model struct {
@@ -50,6 +52,10 @@ func (m model) View() string {
 		return "Loading..."
 	}
 
+	// Generate ASCII art for the counter using go-figure
+	counterStr := fmt.Sprintf("%d", m.counter)
+	bigText := figure.NewFigure(counterStr, "big", true).String()
+
 	// Style for the counter value
 	contentStyle := lipgloss.NewStyle().
 		Bold(true).
@@ -63,11 +69,16 @@ func (m model) View() string {
 		Align(lipgloss.Center).
 		MarginTop(2)
 
-	// Render the counter
-	content := contentStyle.Render(fmt.Sprintf("%d", m.counter))
+	// Render the counter with ASCII art
+	content := contentStyle.Render(bigText)
+
+	instructionTexts := []string{
+		"'SPACE': start/stop",
+		"'q': quit",
+	}
 
 	// Render instructions
-	instructions := instructionsStyle.Render("Press 'q' or Ctrl+C to quit")
+	instructions := instructionsStyle.Render(strings.Join(instructionTexts, "\n"))
 
 	// Combine content and instructions vertically
 	combined := lipgloss.JoinVertical(lipgloss.Center, content, instructions)
