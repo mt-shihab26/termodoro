@@ -39,10 +39,6 @@ func (t *Timer) Reset() {
 	t.Current = t.Duration
 }
 
-func (t *Timer) IsRunning() bool {
-	return t.State == view.RunningTimerState
-}
-
 func (t *Timer) IsFinished() bool {
 	return t.Current <= 0
 }

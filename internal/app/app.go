@@ -6,19 +6,25 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mt-shihab26/termodoro/config"
+	"github.com/mt-shihab26/termodoro/internal/session"
 	"github.com/mt-shihab26/termodoro/internal/timer"
 	"github.com/mt-shihab26/termodoro/view"
 )
 
 type App struct {
-	timer  *timer.Timer
-	width  int
-	height int
+	timer   *timer.Timer
+	session *session.Session
+	width   int
+	height  int
 }
 
 func New(_ *config.Config) *App {
+	s := session.New()
+	t := timer.New(s.GetDuration())
+
 	return &App{
-		timer: timer.New(60),
+		timer:   t,
+		session: s,
 	}
 }
 
@@ -40,6 +46,8 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case time.Time:
 		app.timer.Tick()
 		if app.timer.IsFinished() {
+			app.timer.Reset()
+			app.session.NextSession()
 		}
 		return app, tea.Tick(time.Second, func(t time.Time) tea.Msg {
 			return time.Time(t)

@@ -12,8 +12,6 @@ func (app *App) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		app.timer.Reset()
 	case "b":
 		// TODO
-	case "n":
-		// TODO
 	}
 	return app, nil
 }
