@@ -5,11 +5,12 @@ import (
 )
 
 type Data struct {
-	Width       int
-	Height      int
-	SessionType SessionType
-	TimerState  TimerState
-	CurrentTime int
+	Width        int
+	Height       int
+	SessionType  SessionType
+	SessionCount int
+	TimerState   TimerState
+	CurrentTime  int
 }
 
 func Render(data Data) string {
@@ -26,7 +27,7 @@ func Render(data Data) string {
 				Foreground(lipgloss.Color("33")).
 				Bold(true).
 				MarginBottom(1).
-				Render(getSessionInfo(data.SessionType)),
+				Render(getSessionInfo(data.SessionType, data.SessionCount)),
 			lipgloss.NewStyle().
 				Bold(true).
 				Foreground(getTimerColor(data.TimerState, data.SessionType)).
@@ -36,6 +37,6 @@ func Render(data Data) string {
 			lipgloss.NewStyle().
 				Foreground(lipgloss.Color("240")).
 				MarginTop(2).
-				Render(getInstructions(data.TimerState)),
+				Render(getInstructions(data.TimerState, data.SessionType)),
 		))
 }

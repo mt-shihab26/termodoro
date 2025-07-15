@@ -26,11 +26,20 @@ func (t *Timer) Tick() {
 func (t *Timer) Toggle() {
 	switch t.State {
 	case view.StoppedTimerState:
-		t.start()
+		t.Start()
 	case view.RunningTimerState:
 		t.pause()
 	case view.PausedTimerState:
-		t.start()
+		t.Start()
+	}
+}
+
+func (t *Timer) Start() {
+	switch t.State {
+	case view.StoppedTimerState:
+		t.State = view.RunningTimerState
+	case view.PausedTimerState:
+		t.State = view.RunningTimerState
 	}
 }
 
@@ -41,15 +50,6 @@ func (t *Timer) Reset() {
 
 func (t *Timer) IsFinished() bool {
 	return t.Current <= 0
-}
-
-func (t *Timer) start() {
-	switch t.State {
-	case view.StoppedTimerState:
-		t.State = view.RunningTimerState
-	case view.PausedTimerState:
-		t.State = view.RunningTimerState
-	}
 }
 
 func (t *Timer) pause() {

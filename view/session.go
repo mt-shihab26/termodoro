@@ -14,7 +14,7 @@ const (
 	LongBreakSessionType
 )
 
-func getSessionInfo(sessionType SessionType) string {
+func getSessionInfo(sessionType SessionType, sessionCount int) string {
 	var sessionName string
 
 	switch sessionType {
@@ -26,7 +26,7 @@ func getSessionInfo(sessionType SessionType) string {
 		sessionName = "Long Break"
 	}
 
-	return fmt.Sprintf("%s | Completed Today: %d", sessionName, 1)
+	return fmt.Sprintf("%s | Completed Today: %d", sessionName, sessionCount)
 }
 
 func getSessionColor(sessionType SessionType) lipgloss.Color {

@@ -5,16 +5,21 @@ import (
 	"strings"
 )
 
-func getInstructions(timerState TimerState) string {
+func getInstructions(timerState TimerState, sessionType SessionType) string {
 	operations := map[bool]string{
 		true:  "Pause",
 		false: "Start",
+	}
+	sessions := map[SessionType]string{
+		WorkSessionType:      "work",
+		BreakSessionType:     "break",
+		LongBreakSessionType: "long break",
 	}
 
 	instructionTexts := []string{
 		fmt.Sprintf("'SPACE': %s timer", operations[timerState == RunningTimerState]),
 		"'R'    : Reset current session",
-		"'B'    : Start break manually",
+		fmt.Sprintf("'N'    : Start %s manually", sessions[sessionType]),
 		"'Q'    : Quit application",
 	}
 

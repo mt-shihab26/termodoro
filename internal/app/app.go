@@ -46,8 +46,7 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case time.Time:
 		app.timer.Tick()
 		if app.timer.IsFinished() {
-			app.timer.Reset()
-			app.session.NextSession()
+			app.nextSession()
 		}
 		return app, tea.Tick(time.Second, func(t time.Time) tea.Msg {
 			return time.Time(t)
@@ -60,10 +59,11 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (app *App) View() string {
 	return view.Render(view.Data{
-		Width:       app.width,
-		Height:      app.height,
-		SessionType: view.WorkSessionType,
-		TimerState:  app.timer.State,
-		CurrentTime: app.timer.Current,
+		Width:        app.width,
+		Height:       app.height,
+		SessionType:  app.session.State,
+		SessionCount: app.session.Count,
+		TimerState:   app.timer.State,
+		CurrentTime:  app.timer.Current,
 	})
 }

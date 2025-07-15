@@ -10,8 +10,8 @@ func (app *App) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		app.timer.Toggle()
 	case "r":
 		app.timer.Reset()
-	case "b":
-		// TODO
+	case "n":
+		app.nextSession()
 	}
 	return app, nil
 }
