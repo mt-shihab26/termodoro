@@ -1,3 +1,4 @@
+// Package view
 package view
 
 import (
@@ -24,19 +25,17 @@ func Render(data Data) string {
 		Render(lipgloss.JoinVertical(
 			lipgloss.Center,
 			lipgloss.NewStyle().
-				Foreground(lipgloss.Color("33")).
+				Foreground(getTimerColor(data.TimerState, data.SessionType)).
 				Bold(true).
-				MarginBottom(1).
 				Render(getSessionInfo(data.SessionType, data.SessionCount)),
 			lipgloss.NewStyle().
 				Bold(true).
 				Foreground(getTimerColor(data.TimerState, data.SessionType)).
-				Padding(1, 2).
+				Padding(2, 2, 2, 2).
 				Align(lipgloss.Center).
 				Render(getTimerInfo(data.CurrentTime)),
 			lipgloss.NewStyle().
 				Foreground(lipgloss.Color("240")).
-				MarginTop(2).
 				Render(getInstructions(data.TimerState, data.SessionType)),
 		))
 }

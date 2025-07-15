@@ -34,10 +34,10 @@ func (session *Session) NextSession() {
 func (session *Session) GetDuration() int {
 	switch session.State {
 	case view.WorkSessionType:
+		return 6
+	case view.LongBreakSessionType:
 		return 4
 	case view.BreakSessionType:
-		return 3
-	case view.LongBreakSessionType:
 		return 2
 	default:
 		return 0
