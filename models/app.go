@@ -10,24 +10,20 @@ import (
 	"github.com/common-nighthawk/go-figure"
 )
 
-// TickMsg represents a tick message
 type TickMsg time.Time
 
-// AppModel represents the main application model
 type AppModel struct {
 	timer  *Timer
 	width  int
 	height int
 }
 
-// NewAppModel creates a new application model
 func NewAppModel(timerDuration int) *AppModel {
 	return &AppModel{
 		timer: NewTimer(timerDuration),
 	}
 }
 
-// Init initializes the application
 func (m *AppModel) Init() tea.Cmd {
 	return tea.Batch(
 		tea.Tick(time.Second, func(t time.Time) tea.Msg {
@@ -37,7 +33,6 @@ func (m *AppModel) Init() tea.Cmd {
 	)
 }
 
-// Update handles messages and updates the model
 func (m *AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -58,7 +53,6 @@ func (m *AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// handleKeyPress handles keyboard input
 func (m *AppModel) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "q", "ctrl+c":
@@ -74,51 +68,42 @@ func (m *AppModel) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// View renders the application
 func (m *AppModel) View() string {
 	if m.width == 0 || m.height == 0 {
 		return "Loading..."
 	}
 
-	// Generate ASCII art for the counter
 	counterStr := fmt.Sprintf("%d", m.timer.Current)
 	bigText := figure.NewFigure(counterStr, "big", true).String()
 
-	// Style for the counter value
 	contentStyle := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(m.getTimerColor()).
 		Padding(1, 2).
 		Align(lipgloss.Center)
 
-	// Style for instructions
 	instructionsStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("240")).
 		MarginTop(2)
 
-	// Render the counter with ASCII art
 	content := contentStyle.Render(bigText)
 
-	// Render instructions
 	instructions := instructionsStyle.Render(m.getInstructions())
 
-	// Add status indicator
 	statusStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("208")).
 		MarginTop(1).
 		Bold(true)
-	
+
 	status := statusStyle.Render(m.getStatusText())
 
-	// Combine all elements vertically
 	combined := lipgloss.JoinVertical(
-		lipgloss.Center, 
-		content, 
+		lipgloss.Center,
+		content,
 		status,
 		instructions,
 	)
 
-	// Center everything in the terminal
 	return lipgloss.NewStyle().
 		Width(m.width).
 		Height(m.height).
@@ -126,7 +111,6 @@ func (m *AppModel) View() string {
 		Render(combined)
 }
 
-// getTimerColor returns the appropriate color based on timer state
 func (m *AppModel) getTimerColor() lipgloss.Color {
 	switch m.timer.State {
 	case Running:
@@ -138,19 +122,17 @@ func (m *AppModel) getTimerColor() lipgloss.Color {
 	}
 }
 
-// getStatusText returns the current status text
 func (m *AppModel) getStatusText() string {
 	switch m.timer.State {
 	case Running:
-		return "⏱️  RUNNING"
+		return "RUNNING"
 	case Paused:
-		return "⏸️  PAUSED"
+		return "PAUSED"
 	default:
-		return "⏹️  STOPPED"
+		return "STOPPED"
 	}
 }
 
-// getInstructions returns the instruction text
 func (m *AppModel) getInstructions() string {
 	instructionTexts := []string{
 		"'SPACE': Start/Pause timer",
