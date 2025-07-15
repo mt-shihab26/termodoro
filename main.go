@@ -9,8 +9,6 @@ import (
 )
 
 type model struct {
-	texts   []string
-	current int
 	counter int
 	width   int
 	height  int
@@ -39,7 +37,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Sequence(tea.ExitAltScreen, tea.Quit)
 		}
 	case tickMsg:
-		m.current = (m.current + 1) % len(m.texts)
 		m.counter++
 		return m, tea.Tick(time.Second, func(t time.Time) tea.Msg {
 			return tickMsg(t)
@@ -69,7 +66,7 @@ func (m model) View() string {
 		MarginTop(2)
 
 	// Create the main content
-	content := contentStyle.Render(fmt.Sprintf("%s - Count: %d", m.texts[m.current], m.counter))
+	content := contentStyle.Render(fmt.Sprintf("%d", m.counter))
 
 	// Add instructions
 	instructions := instructionsStyle.Render("Press 'q' or Ctrl+C to quit")
@@ -85,16 +82,9 @@ func (m model) View() string {
 		Render(combined)
 }
 
-func bubbleTeaExample() {
-	texts := []string{
-		"🚀 Bubble Tea is awesome!",
-		"⭐ Styled text rendering",
-		"🌈 Beautiful terminal UIs",
-		"🔥 Full screen magic!",
-	}
-
+func main() {
 	p := tea.NewProgram(
-		model{texts: texts},
+		model{},
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),
 	)
@@ -102,8 +92,4 @@ func bubbleTeaExample() {
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error: %v", err)
 	}
-}
-
-func main() {
-	bubbleTeaExample()
 }
