@@ -50,32 +50,30 @@ func (m model) View() string {
 		return "Loading..."
 	}
 
-	contentStyle := lipgloss.
-		NewStyle().
+	// Style for the counter value
+	contentStyle := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("86")).
-		Background(lipgloss.Color("235")).
 		Padding(1, 2).
-		MarginTop(m.height/2 - 2).
 		Align(lipgloss.Center)
 
-	instructionsStyle := lipgloss.
-		NewStyle().
+	// Style for instructions
+	instructionsStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("240")).
 		Align(lipgloss.Center).
 		MarginTop(2)
 
-	content := contentStyle.
-		Render(fmt.Sprintf("%d", m.counter))
+	// Render the counter
+	content := contentStyle.Render(fmt.Sprintf("%d", m.counter))
 
-	instructions := instructionsStyle.
-		Render("Press 'q' or Ctrl+C to quit")
+	// Render instructions
+	instructions := instructionsStyle.Render("Press 'q' or Ctrl+C to quit")
 
-	combined := lipgloss.
-		JoinVertical(lipgloss.Center, content, instructions)
+	// Combine content and instructions vertically
+	combined := lipgloss.JoinVertical(lipgloss.Center, content, instructions)
 
-	return lipgloss.
-		NewStyle().
+	// Center everything in the terminal
+	return lipgloss.NewStyle().
 		Width(m.width).
 		Height(m.height).
 		Align(lipgloss.Center, lipgloss.Center).
@@ -88,7 +86,6 @@ func main() {
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),
 	)
-
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error: %v", err)
 	}
