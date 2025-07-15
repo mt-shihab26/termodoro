@@ -50,8 +50,8 @@ func (m model) View() string {
 		return "Loading..."
 	}
 
-	// Main content style
-	contentStyle := lipgloss.NewStyle().
+	contentStyle := lipgloss.
+		NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("86")).
 		Background(lipgloss.Color("235")).
@@ -59,23 +59,23 @@ func (m model) View() string {
 		MarginTop(m.height/2 - 2).
 		Align(lipgloss.Center)
 
-	// Instructions style
-	instructionsStyle := lipgloss.NewStyle().
+	instructionsStyle := lipgloss.
+		NewStyle().
 		Foreground(lipgloss.Color("240")).
 		Align(lipgloss.Center).
 		MarginTop(2)
 
-	// Create the main content
-	content := contentStyle.Render(fmt.Sprintf("%d", m.counter))
+	content := contentStyle.
+		Render(fmt.Sprintf("%d", m.counter))
 
-	// Add instructions
-	instructions := instructionsStyle.Render("Press 'q' or Ctrl+C to quit")
+	instructions := instructionsStyle.
+		Render("Press 'q' or Ctrl+C to quit")
 
-	// Combine content and instructions
-	combined := lipgloss.JoinVertical(lipgloss.Center, content, instructions)
+	combined := lipgloss.
+		JoinVertical(lipgloss.Center, content, instructions)
 
-	// Center everything in the full screen
-	return lipgloss.NewStyle().
+	return lipgloss.
+		NewStyle().
 		Width(m.width).
 		Height(m.height).
 		Align(lipgloss.Center, lipgloss.Center).
