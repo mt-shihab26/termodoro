@@ -9,11 +9,9 @@ import (
 )
 
 func main() {
-	c := &config.Config{
-		TimerDuration: 55,
-	}
+	c := config.New()
 
-	m := models.NewAppModel(c.TimerDuration)
+	m := models.NewAppModel(c)
 
 	p := tea.NewProgram(
 		m,
