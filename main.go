@@ -10,7 +10,13 @@ import (
 	"github.com/common-nighthawk/go-figure"
 )
 
+const (
+	STOP_STATE = iota
+	TIMER_STATE
+)
+
 type model struct {
+	state   uint
 	counter int
 	width   int
 	height  int
@@ -66,15 +72,16 @@ func (m model) View() string {
 	// Style for instructions
 	instructionsStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("240")).
-		Align(lipgloss.Center).
 		MarginTop(2)
 
 	// Render the counter with ASCII art
 	content := contentStyle.Render(bigText)
 
 	instructionTexts := []string{
-		"'SPACE': start/stop",
-		"'q': quit",
+		"'SPACE': Start/Pause timer",
+		"'R': Reset current session",
+		"'B': Start break manually",
+		"'Q': Quit application",
 	}
 
 	// Render instructions
