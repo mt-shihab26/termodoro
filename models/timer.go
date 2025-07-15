@@ -1,22 +1,16 @@
 package models
 
-type TimerState uint
-
-const (
-	Stopped TimerState = iota
-	Running
-	Paused
-)
+import "github.com/mt-shihab26/termodoro/view"
 
 type Timer struct {
-	State    TimerState
+	State    view.TimerState
 	Duration int // in seconds
 	Current  int // current countdown value
 }
 
 func NewTimer(duration int) *Timer {
 	return &Timer{
-		State:    Stopped,
+		State:    view.StoppedTimerState,
 		Duration: duration,
 		Current:  duration,
 	}
@@ -24,43 +18,43 @@ func NewTimer(duration int) *Timer {
 
 func (t *Timer) Start() {
 	switch t.State {
-	case Stopped:
-		t.State = Running
-	case Paused:
-		t.State = Running
+	case view.StoppedTimerState:
+		t.State = view.RunningTimerState
+	case view.PausedTimerState:
+		t.State = view.RunningTimerState
 	}
 }
 
 func (t *Timer) Pause() {
-	if t.State == Running {
-		t.State = Paused
+	if t.State == view.RunningTimerState {
+		t.State = view.PausedTimerState
 	}
 }
 
 func (t *Timer) Toggle() {
 	switch t.State {
-	case Stopped:
+	case view.StoppedTimerState:
 		t.Start()
-	case Running:
+	case view.RunningTimerState:
 		t.Pause()
-	case Paused:
+	case view.PausedTimerState:
 		t.Start()
 	}
 }
 
 func (t *Timer) Reset() {
-	t.State = Stopped
+	t.State = view.StoppedTimerState
 	t.Current = t.Duration
 }
 
 func (t *Timer) Tick() {
-	if t.State == Running && t.Current > 0 {
+	if t.State == view.RunningTimerState && t.Current > 0 {
 		t.Current--
 	}
 }
 
 func (t *Timer) IsRunning() bool {
-	return t.State == Running
+	return t.State == view.RunningTimerState
 }
 
 func (t *Timer) IsFinished() bool {
