@@ -5,13 +5,13 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mt-shihab26/termodoro/config"
-	"github.com/mt-shihab26/termodoro/models"
+	"github.com/mt-shihab26/termodoro/internal/app"
 )
 
 func main() {
 	c := config.New()
 
-	m := models.NewAppModel(c)
+	m := app.New(c)
 
 	p := tea.NewProgram(
 		m,
