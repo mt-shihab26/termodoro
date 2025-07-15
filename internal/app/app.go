@@ -1,3 +1,4 @@
+// Package app provides main application functionality for the Pomodoro application.
 package app
 
 import (
@@ -38,6 +39,8 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return app, nil
 	case time.Time:
 		app.timer.Tick()
+		if app.timer.IsFinished() {
+		}
 		return app, tea.Tick(time.Second, func(t time.Time) tea.Msg {
 			return time.Time(t)
 		})

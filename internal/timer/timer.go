@@ -1,5 +1,4 @@
 // Package timer provides timer functionality for the Pomodoro application.
-// It handles timer state management, countdown operations, and timer controls.
 package timer
 
 import "github.com/mt-shihab26/termodoro/view"
