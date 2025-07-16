@@ -30,6 +30,82 @@ termodoro
 - `B`: Start break manually
 - `Q`: Quit application
 
+## Configuration
+
+Termodoro supports user configuration through a JSON file located at `~/.config/termodoro/config.json`. If no config file exists, the application will use sensible defaults based on the standard Pomodoro Technique.
+
+### Config File Location
+
+The configuration file follows the XDG Base Directory Specification:
+
+```
+~/.config/termodoro/config.json
+```
+
+### Config File Format
+
+Create a JSON file with any or all of the following options:
+
+```json
+{
+    "work_session_duration": 25,
+    "break_session_duration": 5,
+    "long_break_session_duration": 15
+}
+```
+
+### Configuration Options
+
+| Option                        | Description             | Default | Unit    |
+| ----------------------------- | ----------------------- | ------- | ------- |
+| `work_session_duration`       | Length of work sessions | 25      | minutes |
+| `break_session_duration`      | Length of short breaks  | 5       | minutes |
+| `long_break_session_duration` | Length of long breaks   | 15      | minutes |
+
+### Partial Configuration
+
+You can specify only the options you want to customize. Missing options will use their default values:
+
+```json
+{
+    "work_session_duration": 30
+}
+```
+
+In this example, work sessions will be 30 minutes, while breaks will use the default values (5 and 15 minutes).
+
+### Configuration Examples
+
+**Extended Work Sessions:**
+
+```json
+{
+    "work_session_duration": 45,
+    "break_session_duration": 10,
+    "long_break_session_duration": 30
+}
+```
+
+**Short Sessions for ADHD/Focus Issues:**
+
+```json
+{
+    "work_session_duration": 15,
+    "break_session_duration": 5,
+    "long_break_session_duration": 15
+}
+```
+
+**Minimal Breaks:**
+
+```json
+{
+    "work_session_duration": 25,
+    "break_session_duration": 2,
+    "long_break_session_duration": 10
+}
+```
+
 ## Development
 
 ### Prerequisites
