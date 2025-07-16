@@ -21,7 +21,10 @@ func New() *Session {
 			State: view.WorkSessionType,
 			Count: 0,
 		}
-		err := cache.Save(cache.New(session.State, session.Count))
+		err := cache.Save(&cache.PCache{
+			SessionType:  &session.State,
+			SessionCount: &session.Count,
+		})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: failed to save initial session to cache: %v\n", err)
 		}
@@ -47,8 +50,10 @@ func (session *Session) NextSession() {
 	case view.LongBreakSessionType:
 		session.State = view.WorkSessionType
 	}
-
-	err := cache.Save(cache.New(session.State, session.Count))
+	err := cache.Save(&cache.PCache{
+		SessionType:  &session.State,
+		SessionCount: &session.Count,
+	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to save session to cache: %v\n", err)
 	}

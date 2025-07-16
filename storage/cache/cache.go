@@ -20,11 +20,9 @@ type Cache struct {
 	SessionCount int              `json:"session_count"`
 }
 
-func New(sessionType view.SessionType, sessionCount int) *Cache {
-	return &Cache{
-		SessionType:  sessionType,
-		SessionCount: sessionCount,
-	}
+type PCache struct {
+	SessionType  *view.SessionType `json:"session_type,omitempty"`
+	SessionCount *int              `json:"session_count,omitempty"`
 }
 
 func Load() (*Cache, error) {
@@ -47,7 +45,21 @@ func Load() (*Cache, error) {
 	return &cache, nil
 }
 
-func Save(cache *Cache) error {
+func Save(partial *PCache) error {
+	existingCache, err := Load()
+	if err != nil {
+		existingCache = &Cache{}
+	}
+	if partial.SessionType != nil {
+		existingCache.SessionType = *partial.SessionType
+	}
+	if partial.SessionCount != nil {
+		existingCache.SessionCount = *partial.SessionCount
+	}
+	return save(existingCache)
+}
+
+func save(cache *Cache) error {
 	err := ensureCacheDir()
 	if err != nil {
 		return fmt.Errorf("failed to create cache directory: %w", err)
@@ -92,29 +104,3 @@ func ensureCacheDir() error {
 	cacheFullDir := filepath.Join(homeDir, cacheDir)
 	return os.MkdirAll(cacheFullDir, 0755)
 }
-
-// func ClearCache() error {
-// 	cacheFilePath, err := getCacheFilePath()
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	if err := os.Remove(cacheFilePath); err != nil && !os.IsNotExist(err) {
-// 		return fmt.Errorf("failed to remove cache file: %w", err)
-// 	}
-//
-// 	return nil
-// }
-//
-// func (session *Session) Reset() {
-// 	session.State = view.WorkSessionType
-// 	session.Count = 0
-//
-// 	if err := ClearCache(); err != nil {
-// 		fmt.Printf("Warning: failed to clear cache: %v\n", err)
-// 	}
-//
-// 	if err := session.saveToCache(); err != nil {
-// 		fmt.Printf("Warning: failed to save reset session to cache: %v\n", err)
-// 	}
-// }
