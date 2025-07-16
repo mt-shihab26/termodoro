@@ -7,7 +7,7 @@ func Run(args []string) error {
 	fmt.Println("Termodoro - A terminal-based Pomodoro timer")
 	fmt.Println("")
 	fmt.Println("USAGE:")
-	fmt.Println("    termodoro [COMMAND]")
+	fmt.Println("    termodoro [COMMAND/FLAGS] ")
 	fmt.Println("")
 	fmt.Println("Run 'termodoro' without any command to start the TUI application.")
 	fmt.Println("")
