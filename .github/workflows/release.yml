@@ -49,6 +49,8 @@ jobs:
                   GOARCH: ${{ matrix.goarch }}
               run: |
                   VERSION=${{ github.ref_name }}
+                  COMMIT=${{ github.sha }}
+                  DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
                   FILENAME=${{ matrix.output }}
                   if [[ "$FILENAME" == *.exe ]]; then
                     PLATFORM_ARCH="${FILENAME%.exe}"
@@ -57,7 +59,7 @@ jobs:
                     PLATFORM_ARCH="$FILENAME"
                     VERSIONED_FILENAME="termodoro-${VERSION}-${PLATFORM_ARCH}"
                   fi
-                  go build -ldflags="-s -w -X main.version=${VERSION}" -o ./bin/${VERSIONED_FILENAME} .
+                  go build -ldflags="-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE}" -o ./bin/${VERSIONED_FILENAME} .
                   chmod +x ./bin/${VERSIONED_FILENAME}
 
             - name: Upload Release Asset
