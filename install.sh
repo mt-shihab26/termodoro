@@ -230,7 +230,7 @@ main() {
 
     # First try if termodoro is in PATH
     if command_exists termodoro; then
-        if termodoro --version >/dev/null 2>&1 || termodoro -h >/dev/null 2>&1; then
+        if termodoro version >/dev/null 2>&1; then
             print_success "Installation completed successfully!"
             print_info "You can now run: termodoro"
         else
