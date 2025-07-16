@@ -13,9 +13,39 @@ A terminal-based Pomodoro timer application built with Go.
 
 ## Installation
 
+### Install Binary (Recommended)
+
+Install the latest version automatically for your operating system:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mt-shihab26/termodoro/main/install.sh | bash
+```
+
+The installer will:
+
+- Automatically detect your OS and architecture
+- Download the latest release binary
+- Install to `~/.local/bin/termodoro`
+- Set executable permissions
+- Provide PATH setup instructions if needed
+
+### Manual Installation
+
+#### From Source
+
 ```bash
 go install github.com/mt-shihab26/termodoro@latest
 ```
+
+#### Download Binary
+
+You can manually download pre-built binaries from the [releases page](https://github.com/mt-shihab26/termodoro/releases/latest).
+
+Available for:
+
+- Linux (x86_64, ARM64)
+- macOS (x86_64, ARM64)
+- Windows (x86_64, ARM64)
 
 ## Usage
 
