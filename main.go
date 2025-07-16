@@ -1,6 +1,6 @@
 package main
 
-import "github.com/mt-shihab26/termodoro/cmd"
+import "github.com/mt-shihab26/termodoro/cmd/root"
 
 var (
 	version = "dev"
@@ -9,6 +9,6 @@ var (
 )
 
 func main() {
-	cmd.SetVersion(version, commit, date)
-	cmd.Execute()
+	root.SetVersion(version, commit, date)
+	root.Execute()
 }

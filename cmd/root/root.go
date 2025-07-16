@@ -1,5 +1,4 @@
-// Package cmd
-package cmd
+package root
 
 import (
 	"fmt"
@@ -18,34 +17,24 @@ func Execute() {
 	}
 }
 
+func SetVersion(ver, commit, date string) {
+	version.Version = ver
+	version.Commit = commit
+	version.Date = date
+}
+
 func executeCommand() error {
 	args := os.Args[1:]
 
-	// Handle flags first
 	if len(args) > 0 {
 		switch args[0] {
-		case "-v", "--version":
+		case "version", "-v", "--version":
 			return version.Run(args[1:])
-		case "-h", "--help":
+		case "help", "-h", "--help":
 			return help.Run(args[1:])
 		}
 	}
 
-	// Handle subcommands
-	if len(args) > 0 {
-		switch args[0] {
-		case "version":
-			return version.Run(args[1:])
-		case "help":
-			return help.Run(args[1:])
-		default:
-			fmt.Fprintf(os.Stderr, "Unknown command: %s\n", args[0])
-			fmt.Fprintf(os.Stderr, "Run 'termodoro help' for usage information.\n")
-			os.Exit(1)
-		}
-	}
-
-	// Run TUI (default)
 	return runTUI()
 }
 
@@ -59,10 +48,4 @@ func runTUI() error {
 
 	_, err := program.Run()
 	return err
-}
-
-func SetVersion(ver, commit, date string) {
-	version.Version = ver
-	version.Commit = commit
-	version.Date = date
 }

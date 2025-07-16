@@ -9,6 +9,8 @@ func Run(args []string) error {
 	fmt.Println("USAGE:")
 	fmt.Println("    termodoro [COMMAND]")
 	fmt.Println("")
+	fmt.Println("Run 'termodoro' without any command to start the TUI application.")
+	fmt.Println("")
 	fmt.Println("COMMANDS:")
 	fmt.Println("    version    Show version information")
 	fmt.Println("    help       Show this help message")
