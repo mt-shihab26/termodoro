@@ -61,6 +61,14 @@ func (session *Session) NextSession() {
 }
 
 func (session *Session) GetDuration() int { // in seconds
+	timerCurrent, err := cache.LoadTimerCurrent()
+	if err != nil {
+		return session.getDefaultDuration()
+	}
+	return timerCurrent
+}
+
+func (session *Session) getDefaultDuration() int { // in seconds
 	cfg := config.Load()
 	switch session.State {
 	case view.WorkSessionType:

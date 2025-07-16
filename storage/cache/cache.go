@@ -3,6 +3,7 @@ package cache
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -47,6 +48,20 @@ func Load() (*Cache, error) {
 		return nil, fmt.Errorf("failed to unmarshal cache data: %w", err)
 	}
 	return &cache, nil
+}
+
+func LoadTimerCurrent() (int, error) {
+	che, err := Load()
+	if err != nil {
+		return 0, err
+	}
+	cached := che.TimerCurrent
+	if cached == 0 {
+		return 0, errors.New("timer_current is zero value")
+	}
+	zero := 0
+	Save(&PCache{TimerCurrent: &zero})
+	return cached, nil
 }
 
 func Save(partial *PCache) error {
