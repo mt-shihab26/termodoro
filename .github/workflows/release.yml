@@ -58,6 +58,7 @@ jobs:
                     VERSIONED_FILENAME="termodoro-${VERSION}-${PLATFORM_ARCH}"
                   fi
                   go build -ldflags="-s -w -X main.version=${VERSION}" -o ./bin/${VERSIONED_FILENAME} .
+                  chmod +x ./bin/${VERSIONED_FILENAME}
 
             - name: Upload Release Asset
               env:
