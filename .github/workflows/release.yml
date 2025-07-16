@@ -17,22 +17,22 @@ jobs:
                 include:
                     - goos: linux
                       goarch: amd64
-                      output: termodoro-linux-amd64
+                      output: linux-x86_64
                     - goos: linux
                       goarch: arm64
-                      output: termodoro-linux-arm64
+                      output: linux-arm64
                     - goos: darwin
                       goarch: amd64
-                      output: termodoro-darwin-amd64
+                      output: darwin-x86_64
                     - goos: darwin
                       goarch: arm64
-                      output: termodoro-darwin-arm64
+                      output: darwin-arm64
                     - goos: windows
                       goarch: amd64
-                      output: termodoro-windows-amd64.exe
+                      output: windows-x86_64.exe
                     - goos: windows
                       goarch: arm64
-                      output: termodoro-windows-arm64.exe
+                      output: windows-arm64.exe
 
         steps:
             - name: Checkout code
@@ -51,9 +51,11 @@ jobs:
                   VERSION=${{ github.ref_name }}
                   FILENAME=${{ matrix.output }}
                   if [[ "$FILENAME" == *.exe ]]; then
-                    VERSIONED_FILENAME="${FILENAME%.exe}-${VERSION}.exe"
+                    PLATFORM_ARCH="${FILENAME%.exe}"
+                    VERSIONED_FILENAME="termodoro-${VERSION}-${PLATFORM_ARCH}.exe"
                   else
-                    VERSIONED_FILENAME="${FILENAME}-${VERSION}"
+                    PLATFORM_ARCH="$FILENAME"
+                    VERSIONED_FILENAME="termodoro-${VERSION}-${PLATFORM_ARCH}"
                   fi
                   go build -ldflags="-s -w -X main.version=${VERSION}" -o ./bin/${VERSIONED_FILENAME} .
 
@@ -64,8 +66,10 @@ jobs:
                   VERSION=${{ github.ref_name }}
                   FILENAME=${{ matrix.output }}
                   if [[ "$FILENAME" == *.exe ]]; then
-                    VERSIONED_FILENAME="${FILENAME%.exe}-${VERSION}.exe"
+                    PLATFORM_ARCH="${FILENAME%.exe}"
+                    VERSIONED_FILENAME="termodoro-${VERSION}-${PLATFORM_ARCH}.exe"
                   else
-                    VERSIONED_FILENAME="${FILENAME}-${VERSION}"
+                    PLATFORM_ARCH="$FILENAME"
+                    VERSIONED_FILENAME="termodoro-${VERSION}-${PLATFORM_ARCH}"
                   fi
                   gh release upload ${{ github.ref_name }} ./bin/${VERSIONED_FILENAME} --clobber
