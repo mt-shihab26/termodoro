@@ -48,11 +48,7 @@ jobs:
                   go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" -o ./bin/${{ matrix.output }} .
 
             - name: Upload Release Asset
-              uses: actions/upload-release-asset@v1
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  upload_url: ${{ github.event.release.upload_url }}
-                  asset_path: ./bin/${{ matrix.output }}
-                  asset_name: ${{ matrix.output }}
-                  asset_content_type: application/octet-stream
+              run: |
+                  gh release upload ${{ github.ref_name }} ./bin/${{ matrix.output }} --clobber
