@@ -6,14 +6,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/mt-shihab26/termodoro/pkg/disk"
 	"github.com/mt-shihab26/termodoro/view"
 )
 
 const (
-	cacheDir      = ".termodoro"
-	cacheFileName = "cache.json"
+	cacheDir = ".termodoro"
 )
 
 type Cache struct {
@@ -86,7 +87,13 @@ func getCacheFilePath() (string, error) {
 		return "", fmt.Errorf("failed to get user home directory: %w", err)
 	}
 	cacheFullDir := filepath.Join(homeDir, cacheDir)
-	return filepath.Join(cacheFullDir, cacheFileName), nil
+	fileName := getTodayFileName()
+	return filepath.Join(cacheFullDir, fileName), nil
+}
+
+func getTodayFileName() string {
+	year, month, day := time.Now().Date()
+	return strings.ToLower(fmt.Sprintf("%v-%v-%v.json", year, month, day))
 }
 
 func ensureCacheDir() error {
