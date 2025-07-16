@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/mt-shihab26/termodoro/pkg/disk"
 	"github.com/mt-shihab26/termodoro/view"
 )
 
@@ -30,7 +31,7 @@ func Load() (*Cache, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = getIsFileExist(cacheFilePath)
+	err = disk.GetIsFileExist(cacheFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -86,14 +87,6 @@ func getCacheFilePath() (string, error) {
 	}
 	cacheFullDir := filepath.Join(homeDir, cacheDir)
 	return filepath.Join(cacheFullDir, cacheFileName), nil
-}
-
-func getIsFileExist(filePath string) error {
-	_, err := os.Stat(filePath)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func ensureCacheDir() error {

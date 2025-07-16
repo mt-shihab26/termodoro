@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/mt-shihab26/termodoro/storage/cache"
+	"github.com/mt-shihab26/termodoro/storage/config"
 	"github.com/mt-shihab26/termodoro/view"
 )
 
@@ -59,14 +60,15 @@ func (session *Session) NextSession() {
 	}
 }
 
-func (session *Session) GetDuration() int {
+func (session *Session) GetDuration() int { // in seconds
+	cfg := config.Load()
 	switch session.State {
 	case view.WorkSessionType:
-		return 6
-	case view.LongBreakSessionType:
-		return 4
+		return cfg.WorkSessionDuration * 60
 	case view.BreakSessionType:
-		return 2
+		return cfg.BreakSessionDuration * 60
+	case view.LongBreakSessionType:
+		return cfg.LongBreakSessionDuration * 60
 	default:
 		return 0
 	}
