@@ -45,10 +45,24 @@ jobs:
                   GOOS: ${{ matrix.goos }}
                   GOARCH: ${{ matrix.goarch }}
               run: |
-                  go build -ldflags="-s -w -X main.version=${{ github.ref_name }}" -o ./bin/${{ matrix.output }} .
+                  VERSION=${{ github.ref_name }}
+                  FILENAME=${{ matrix.output }}
+                  if [[ "$FILENAME" == *.exe ]]; then
+                    VERSIONED_FILENAME="${FILENAME%.exe}-${VERSION}.exe"
+                  else
+                    VERSIONED_FILENAME="${FILENAME}-${VERSION}"
+                  fi
+                  go build -ldflags="-s -w -X main.version=${VERSION}" -o ./bin/${VERSIONED_FILENAME} .
 
             - name: Upload Release Asset
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
-                  gh release upload ${{ github.ref_name }} ./bin/${{ matrix.output }} --clobber
+                  VERSION=${{ github.ref_name }}
+                  FILENAME=${{ matrix.output }}
+                  if [[ "$FILENAME" == *.exe ]]; then
+                    VERSIONED_FILENAME="${FILENAME%.exe}-${VERSION}.exe"
+                  else
+                    VERSIONED_FILENAME="${FILENAME}-${VERSION}"
+                  fi
+                  gh release upload ${{ github.ref_name }} ./bin/${VERSIONED_FILENAME} --clobber
