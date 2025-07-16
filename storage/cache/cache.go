@@ -20,11 +20,13 @@ const (
 type Cache struct {
 	SessionType  view.SessionType `json:"session_type"`
 	SessionCount int              `json:"session_count"`
+	TimerCurrent int              `json:"timer_current"`
 }
 
 type PCache struct {
 	SessionType  *view.SessionType `json:"session_type,omitempty"`
 	SessionCount *int              `json:"session_count,omitempty"`
+	TimerCurrent *int              `json:"timer_current,omitempty"`
 }
 
 func Load() (*Cache, error) {
@@ -57,6 +59,9 @@ func Save(partial *PCache) error {
 	}
 	if partial.SessionCount != nil {
 		existingCache.SessionCount = *partial.SessionCount
+	}
+	if partial.TimerCurrent != nil {
+		existingCache.TimerCurrent = *partial.TimerCurrent
 	}
 	return save(existingCache)
 }
