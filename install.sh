@@ -1,6 +1,17 @@
 #!/bin/bash
 
+# Termodoro Installation Script
+# This script automatically downloads and installs the latest version of termodoro
+# for your operating system and architecture.
+
 set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
 # GitHub repository details
 REPO_OWNER="mt-shihab26"
@@ -9,12 +20,6 @@ GITHUB_API_URL="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}"
 
 # Installation directory
 INSTALL_DIR="${HOME}/.local/bin"
-
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
 
 # Function to print colored output
 print_info() {
@@ -59,8 +64,6 @@ command_exists() {
 
 # Function to get latest release version
 get_latest_version() {
-    print_info "Fetching latest release information..."
-
     if command_exists curl; then
         curl -s "${GITHUB_API_URL}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'
     elif command_exists wget; then
@@ -183,6 +186,7 @@ main() {
     fi
 
     # Get latest version
+    print_info "Fetching latest release information..."
     VERSION=$(get_latest_version)
     if [ -z "$VERSION" ]; then
         print_error "Failed to fetch latest version information"
@@ -223,12 +227,27 @@ main() {
 
     # Test installation
     print_info "Testing installation..."
-    if "$INSTALL_PATH" --version >/dev/null 2>&1 || "$INSTALL_PATH" -h >/dev/null 2>&1; then
-        print_success "Installation completed successfully!"
-        print_info "You can now run: termodoro"
+
+    # First try if termodoro is in PATH
+    if command_exists termodoro; then
+        if termodoro --version >/dev/null 2>&1 || termodoro -h >/dev/null 2>&1; then
+            print_success "Installation completed successfully!"
+            print_info "You can now run: termodoro"
+        else
+            print_warning "termodoro is in PATH but failed to run properly."
+        fi
     else
-        print_warning "Installation completed, but binary test failed."
-        print_info "Try running: $INSTALL_PATH"
+        if [ -f "$INSTALL_PATH" ] && [ -x "$INSTALL_PATH" ]; then
+            print_success "Installation completed successfully!"
+            print_warning "termodoro is not in your PATH. You can either:"
+            print_info "1. Run it directly: $INSTALL_PATH"
+            print_info "2. Add $INSTALL_DIR to your PATH (see instructions below)"
+            update_path "$INSTALL_DIR"
+            print_info "3. Restart your terminal after adding to PATH"
+        else
+            print_error "Installation failed - binary is not executable or missing."
+            print_info "Expected location: $INSTALL_PATH"
+        fi
     fi
 }
 
