@@ -18,7 +18,7 @@ A terminal-based Pomodoro timer application built with Go.
 Install the latest version automatically for your operating system:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mt-shihab26/termodoro/main/install.sh | bash
+curl -fsSL "https://raw.githubusercontent.com/mt-shihab26/termodoro/main/install.sh?$(date +%s)" | bash
 ```
 
 The installer will:
