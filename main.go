@@ -1,21 +1,14 @@
 package main
 
-import (
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/mt-shihab26/termodoro/internal/app"
+import "github.com/mt-shihab26/termodoro/cmd"
+
+var (
+	version = "dev"
+	commit  = "unknown"
+	date    = "unknown"
 )
 
 func main() {
-	app := app.New()
-
-	program := tea.NewProgram(
-		app,
-		tea.WithAltScreen(),
-		tea.WithMouseCellMotion(),
-	)
-
-	_, err := program.Run()
-	if err != nil {
-		panic(err)
-	}
+	cmd.SetVersion(version, commit, date)
+	cmd.Execute()
 }
