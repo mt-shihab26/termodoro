@@ -1,5 +1,5 @@
 <div>
-  <img src="./asserts/logo.svg" alt="Termodoro Logo" width="96" height="96">
+  <img src="./assets/logo.svg" alt="Termodoro Logo" width="96" height="96">
 </div>
 
 # Termodoro
