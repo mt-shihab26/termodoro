@@ -1,4 +1,11 @@
-# <img src="./asserts/logo.svg" alt="Termodoro Logo" width="32" height="32"> Termodoro
+<div align="center">
+  <img src="./asserts/logo.svg" alt="Termodoro Logo" width="96" height="96">
+    <p>
+        <em>A terminal-based Pomodoro timer application built with Go.</em>
+    </p>
+</div>
+
+# Termodoro
 
 A terminal-based Pomodoro timer application built with Go.
 
