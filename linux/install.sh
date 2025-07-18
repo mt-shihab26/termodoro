@@ -6,8 +6,8 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 DESKTOP_FILE_SOURCE="$SCRIPT_DIR/termodoro.desktop"
 DESKTOP_FILE_DESTINATION="$HOME/.local/share/applications/termodoro.desktop"
 
-ICON_FILE_SOURCE="$PROJECT_ROOT/assets/logo.svg"
-ICON_FILE_DESTINATION="$HOME/.local/share/icons/hicolor/48x48/apps/termodoro.svg"
+ICON_FILE_SOURCE="$PROJECT_ROOT/assets/logo.png"
+ICON_FILE_DESTINATION="$HOME/.local/share/icons/hicolor/48x48/apps/termodoro.png"
 
 ensure_directory_exists() {
     local dir="$(dirname "$1")"

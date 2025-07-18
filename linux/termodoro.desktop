@@ -5,6 +5,6 @@ Comment=Pomodoro timer
 Exec=bash -c "kitty --title 'Termodoro' ~/.local/bin/termodoro"
 Terminal=false
 Type=Application
-Icon=termodoro.svg
+Icon=termodoro
 Categories=Terminal;
 StartupNotify=false
