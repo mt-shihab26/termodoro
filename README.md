@@ -1,8 +1,5 @@
-<div align="center">
+<div>
   <img src="./asserts/logo.svg" alt="Termodoro Logo" width="96" height="96">
-    <p>
-        <em>A terminal-based Pomodoro timer application built with Go.</em>
-    </p>
 </div>
 
 # Termodoro
