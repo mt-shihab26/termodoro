@@ -1,4 +1,4 @@
-# Termodoro
+# <img src="./asserts/logo.svg" alt="Termodoro Logo" width="32" height="32"> Termodoro
 
 A terminal-based Pomodoro timer application built with Go.
 

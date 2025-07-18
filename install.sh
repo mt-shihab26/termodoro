@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 
 # Termodoro Installation Script
 # This script automatically downloads and installs the latest version of termodoro
