@@ -1,6 +1,6 @@
 package main
 
-import "github.com/mt-shihab26/termodoro/cmd/root"
+import "github.com/mt-shihab26/termodoro/internal/commands/root"
 
 var (
 	version = "dev"

@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/mt-shihab26/termodoro/pkg/disk"
+	"github.com/mt-shihab26/termodoro/internal/utils"
 )
 
 const (
@@ -45,7 +45,7 @@ func Load() Config {
 	if err != nil {
 		return defaultConfig
 	}
-	err = disk.GetIsFileExist(configFilePath)
+	err = utils.GetIsFileExist(configFilePath)
 	if err != nil {
 		return defaultConfig
 	}

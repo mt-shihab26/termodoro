@@ -7,7 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mt-shihab26/termodoro/internal/session"
 	"github.com/mt-shihab26/termodoro/internal/timer"
-	"github.com/mt-shihab26/termodoro/view"
+	"github.com/mt-shihab26/termodoro/internal/ui"
 )
 
 type App struct {
@@ -58,7 +58,7 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (app *App) View() string {
-	return view.Render(view.Data{
+	return ui.Render(ui.Data{
 		Width:        app.width,
 		Height:       app.height,
 		SessionType:  app.session.State,

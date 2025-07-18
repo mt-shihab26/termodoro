@@ -2,7 +2,7 @@ package app
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/mt-shihab26/termodoro/storage/cache"
+	"github.com/mt-shihab26/termodoro/internal/cache"
 )
 
 func (app *App) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {

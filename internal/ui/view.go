@@ -1,5 +1,5 @@
 // Package view
-package view
+package ui
 
 import (
 	"github.com/charmbracelet/lipgloss"

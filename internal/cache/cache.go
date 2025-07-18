@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mt-shihab26/termodoro/pkg/disk"
-	"github.com/mt-shihab26/termodoro/view"
+	"github.com/mt-shihab26/termodoro/internal/ui"
+	"github.com/mt-shihab26/termodoro/internal/utils"
 )
 
 const (
@@ -19,15 +19,15 @@ const (
 )
 
 type Cache struct {
-	SessionType  view.SessionType `json:"session_type"`
-	SessionCount int              `json:"session_count"`
-	TimerCurrent int              `json:"timer_current"`
+	SessionType  ui.SessionType `json:"session_type"`
+	SessionCount int            `json:"session_count"`
+	TimerCurrent int            `json:"timer_current"`
 }
 
 type PCache struct {
-	SessionType  *view.SessionType `json:"session_type,omitempty"`
-	SessionCount *int              `json:"session_count,omitempty"`
-	TimerCurrent *int              `json:"timer_current,omitempty"`
+	SessionType  *ui.SessionType `json:"session_type,omitempty"`
+	SessionCount *int            `json:"session_count,omitempty"`
+	TimerCurrent *int            `json:"timer_current,omitempty"`
 }
 
 func Load() (*Cache, error) {
@@ -35,7 +35,7 @@ func Load() (*Cache, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = disk.GetIsFileExist(cacheFilePath)
+	err = utils.GetIsFileExist(cacheFilePath)
 	if err != nil {
 		return nil, err
 	}

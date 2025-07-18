@@ -5,9 +5,9 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/mt-shihab26/termodoro/cmd/help"
-	"github.com/mt-shihab26/termodoro/cmd/version"
 	"github.com/mt-shihab26/termodoro/internal/app"
+	"github.com/mt-shihab26/termodoro/internal/commands/help"
+	"github.com/mt-shihab26/termodoro/internal/commands/version"
 )
 
 func Execute() {

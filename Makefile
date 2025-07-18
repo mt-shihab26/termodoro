@@ -6,8 +6,8 @@ run: build
 	$(BINARY_PATH)
 
 build:
-	go build -o $(BINARY_PATH) .
+	go build -o $(BINARY_PATH) ./cmd/termodoro/main.go
 
 install: 
-	go install
+	go install ./cmd/termodoro/main.go
 

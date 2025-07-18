@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mt-shihab26/termodoro/storage/cache"
-	"github.com/mt-shihab26/termodoro/storage/config"
-	"github.com/mt-shihab26/termodoro/view"
+	"github.com/mt-shihab26/termodoro/internal/cache"
+	"github.com/mt-shihab26/termodoro/internal/config"
+	"github.com/mt-shihab26/termodoro/internal/ui"
 )
 
 type Session struct {
-	State view.SessionType
+	State ui.SessionType
 	Count int
 }
 
@@ -19,7 +19,7 @@ func New() *Session {
 	data, err := cache.Load()
 	if err != nil {
 		session := &Session{
-			State: view.WorkSessionType,
+			State: ui.WorkSessionType,
 			Count: 0,
 		}
 		err := cache.Save(&cache.PCache{
@@ -39,17 +39,17 @@ func New() *Session {
 
 func (session *Session) NextSession() {
 	switch session.State {
-	case view.WorkSessionType:
+	case ui.WorkSessionType:
 		session.Count++
 		if session.Count%4 == 0 {
-			session.State = view.LongBreakSessionType
+			session.State = ui.LongBreakSessionType
 		} else {
-			session.State = view.BreakSessionType
+			session.State = ui.BreakSessionType
 		}
-	case view.BreakSessionType:
-		session.State = view.WorkSessionType
-	case view.LongBreakSessionType:
-		session.State = view.WorkSessionType
+	case ui.BreakSessionType:
+		session.State = ui.WorkSessionType
+	case ui.LongBreakSessionType:
+		session.State = ui.WorkSessionType
 	}
 	err := cache.Save(&cache.PCache{
 		SessionType:  &session.State,
@@ -71,11 +71,11 @@ func (session *Session) GetDuration() int { // in seconds
 func (session *Session) getDefaultDuration() int { // in seconds
 	cfg := config.Load()
 	switch session.State {
-	case view.WorkSessionType:
+	case ui.WorkSessionType:
 		return cfg.WorkSessionDuration * 60
-	case view.BreakSessionType:
+	case ui.BreakSessionType:
 		return cfg.BreakSessionDuration * 60
-	case view.LongBreakSessionType:
+	case ui.LongBreakSessionType:
 		return cfg.LongBreakSessionDuration * 60
 	default:
 		return 0
