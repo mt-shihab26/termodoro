@@ -38,7 +38,7 @@ The installer will:
 #### From Source
 
 ```bash
-go install github.com/mt-shihab26/termodoro@latest
+go install github.com/mt-shihab26/termodoro/cmd/termodoro@latest
 ```
 
 #### Download Binary
