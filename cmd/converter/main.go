@@ -1,3 +1,4 @@
+// converter is a command line tool to convert svg graphics to png images.
 package main
 
 import (
