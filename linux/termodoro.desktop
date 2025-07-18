@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=Termodoro
+Comment=Pomodoro timer
+Exec=bash -c "kitty --title 'Termodoro' ~/.local/bin/termodoro"
+Terminal=false
+Type=Application
+Icon=Termodoro
+Categories=Terminal;
+StartupNotify=false
