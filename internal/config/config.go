@@ -20,12 +20,14 @@ type Config struct {
 	WorkSessionDuration      int `json:"work_session_duration"`
 	BreakSessionDuration     int `json:"break_session_duration"`
 	LongBreakSessionDuration int `json:"long_break_session_duration"`
+	LongBreakSessionInterval int `json:"long_break_session_interval"`
 }
 
 var defaultConfig = Config{
 	WorkSessionDuration:      25,
 	BreakSessionDuration:     5,
 	LongBreakSessionDuration: 15,
+	LongBreakSessionInterval: 4,
 }
 
 func mergeDefaults(config *Config) {
@@ -37,6 +39,9 @@ func mergeDefaults(config *Config) {
 	}
 	if config.LongBreakSessionDuration == 0 {
 		config.LongBreakSessionDuration = defaultConfig.LongBreakSessionDuration
+	}
+	if config.LongBreakSessionInterval == 0 {
+		config.LongBreakSessionInterval = defaultConfig.LongBreakSessionInterval
 	}
 }
 

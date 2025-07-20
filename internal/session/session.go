@@ -39,12 +39,14 @@ func New() *Session {
 }
 
 func (session *Session) NextSession() {
+	cfg := config.Load()
+
 	message := ""
 
 	switch session.State {
 	case ui.WorkSessionType:
 		session.Count++
-		if session.Count%4 == 0 {
+		if session.Count%cfg.LongBreakSessionInterval == 0 {
 			session.State = ui.LongBreakSessionType
 			message = "Time for a long break!"
 		} else {
