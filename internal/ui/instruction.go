@@ -17,10 +17,10 @@ func getInstructions(timerState TimerState, sessionType SessionType) string {
 	}
 
 	instructionTexts := []string{
-		fmt.Sprintf("'SPACE': %s timer", operations[timerState == RunningTimerState]),
-		"'R'    : Reset current session",
-		fmt.Sprintf("'N'    : Start %s manually", sessions[sessionType]),
-		"'Q'    : Quit application",
+		fmt.Sprintf("'space': %s timer", operations[timerState == RunningTimerState]),
+		"'r'    : Reset current session",
+		fmt.Sprintf("'n'    : Start %s manually", sessions[sessionType]),
+		"'q'    : Quit application",
 	}
 
 	return strings.Join(instructionTexts, "\n")

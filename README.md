@@ -8,10 +8,10 @@ A terminal-based Pomodoro timer application built with Go.
 
 ## Features
 
-- A TUI Application
-- Configurable work sessions (default: 25-minute)
-- Configurable short breaks (default: 5-minute)
-- Configurable long breaks (default: 15-minute, every 4th cycle)
+- A TUI application
+- Configurable work sessions (default: 25 minutes)
+- Configurable short breaks (default: 5 minutes)
+- Configurable long breaks (default: 15 minutes, every 4th cycle)
 - Keyboard controls
 
 ## Installation
@@ -50,16 +50,32 @@ go install github.com/mt-shihab26/termodoro/cmd/termodoro@latest
 
 ## Usage
 
+### Commands
+
+Start the Pomodoro timer application:
+
 ```bash
 termodoro
 ```
 
+Display version information:
+
+```bash
+termodoro version
+```
+
+Show help and usage information:
+
+```bash
+termodoro help
+```
+
 ### Controls
 
-- `SPACE`: Start/Pause timer
-- `R`: Reset current session
-- `B`: Start break manually
-- `Q`: Quit application
+- `space`: Start/Pause timer
+- `r`: Reset current session
+- `n`: Go to next session manually
+- `q`: Quit application
 
 ## Configuration
 
@@ -79,10 +95,8 @@ Create a JSON file with any or all of the following options:
 
 ```json
 {
-    "work_session_duration": 25,
-    "break_session_duration": 5,
-    "long_break_session_duration": 15,
-    "long_break_session_interval": 4
+    "work_session_duration": 55,
+    "long_break_session_interval": 2
 }
 ```
 
@@ -116,5 +130,6 @@ To build only:
 make build
 ```
 
-This will create a binary in the root `~/.local/bin/termodoro`.
-This is the location where the install script install the binary
+This will create a binary in the root directory as `./termodoro`.
+
+**Note:** The install script places the binary at `~/.local/bin/termodoro`, which is where the automated installation puts the executable.
