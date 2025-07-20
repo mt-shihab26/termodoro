@@ -1,4 +1,4 @@
-.PHONY: build run builds
+.PHONY: build run install
 
 BINARY_PATH=./bin/termodoro
 
