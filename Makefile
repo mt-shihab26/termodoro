@@ -1,13 +1,11 @@
 .PHONY: build run install
 
-BINARY_PATH=./bin/termodoro
+SOURCE_PATH=./cmd/termodoro/main.go
+BINARY_PATH=~/.local/bin/termodoro
 
 run: build
 	$(BINARY_PATH)
 
 build:
-	go build -o $(BINARY_PATH) ./cmd/termodoro/main.go
-
-install: 
-	go install ./cmd/termodoro
+	go build -o $(BINARY_PATH) $(SOURCE_PATH)
 

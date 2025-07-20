@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/mt-shihab26/termodoro/internal/ui"
@@ -113,7 +112,7 @@ func getCacheFilePath() (string, error) {
 
 func getTodayFileName() string {
 	year, month, day := time.Now().Date()
-	return strings.ToLower(fmt.Sprintf("%v-%v-%v.json", year, month, day))
+	return fmt.Sprintf("%04d-%02d-%02d.json", year, int(month), day)
 }
 
 func ensureCacheDir() error {
