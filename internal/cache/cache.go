@@ -13,10 +13,6 @@ import (
 	"github.com/mt-shihab26/termodoro/internal/utils"
 )
 
-const (
-	cacheDir = ".termodoro"
-)
-
 type Cache struct {
 	SessionType  ui.SessionType `json:"session_type"`
 	SessionCount int            `json:"session_count"`
@@ -100,26 +96,33 @@ func save(cache *Cache) error {
 	return nil
 }
 
+func ensureCacheDir() error {
+	cacheFullDir, err := getCacheDirName()
+	if err != nil {
+		return fmt.Errorf("failed to get cache directory name: %w", err)
+	}
+	return os.MkdirAll(cacheFullDir, 0755)
+}
+
 func getCacheFilePath() (string, error) {
+	cacheFullDir, err := getCacheDirName()
+	if err != nil {
+		return "", fmt.Errorf("failed to get cache directory name: %w", err)
+	}
+	fileName := getTodayFileName()
+	return filepath.Join(cacheFullDir, fileName), nil
+}
+
+func getCacheDirName() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("failed to get user home directory: %w", err)
 	}
-	cacheFullDir := filepath.Join(homeDir, cacheDir)
-	fileName := getTodayFileName()
-	return filepath.Join(cacheFullDir, fileName), nil
+	cacheFullDir := filepath.Join(homeDir, ".local", "state", "termodoro")
+	return cacheFullDir, nil
 }
 
 func getTodayFileName() string {
 	year, month, day := time.Now().Date()
 	return fmt.Sprintf("%04d-%02d-%02d.json", year, int(month), day)
-}
-
-func ensureCacheDir() error {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("failed to get user home directory: %w", err)
-	}
-	cacheFullDir := filepath.Join(homeDir, cacheDir)
-	return os.MkdirAll(cacheFullDir, 0755)
 }

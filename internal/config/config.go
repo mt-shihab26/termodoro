@@ -10,12 +10,6 @@ import (
 	"github.com/mt-shihab26/termodoro/internal/utils"
 )
 
-const (
-	configDir      = ".config"
-	appConfigDir   = "termodoro"
-	configFileName = "config.json"
-)
-
 type Config struct {
 	WorkSessionDuration      int `json:"work_session_duration"`
 	BreakSessionDuration     int `json:"break_session_duration"`
@@ -71,6 +65,6 @@ func getConfigFilePath() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get user home directory: %w", err)
 	}
-	configFullDir := filepath.Join(homeDir, configDir, appConfigDir)
-	return filepath.Join(configFullDir, configFileName), nil
+	filePath := filepath.Join(homeDir, ".config", "termodoro", "config.json")
+	return filePath, nil
 }
