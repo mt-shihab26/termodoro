@@ -9,5 +9,5 @@ build:
 	go build -o $(BINARY_PATH) ./cmd/termodoro/main.go
 
 install: 
-	go install ./cmd/termodoro/main.go
+	go install ./cmd/termodoro
 
