@@ -46,7 +46,6 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		app.timer.Tick()
 		if app.timer.IsFinished() {
 			app.nextSession()
-			app.timer.Start()
 		}
 		return app, tea.Tick(time.Second, func(t time.Time) tea.Msg {
 			return time.Time(t)
