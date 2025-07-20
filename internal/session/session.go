@@ -8,6 +8,7 @@ import (
 	"github.com/mt-shihab26/termodoro/internal/cache"
 	"github.com/mt-shihab26/termodoro/internal/config"
 	"github.com/mt-shihab26/termodoro/internal/ui"
+	"github.com/mt-shihab26/termodoro/internal/utils"
 )
 
 type Session struct {
@@ -38,25 +39,31 @@ func New() *Session {
 }
 
 func (session *Session) NextSession() {
+	message := ""
+
 	switch session.State {
 	case ui.WorkSessionType:
 		session.Count++
 		if session.Count%4 == 0 {
 			session.State = ui.LongBreakSessionType
+			message = "Time for a long break!"
 		} else {
 			session.State = ui.BreakSessionType
+			message = "Time for a break!"
 		}
-	case ui.BreakSessionType:
+	case ui.BreakSessionType, ui.LongBreakSessionType:
 		session.State = ui.WorkSessionType
-	case ui.LongBreakSessionType:
-		session.State = ui.WorkSessionType
+		message = "Time to get back to work!"
 	}
-	err := cache.Save(&cache.PCache{
-		SessionType:  &session.State,
-		SessionCount: &session.Count,
-	})
-	if err != nil {
+
+	if err := cache.Save(&cache.PCache{SessionType: &session.State, SessionCount: &session.Count}); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to save session to cache: %v\n", err)
+	}
+
+	if message != "" {
+		if err := utils.NotifyWithSound("Termodoro", message, ""); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to send notification: %v\n", err)
+		}
 	}
 }
 
