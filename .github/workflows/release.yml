@@ -48,19 +48,37 @@ jobs:
                   GOOS: ${{ matrix.goos }}
                   GOARCH: ${{ matrix.goarch }}
               run: |
+                  mkdir -p bin dist
+
                   VERSION=${{ github.ref_name }}
                   COMMIT=${{ github.sha }}
                   DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
                   FILENAME=${{ matrix.output }}
+
                   if [[ "$FILENAME" == *.exe ]]; then
                     PLATFORM_ARCH="${FILENAME%.exe}"
-                    VERSIONED_FILENAME="termodoro-${VERSION}-${PLATFORM_ARCH}.exe"
+                    BINARY_NAME="termodoro.exe"
+                    ARCHIVE_NAME="termodoro-${VERSION}-${PLATFORM_ARCH}.zip"
                   else
                     PLATFORM_ARCH="$FILENAME"
-                    VERSIONED_FILENAME="termodoro-${VERSION}-${PLATFORM_ARCH}"
+                    BINARY_NAME="termodoro"
+                    ARCHIVE_NAME="termodoro-${VERSION}-${PLATFORM_ARCH}.tar.gz"
                   fi
-                  go build -ldflags="-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE}" -o ./bin/${VERSIONED_FILENAME} .
-                  chmod +x ./bin/${VERSIONED_FILENAME}
+
+                  BUILD_DIR=./bin/${PLATFORM_ARCH}
+                  mkdir -p "${BUILD_DIR}"
+
+                  go build -ldflags="-s -w -X main.version=${VERSION} -X main.commit=${COMMIT} -X main.date=${DATE}" \
+                    -o "${BUILD_DIR}/${BINARY_NAME}" ./cmd/termodoro
+
+                  chmod +x "${BUILD_DIR}/${BINARY_NAME}"
+
+                  # Archive
+                  if [[ "$FILENAME" == *.exe ]]; then
+                    zip -j "dist/${ARCHIVE_NAME}" "${BUILD_DIR}/${BINARY_NAME}"
+                  else
+                    tar -czf "dist/${ARCHIVE_NAME}" -C "${BUILD_DIR}" "${BINARY_NAME}"
+                  fi
 
             - name: Upload Release Asset
               env:
@@ -68,11 +86,13 @@ jobs:
               run: |
                   VERSION=${{ github.ref_name }}
                   FILENAME=${{ matrix.output }}
+
                   if [[ "$FILENAME" == *.exe ]]; then
                     PLATFORM_ARCH="${FILENAME%.exe}"
-                    VERSIONED_FILENAME="termodoro-${VERSION}-${PLATFORM_ARCH}.exe"
+                    ARCHIVE_NAME="termodoro-${VERSION}-${PLATFORM_ARCH}.zip"
                   else
                     PLATFORM_ARCH="$FILENAME"
-                    VERSIONED_FILENAME="termodoro-${VERSION}-${PLATFORM_ARCH}"
+                    ARCHIVE_NAME="termodoro-${VERSION}-${PLATFORM_ARCH}.tar.gz"
                   fi
-                  gh release upload ${{ github.ref_name }} ./bin/${VERSIONED_FILENAME} --clobber
+
+                  gh release upload "${VERSION}" "dist/${ARCHIVE_NAME}" --clobber
