@@ -1,4 +1,4 @@
-// Package view
+// Package ui
 package ui
 
 import (
@@ -36,6 +36,6 @@ func Render(data Data) string {
 				Render(getTimerInfo(data.CurrentTime)),
 			lipgloss.NewStyle().
 				Foreground(lipgloss.Color("240")).
-				Render(getInstructions(data.TimerState, data.SessionType)),
+				Render(getInstructions(data.TimerState, data.SessionType, data.SessionCount)),
 		))
 }
