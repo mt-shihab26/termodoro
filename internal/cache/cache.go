@@ -14,15 +14,17 @@ import (
 )
 
 type Cache struct {
-	SessionType  ui.SessionType `json:"session_type"`
-	SessionCount int            `json:"session_count"`
-	TimerCurrent int            `json:"timer_current"`
+	SessionType     ui.SessionType `json:"session_type"`
+	SessionCount    int            `json:"session_count"`
+	TimerCurrent    int            `json:"timer_current"`
+	SessionLastDate string         `json:"session_last_date"`
 }
 
 type PCache struct {
-	SessionType  *ui.SessionType `json:"session_type,omitempty"`
-	SessionCount *int            `json:"session_count,omitempty"`
-	TimerCurrent *int            `json:"timer_current,omitempty"`
+	SessionType     *ui.SessionType `json:"session_type,omitempty"`
+	SessionCount    *int            `json:"session_count,omitempty"`
+	TimerCurrent    *int            `json:"timer_current,omitempty"`
+	SessionLastDate *string         `json:"session_last_date,omitempty"`
 }
 
 func Load() (*Cache, error) {
@@ -72,6 +74,9 @@ func Save(partial *PCache) error {
 	}
 	if partial.TimerCurrent != nil {
 		existingCache.TimerCurrent = *partial.TimerCurrent
+	}
+	if partial.SessionLastDate != nil {
+		existingCache.SessionLastDate = *partial.SessionLastDate
 	}
 	return save(existingCache)
 }
