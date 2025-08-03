@@ -1,9 +1,17 @@
 // Package help
 package help
 
-import "fmt"
+import (
+	"fmt"
 
-func Run(args []string) error {
+	"github.com/mt-shihab26/termodoro/pkg/commands"
+)
+
+func Run() commands.Func {
+	return run
+}
+
+var run commands.Func = func(args []string) error {
 	fmt.Println("Termodoro - A terminal-based Pomodoro timer")
 	fmt.Println("")
 	fmt.Println("USAGE:")
