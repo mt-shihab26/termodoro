@@ -18,14 +18,19 @@ func Add(name string, handler func() Func) {
 	registry[name] = command{handler: handler}
 }
 
-func Run() {
-	args := os.Args[1:]
-
-	if len(args) == 0 {
-		cmd := registry[":"]
-		cmd.handler()(args)
-		return
+func Run() error {
+	if len(os.Args[1:]) == 0 {
+		cmd, ok := registry[":"]
+		if !ok {
+			return fmt.Errorf("default command ':' not found")
+		}
+		return cmd.handler()([]string{})
 	}
 
-	fmt.Println(args)
+	firstSubcommand := os.Args[1]
+	cmd, ok := registry[firstSubcommand]
+	if !ok {
+		return fmt.Errorf("unknown command: %s", firstSubcommand)
+	}
+	return cmd.handler()(os.Args[2:])
 }
