@@ -19,6 +19,8 @@ func main() {
 	commands.Add(":", root.Run)
 	commands.Add("help", help.Run)
 	commands.Add("version", version2.Run)
+
+	commands.Run()
 }
 
 func setVersion(ver, commit, date string) {
