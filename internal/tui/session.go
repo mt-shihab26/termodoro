@@ -5,14 +5,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/mt-shihab26/termodoro/internal/cache"
-	"github.com/mt-shihab26/termodoro/internal/config"
-	"github.com/mt-shihab26/termodoro/internal/ui"
-	"github.com/mt-shihab26/termodoro/internal/utils"
+	"github.com/mt-shihab26/termodoro/pkg/cache"
+	"github.com/mt-shihab26/termodoro/pkg/config"
+	"github.com/mt-shihab26/termodoro/pkg/enums"
+	"github.com/mt-shihab26/termodoro/pkg/utils"
 )
 
 type Session struct {
-	State    ui.SessionType
+	State    enums.SessionType
 	Count    int
 	LastDate string
 }
@@ -21,7 +21,7 @@ func NewSession() *Session {
 	data, err := cache.Load()
 	if err != nil {
 		session := &Session{
-			State:    ui.WorkSessionType,
+			State:    enums.WorkSessionType,
 			Count:    0,
 			LastDate: getCurrentDate(),
 		}
@@ -54,17 +54,17 @@ func (session *Session) NextSession() {
 	message := ""
 
 	switch session.State {
-	case ui.WorkSessionType:
+	case enums.WorkSessionType:
 		session.Count++
 		if session.Count%cfg.LongBreakSessionInterval == 0 {
-			session.State = ui.LongBreakSessionType
+			session.State = enums.LongBreakSessionType
 			message = "Time for a long break!"
 		} else {
-			session.State = ui.BreakSessionType
+			session.State = enums.BreakSessionType
 			message = "Time for a break!"
 		}
-	case ui.BreakSessionType, ui.LongBreakSessionType:
-		session.State = ui.WorkSessionType
+	case enums.BreakSessionType, enums.LongBreakSessionType:
+		session.State = enums.WorkSessionType
 		message = "Time to get back to work!"
 	}
 
@@ -97,11 +97,11 @@ func (session *Session) GetDuration() int { // in seconds
 func (session *Session) getDefaultDuration() int { // in seconds
 	cfg := config.Load()
 	switch session.State {
-	case ui.WorkSessionType:
+	case enums.WorkSessionType:
 		return cfg.WorkSessionDuration * 60
-	case ui.BreakSessionType:
+	case enums.BreakSessionType:
 		return cfg.BreakSessionDuration * 60
-	case ui.LongBreakSessionType:
+	case enums.LongBreakSessionType:
 		return cfg.LongBreakSessionDuration * 60
 	default:
 		return 0

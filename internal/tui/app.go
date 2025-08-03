@@ -4,8 +4,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/mt-shihab26/termodoro/internal/cache"
-	"github.com/mt-shihab26/termodoro/internal/ui"
+	"github.com/mt-shihab26/termodoro/pkg/cache"
 )
 
 type App struct {
@@ -55,7 +54,7 @@ func (app *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (app *App) View() string {
-	return ui.Render(ui.Data{
+	return Render(View{
 		Width:        app.width,
 		Height:       app.height,
 		SessionType:  app.session.State,

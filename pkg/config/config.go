@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/mt-shihab26/termodoro/internal/utils"
+	"github.com/mt-shihab26/termodoro/pkg/utils"
 )
 
 type Config struct {

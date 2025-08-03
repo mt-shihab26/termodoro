@@ -1,49 +1,49 @@
 package tui
 
-import "github.com/mt-shihab26/termodoro/internal/ui"
+import "github.com/mt-shihab26/termodoro/pkg/enums"
 
 type Timer struct {
-	State    ui.TimerState
+	State    enums.TimerState
 	Duration int
 	Current  int
 }
 
 func NewTimer(duration int) *Timer {
 	return &Timer{
-		State:    ui.StoppedTimerState,
+		State:    enums.StoppedTimerState,
 		Duration: duration,
 		Current:  duration,
 	}
 }
 
 func (t *Timer) Tick() {
-	if t.State == ui.RunningTimerState && t.Current > 0 {
+	if t.State == enums.RunningTimerState && t.Current > 0 {
 		t.Current--
 	}
 }
 
 func (t *Timer) Toggle() {
 	switch t.State {
-	case ui.StoppedTimerState:
+	case enums.StoppedTimerState:
 		t.Start()
-	case ui.RunningTimerState:
+	case enums.RunningTimerState:
 		t.pause()
-	case ui.PausedTimerState:
+	case enums.PausedTimerState:
 		t.Start()
 	}
 }
 
 func (t *Timer) Start() {
 	switch t.State {
-	case ui.StoppedTimerState:
-		t.State = ui.RunningTimerState
-	case ui.PausedTimerState:
-		t.State = ui.RunningTimerState
+	case enums.StoppedTimerState:
+		t.State = enums.RunningTimerState
+	case enums.PausedTimerState:
+		t.State = enums.RunningTimerState
 	}
 }
 
 func (t *Timer) Reset() {
-	t.State = ui.StoppedTimerState
+	t.State = enums.StoppedTimerState
 	t.Current = t.Duration
 }
 
@@ -52,7 +52,7 @@ func (t *Timer) IsFinished() bool {
 }
 
 func (t *Timer) pause() {
-	if t.State == ui.RunningTimerState {
-		t.State = ui.PausedTimerState
+	if t.State == enums.RunningTimerState {
+		t.State = enums.PausedTimerState
 	}
 }

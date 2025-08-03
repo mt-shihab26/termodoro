@@ -9,22 +9,22 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/mt-shihab26/termodoro/internal/ui"
-	"github.com/mt-shihab26/termodoro/internal/utils"
+	"github.com/mt-shihab26/termodoro/pkg/enums"
+	"github.com/mt-shihab26/termodoro/pkg/utils"
 )
 
 type Cache struct {
-	SessionType     ui.SessionType `json:"session_type"`
-	SessionCount    int            `json:"session_count"`
-	TimerCurrent    int            `json:"timer_current"`
-	SessionLastDate string         `json:"session_last_date"`
+	SessionType     enums.SessionType `json:"session_type"`
+	SessionCount    int               `json:"session_count"`
+	TimerCurrent    int               `json:"timer_current"`
+	SessionLastDate string            `json:"session_last_date"`
 }
 
 type PCache struct {
-	SessionType     *ui.SessionType `json:"session_type,omitempty"`
-	SessionCount    *int            `json:"session_count,omitempty"`
-	TimerCurrent    *int            `json:"timer_current,omitempty"`
-	SessionLastDate *string         `json:"session_last_date,omitempty"`
+	SessionType     *enums.SessionType `json:"session_type,omitempty"`
+	SessionCount    *int               `json:"session_count,omitempty"`
+	TimerCurrent    *int               `json:"timer_current,omitempty"`
+	SessionLastDate *string            `json:"session_last_date,omitempty"`
 }
 
 func Load() (*Cache, error) {
