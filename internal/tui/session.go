@@ -1,5 +1,4 @@
-// Package session
-package session
+package tui
 
 import (
 	"fmt"
@@ -18,7 +17,7 @@ type Session struct {
 	LastDate string
 }
 
-func New() *Session {
+func NewSession() *Session {
 	data, err := cache.Load()
 	if err != nil {
 		session := &Session{

@@ -1,25 +1,23 @@
-// Package app
-package app
+package tui
 
 import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/mt-shihab26/termodoro/internal/session"
-	"github.com/mt-shihab26/termodoro/internal/timer"
+	"github.com/mt-shihab26/termodoro/internal/cache"
 	"github.com/mt-shihab26/termodoro/internal/ui"
 )
 
 type App struct {
-	timer   *timer.Timer
-	session *session.Session
+	timer   *Timer
+	session *Session
 	width   int
 	height  int
 }
 
-func New() *App {
-	s := session.New()
-	t := timer.New(s.GetDuration())
+func NewApp() *App {
+	s := NewSession()
+	t := NewTimer(s.GetDuration())
 
 	return &App{
 		timer:   t,
@@ -65,4 +63,24 @@ func (app *App) View() string {
 		TimerState:   app.timer.State,
 		CurrentTime:  app.timer.Current,
 	})
+}
+
+func (app *App) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "q", "ctrl+c":
+		cache.Save(&cache.PCache{TimerCurrent: &app.timer.Current})
+		return app, tea.Sequence(tea.ExitAltScreen, tea.Quit)
+	case " ":
+		app.timer.Toggle()
+	case "r":
+		// app.timer.Reset()
+	case "n":
+		app.nextSession()
+	}
+	return app, nil
+}
+
+func (app *App) nextSession() {
+	app.session.NextSession()
+	app.timer = NewTimer(app.session.GetDuration())
 }

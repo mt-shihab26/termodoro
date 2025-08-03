@@ -1,5 +1,4 @@
-// Package timer
-package timer
+package tui
 
 import "github.com/mt-shihab26/termodoro/internal/ui"
 
@@ -9,7 +8,7 @@ type Timer struct {
 	Current  int
 }
 
-func New(duration int) *Timer {
+func NewTimer(duration int) *Timer {
 	return &Timer{
 		State:    ui.StoppedTimerState,
 		Duration: duration,
