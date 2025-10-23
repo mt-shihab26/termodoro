@@ -82,7 +82,9 @@ get_download_url() {
 
     local filename="termodoro-${version}-${os}-${arch}"
     if [ "$os" = "windows" ]; then
-        filename="${filename}.exe"
+        filename="${filename}.zip"
+    else
+        filename="${filename}.tar.gz"
     fi
 
     echo "https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download/${version}/${filename}"
@@ -123,6 +125,33 @@ verify_download() {
     if file "$file" 2>/dev/null | grep -q "HTML"; then
         print_error "Downloaded file appears to be an HTML page (download may have failed)"
         exit 1
+    fi
+}
+
+# Function to extract archive
+extract_archive() {
+    local archive="$1"
+    local extract_dir="$2"
+    local os="$3"
+
+    mkdir -p "$extract_dir"
+
+    print_info "Extracting archive..."
+
+    if [ "$os" = "windows" ]; then
+        if command_exists unzip; then
+            unzip -q "$archive" -d "$extract_dir"
+        else
+            print_error "unzip is not available. Please install unzip."
+            exit 1
+        fi
+    else
+        if command_exists tar; then
+            tar -xzf "$archive" -C "$extract_dir"
+        else
+            print_error "tar is not available. Please install tar."
+            exit 1
+        fi
     fi
 }
 
@@ -198,11 +227,12 @@ main() {
     # Construct download URL
     DOWNLOAD_URL=$(get_download_url "$VERSION" "$OS" "$ARCH")
 
-    # Create temporary file for download
+    # Create temporary file and directory for download
     TEMP_FILE=$(mktemp)
-    trap "rm -f $TEMP_FILE" EXIT
+    TEMP_DIR=$(mktemp -d)
+    trap "rm -f $TEMP_FILE; rm -rf $TEMP_DIR" EXIT
 
-    # Download binary
+    # Download archive
     if ! download_file "$DOWNLOAD_URL" "$TEMP_FILE"; then
         print_error "Failed to download termodoro"
         exit 1
@@ -211,16 +241,27 @@ main() {
     # Verify download
     verify_download "$TEMP_FILE"
 
+    # Extract archive
+    extract_archive "$TEMP_FILE" "$TEMP_DIR" "$OS"
+
     # Determine final binary name
     BINARY_NAME="termodoro"
     if [ "$OS" = "windows" ]; then
         BINARY_NAME="termodoro.exe"
     fi
 
+    # Find the binary in the extracted files
+    EXTRACTED_BINARY=$(find "$TEMP_DIR" -name "$BINARY_NAME" -type f | head -n 1)
+
+    if [ -z "$EXTRACTED_BINARY" ]; then
+        print_error "Could not find binary in extracted archive"
+        exit 1
+    fi
+
     INSTALL_PATH="${INSTALL_DIR}/${BINARY_NAME}"
 
     # Install binary
-    install_binary "$TEMP_FILE" "$INSTALL_PATH"
+    install_binary "$EXTRACTED_BINARY" "$INSTALL_PATH"
 
     # Check PATH
     update_path "$INSTALL_DIR"
