@@ -1,6 +1,6 @@
 use crossterm::{
     cursor,
-    event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
+    event::{self, Event, KeyCode, KeyModifiers},
     execute, queue,
     style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
     terminal::{self, ClearType},
@@ -30,13 +30,18 @@ fn event_loop(stdout: &mut impl Write, timer: &mut Timer) -> io::Result<()> {
     loop {
         draw(stdout, timer)?;
 
-        if event::poll(Duration::from_millis(200))? {
-            if let Event::Key(KeyEvent { code, modifiers, .. }) = event::read()? {
-                match (code, modifiers) {
-                    (KeyCode::Char('q'), _) | (KeyCode::Char('c'), KeyModifiers::CONTROL) => break,
-                    (KeyCode::Char(' '), _) => timer.toggle_pause(),
-                    (KeyCode::Char('s'), _) => timer.skip(),
-                    (KeyCode::Char('r'), _) => timer.reset(),
+        if event::poll(Duration::ZERO)? {
+            if let Event::Key(event) = event::read()? {
+                match (event.code, event.modifiers) {
+                    (KeyCode::Char('c'), KeyModifiers::CONTROL) => break,
+                    _ => {}
+                }
+
+                match event.code {
+                    KeyCode::Char('q') => break,
+                    KeyCode::Char(' ') => timer.toggle(),
+                    KeyCode::Char('s') => timer.skip(),
+                    KeyCode::Char('r') => timer.reset(),
                     _ => {}
                 }
             }

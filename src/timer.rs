@@ -1,5 +1,5 @@
 use crate::config::Config;
-use crate::state::{Phase, State};
+use crate::state::{self, Phase, State};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Status {
@@ -31,6 +31,28 @@ impl Timer {
         }
     }
 
+    pub fn toggle(&mut self) {
+        self.status = match self.status {
+            Status::Running => Status::Paused,
+            Status::Paused => Status::Running,
+        };
+
+        state::save_state(&self.state);
+    }
+
+    pub fn skip(&mut self) {
+        self.advance();
+
+        state::save_state(&self.state);
+    }
+
+    pub fn reset(&mut self) {
+        self.state.remaining_secs = self.phase_duration();
+        self.status = Status::Paused;
+
+        state::save_state(&self.state);
+    }
+
     pub fn tick(&mut self) {
         if self.status != Status::Running {
             return;
@@ -40,22 +62,6 @@ impl Timer {
         } else {
             self.advance();
         }
-    }
-
-    pub fn toggle_pause(&mut self) {
-        self.status = match self.status {
-            Status::Running => Status::Paused,
-            Status::Paused => Status::Running,
-        };
-    }
-
-    pub fn skip(&mut self) {
-        self.advance();
-    }
-
-    pub fn reset(&mut self) {
-        self.state.remaining_secs = self.phase_duration();
-        self.status = Status::Paused;
     }
 
     fn advance(&mut self) {
