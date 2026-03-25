@@ -1,23 +1,5 @@
 use crate::config::Config;
-use crate::state::State;
-
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum Phase {
-    Work,
-    Break,
-    LongBreak,
-}
-
-impl Phase {
-    pub fn label(&self) -> &str {
-        match self {
-            Phase::Work => "Work",
-            Phase::Break => "Short Break",
-            Phase::LongBreak => "Long Break",
-        }
-    }
-}
+use crate::state::{Phase, State};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TimerState {

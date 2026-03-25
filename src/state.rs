@@ -5,7 +5,24 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 
 use crate::logger::log;
-use crate::timer::Phase;
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Phase {
+    Work,
+    Break,
+    LongBreak,
+}
+
+impl Phase {
+    pub fn label(&self) -> &str {
+        match self {
+            Phase::Work => "Work",
+            Phase::Break => "Short Break",
+            Phase::LongBreak => "Long Break",
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
