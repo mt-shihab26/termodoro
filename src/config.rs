@@ -39,11 +39,9 @@ pub fn load_config() -> Config {
 }
 
 fn config_path() -> Option<PathBuf> {
-    let base = if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME") {
-        PathBuf::from(xdg)
-    } else {
-        let home = std::env::var("HOME").ok()?;
-        PathBuf::from(home).join(".config")
+    let base = match std::env::var("XDG_CONFIG_HOME") {
+        Err(_) => PathBuf::from(std::env::var("HOME").ok()?).join(".config"),
+        Ok(xdg) => PathBuf::from(xdg),
     };
 
     let path = base.join("termodoro").join("config.json");
