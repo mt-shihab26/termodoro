@@ -1,4 +1,5 @@
 use crate::config::Config;
+use crate::state::SavedState;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Phase {
@@ -32,13 +33,16 @@ pub struct Timer {
 }
 
 impl Timer {
-    pub fn new(config: Config) -> Self {
-        let remaining_secs = config.work_session_duration * 60;
+    pub fn new(config: Config, saved: Option<SavedState>) -> Self {
+        let (phase, remaining_secs, sessions_completed) = match saved {
+            Some(s) => (s.phase, s.remaining_secs, s.sessions_completed),
+            None => (Phase::Work, config.work_session_duration * 60, 0),
+        };
         Self {
-            phase: Phase::Work,
+            phase,
             state: State::Paused,
             remaining_secs,
-            sessions_completed: 0,
+            sessions_completed,
             config,
         }
     }

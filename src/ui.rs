@@ -8,6 +8,7 @@ use crossterm::{
 use std::io::{self, Write};
 use std::time::Duration;
 
+use crate::state;
 use crate::timer::{Phase, State, Timer};
 
 pub fn run(mut timer: Timer) -> io::Result<()> {
@@ -16,6 +17,8 @@ pub fn run(mut timer: Timer) -> io::Result<()> {
     execute!(stdout, terminal::EnterAlternateScreen, cursor::Hide)?;
 
     let result = event_loop(&mut stdout, &mut timer);
+
+    state::save(&timer);
 
     execute!(stdout, terminal::LeaveAlternateScreen, cursor::Show)?;
     terminal::disable_raw_mode()?;
