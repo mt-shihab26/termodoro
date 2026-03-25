@@ -3,7 +3,6 @@ use std::fs::read_to_string;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Deserialize)]
-#[serde(default)]
 pub struct Config {
     pub work_session_duration: u64,
     pub break_session_duration: u64,
