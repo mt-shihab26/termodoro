@@ -1,6 +1,7 @@
-use serde::Deserialize;
 use std::fs::read_to_string;
 use std::path::PathBuf;
+
+use serde::Deserialize;
 
 use crate::logger::log;
 

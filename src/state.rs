@@ -1,10 +1,11 @@
-use serde::{Deserialize, Serialize};
 use std::fs;
 use std::fs::read_to_string;
 use std::path::PathBuf;
 
+use serde::{Deserialize, Serialize};
+
 use crate::logger::log;
-use crate::timer::{Phase, Timer};
+use crate::timer::Phase;
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
@@ -32,7 +33,7 @@ pub fn load_state() -> Option<State> {
     Some(state)
 }
 
-pub fn save_state(timer: &Timer) {
+pub fn save_state(state: &State) {
     let Some(path) = state_path() else {
         log("state: could not resolve state path (HOME not set?)");
         return;
@@ -45,13 +46,7 @@ pub fn save_state(timer: &Timer) {
         }
     }
 
-    let state = State {
-        phase: timer.phase.clone(),
-        remaining_secs: timer.remaining_secs,
-        sessions_completed: timer.sessions_completed,
-    };
-
-    let Ok(contents) = serde_json::to_string(&state) else {
+    let Ok(contents) = serde_json::to_string(state) else {
         log("state: failed to serialize state");
         return;
     };
