@@ -32,15 +32,10 @@ pub fn log(msg: &str) {
 }
 
 fn log_path() -> Option<PathBuf> {
-    let state_home = std::env::var("XDG_STATE_HOME");
-
-    let base;
-    if state_home.is_ok() {
-        base = PathBuf::from(state_home.unwrap());
-    } else {
-        let home = std::env::var("HOME").ok()?;
-        base = PathBuf::from(home).join(".local").join("state");
-    }
+    let base = match std::env::var("XDG_STATE_HOME") {
+        Ok(state_home) => PathBuf::from(state_home),
+        Err(_) => PathBuf::from(std::env::var("HOME").ok()?).join(".local").join("state"),
+    };
 
     Some(base.join("termodoro").join("termodoro.log"))
 }
