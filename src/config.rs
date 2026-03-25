@@ -1,3 +1,4 @@
+use crate::logger;
 use serde::Deserialize;
 use std::fs::read_to_string;
 use std::path::PathBuf;
@@ -24,14 +25,20 @@ impl Default for Config {
 
 pub fn load_config() -> Config {
     let Some(path) = config_path() else {
+        logger::log("config: could not resolve config path (HOME not set?)");
         return Config::default();
     };
 
-    let Ok(contents) = read_to_string(path) else {
+    let Ok(contents) = read_to_string(&path) else {
+        logger::log(&format!("config: could not read file: {}", path.display()));
         return Config::default();
     };
 
     let Ok(config) = serde_json::from_str(&contents) else {
+        logger::log(&format!(
+            "config: failed to parse JSON in: {}",
+            path.display()
+        ));
         return Config::default();
     };
 
@@ -40,8 +47,8 @@ pub fn load_config() -> Config {
 
 fn config_path() -> Option<PathBuf> {
     let base = match std::env::var("XDG_CONFIG_HOME") {
-        Err(_) => PathBuf::from(std::env::var("HOME").ok()?).join(".config"),
         Ok(xdg) => PathBuf::from(xdg),
+        Err(_) => PathBuf::from(std::env::var("HOME").ok()?).join(".config"),
     };
 
     let path = base.join("termodoro").join("config.json");

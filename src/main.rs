@@ -1,4 +1,5 @@
 mod config;
+mod logger;
 mod state;
 mod timer;
 mod ui;
