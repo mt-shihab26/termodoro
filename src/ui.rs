@@ -30,7 +30,7 @@ fn event_loop(stdout: &mut impl Write, timer: &mut Timer) -> io::Result<()> {
     loop {
         draw(stdout, timer)?;
 
-        if event::poll(Duration::ZERO)? {
+        if event::poll(Duration::from_secs(1))? {
             if let Event::Key(event) = event::read()? {
                 match (event.code, event.modifiers) {
                     (KeyCode::Char('c'), KeyModifiers::CONTROL) => break,
@@ -47,9 +47,7 @@ fn event_loop(stdout: &mut impl Write, timer: &mut Timer) -> io::Result<()> {
             }
         }
 
-        if timer.status == Status::Running {
-            timer.tick();
-        }
+        timer.tick();
     }
     Ok(())
 }
