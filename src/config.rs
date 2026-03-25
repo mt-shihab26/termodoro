@@ -2,7 +2,8 @@ use serde::Deserialize;
 use std::fs::read_to_string;
 use std::path::PathBuf;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Deserialize)]
+#[serde(default)]
 pub struct Config {
     pub work_session_duration: u64,
     pub break_session_duration: u64,
@@ -22,10 +23,19 @@ impl Default for Config {
 }
 
 pub fn load_config() -> Config {
-    config_path()
-        .and_then(|p| read_to_string(p).ok())
-        .and_then(|s| serde_json::from_str(&s).ok())
-        .unwrap_or_default()
+    let Some(path) = config_path() else {
+        return Config::default();
+    };
+
+    let Ok(contents) = read_to_string(path) else {
+        return Config::default();
+    };
+
+    let Ok(config) = serde_json::from_str(&contents) else {
+        return Config::default();
+    };
+
+    config
 }
 
 fn config_path() -> Option<PathBuf> {
