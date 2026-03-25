@@ -21,7 +21,6 @@ impl Phase {
 pub enum State {
     Running,
     Paused,
-    Done,
 }
 
 pub struct Timer {
@@ -59,7 +58,6 @@ impl Timer {
         self.state = match self.state {
             State::Running => State::Paused,
             State::Paused => State::Running,
-            State::Done => State::Done,
         };
     }
 

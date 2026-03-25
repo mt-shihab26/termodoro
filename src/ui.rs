@@ -150,7 +150,6 @@ fn draw(stdout: &mut impl Write, timer: &Timer) -> io::Result<()> {
     let status = match timer.state {
         State::Running => "● Running",
         State::Paused => "⏸ Paused",
-        State::Done => "✓ Done",
     };
     queue!(
         stdout,
