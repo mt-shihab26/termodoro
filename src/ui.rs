@@ -18,7 +18,7 @@ pub fn run(mut timer: Timer) -> io::Result<()> {
 
     let result = event_loop(&mut stdout, &mut timer);
 
-    state::save(&timer);
+    state::save_state(&timer);
 
     execute!(stdout, terminal::LeaveAlternateScreen, cursor::Show)?;
     terminal::disable_raw_mode()?;

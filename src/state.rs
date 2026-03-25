@@ -1,73 +1,80 @@
+use serde::{Deserialize, Serialize};
 use std::fs;
+use std::fs::read_to_string;
 use std::path::PathBuf;
 
+use crate::logger::log;
 use crate::timer::{Phase, Timer};
 
+#[derive(Serialize, Deserialize)]
 pub struct State {
     pub phase: Phase,
     pub remaining_secs: u64,
     pub sessions_completed: u32,
 }
 
-pub fn save(timer: &Timer) {
-    let Some(path) = state_path() else { return };
-    if let Some(dir) = path.parent() {
-        let _ = fs::create_dir_all(dir);
-    }
-    let contents = format!(
-        "phase={}\nremaining_secs={}\nsessions_completed={}\n",
-        phase_to_str(&timer.phase),
-        timer.remaining_secs,
-        timer.sessions_completed,
-    );
-    let _ = fs::write(path, contents);
+pub fn load_state() -> Option<State> {
+    let Some(path) = state_path() else {
+        log("state: could not resolve state path (HOME not set?)");
+        return None;
+    };
+
+    let Ok(contents) = read_to_string(&path) else {
+        log(&format!("state: could not read {}", path.display()));
+        return None;
+    };
+
+    let Ok(state) = serde_json::from_str(&contents) else {
+        log(&format!("state: failed to parse {}", path.display()));
+        return None;
+    };
+
+    Some(state)
 }
 
-pub fn load_state() -> Option<State> {
-    let contents = fs::read_to_string(state_path()?).ok()?;
-    let mut phase = None;
-    let mut remaining_secs = None;
-    let mut sessions_completed = None;
+pub fn save_state(timer: &Timer) {
+    let Some(path) = state_path() else {
+        log("state: could not resolve state path (HOME not set?)");
+        return;
+    };
 
-    for line in contents.lines() {
-        let Some(eq) = line.find('=') else { continue };
-        let key = &line[..eq];
-        let val = &line[eq + 1..];
-        match key {
-            "phase" => phase = str_to_phase(val),
-            "remaining_secs" => remaining_secs = val.parse().ok(),
-            "sessions_completed" => sessions_completed = val.parse().ok(),
-            _ => {}
+    if let Some(dir) = path.parent() {
+        if let Err(e) = fs::create_dir_all(dir) {
+            log(&format!("state: could not create directory {}: {e}", dir.display()));
+            return;
         }
     }
 
-    Some(State {
-        phase: phase?,
-        remaining_secs: remaining_secs?,
-        sessions_completed: sessions_completed?,
-    })
-}
+    let state = State {
+        phase: timer.phase.clone(),
+        remaining_secs: timer.remaining_secs,
+        sessions_completed: timer.sessions_completed,
+    };
 
-fn phase_to_str(phase: &Phase) -> &'static str {
-    match phase {
-        Phase::Work => "work",
-        Phase::Break => "break",
-        Phase::LongBreak => "long_break",
-    }
-}
+    let Ok(contents) = serde_json::to_string(&state) else {
+        log("state: failed to serialize state");
+        return;
+    };
 
-fn str_to_phase(s: &str) -> Option<Phase> {
-    match s {
-        "work" => Some(Phase::Work),
-        "break" => Some(Phase::Break),
-        "long_break" => Some(Phase::LongBreak),
-        _ => None,
+    if let Err(e) = fs::write(&path, contents) {
+        log(&format!("state: failed to write {}: {e}", path.display()));
     }
 }
 
 fn state_path() -> Option<PathBuf> {
-    let base = std::env::var("XDG_STATE_HOME")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from(std::env::var("HOME").unwrap_or_default()).join(".local/state"));
-    Some(base.join("termodoro").join("state"))
+    let base = match std::env::var("XDG_STATE_HOME") {
+        Ok(state_home) => PathBuf::from(state_home),
+        Err(e) => {
+            log(&format!("state: XDG_STATE_HOME not set ({e}), falling back to HOME"));
+            match std::env::var("HOME") {
+                Ok(home) => PathBuf::from(home).join(".local").join("state"),
+                Err(e) => {
+                    log(&format!("state: HOME env var not set: {e}"));
+                    return None;
+                }
+            }
+        }
+    };
+
+    Some(base.join("termodoro").join("state.json"))
 }

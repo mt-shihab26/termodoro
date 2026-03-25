@@ -1,7 +1,8 @@
 use crate::config::Config;
 use crate::state::State;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Phase {
     Work,
     Break,
