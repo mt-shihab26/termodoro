@@ -1,7 +1,8 @@
-use crate::logger::{self, log};
 use serde::Deserialize;
 use std::fs::read_to_string;
 use std::path::PathBuf;
+
+use crate::logger::log;
 
 #[derive(Deserialize)]
 #[serde(default)]
@@ -51,7 +52,18 @@ pub fn load_config() -> Config {
 fn config_path() -> Option<PathBuf> {
     let base = match std::env::var("XDG_CONFIG_HOME") {
         Ok(xdg) => PathBuf::from(xdg),
-        Err(_) => PathBuf::from(std::env::var("HOME").ok()?).join(".config"),
+        Err(e) => {
+            log(&format!(
+                "config: XDG_CONFIG_HOME not set ({e}), falling back to HOME"
+            ));
+            match std::env::var("HOME") {
+                Ok(home) => PathBuf::from(home).join(".config"),
+                Err(e) => {
+                    log(&format!("config: HOME env var not set: {e}"));
+                    return None;
+                }
+            }
+        }
     };
 
     let path = base.join("termodoro").join("config.json");
