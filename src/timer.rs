@@ -19,14 +19,14 @@ impl Phase {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum State {
+pub enum TimerState {
     Running,
     Paused,
 }
 
 pub struct Timer {
     pub phase: Phase,
-    pub state: State,
+    pub state: TimerState,
     pub remaining_secs: u64,
     pub sessions_completed: u32,
     config: Config,
@@ -40,7 +40,7 @@ impl Timer {
         };
         Self {
             phase,
-            state: State::Paused,
+            state: TimerState::Paused,
             remaining_secs,
             sessions_completed,
             config,
@@ -48,7 +48,7 @@ impl Timer {
     }
 
     pub fn tick(&mut self) {
-        if self.state != State::Running {
+        if self.state != TimerState::Running {
             return;
         }
         if self.remaining_secs > 0 {
@@ -60,8 +60,8 @@ impl Timer {
 
     pub fn toggle_pause(&mut self) {
         self.state = match self.state {
-            State::Running => State::Paused,
-            State::Paused => State::Running,
+            TimerState::Running => TimerState::Paused,
+            TimerState::Paused => TimerState::Running,
         };
     }
 
@@ -71,7 +71,7 @@ impl Timer {
 
     pub fn reset(&mut self) {
         self.remaining_secs = self.phase_duration();
-        self.state = State::Paused;
+        self.state = TimerState::Paused;
     }
 
     fn advance(&mut self) {
@@ -91,7 +91,7 @@ impl Timer {
                 self.remaining_secs = self.config.work_session_duration * 60;
             }
         }
-        self.state = State::Paused;
+        self.state = TimerState::Paused;
     }
 
     fn phase_duration(&self) -> u64 {

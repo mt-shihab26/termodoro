@@ -9,7 +9,7 @@ use std::io::{self, Write};
 use std::time::Duration;
 
 use crate::state;
-use crate::timer::{Phase, State, Timer};
+use crate::timer::{Phase, Timer, TimerState};
 
 pub fn run(mut timer: Timer) -> io::Result<()> {
     terminal::enable_raw_mode()?;
@@ -30,10 +30,7 @@ fn event_loop(stdout: &mut impl Write, timer: &mut Timer) -> io::Result<()> {
         draw(stdout, timer)?;
 
         if event::poll(Duration::from_millis(200))? {
-            if let Event::Key(KeyEvent {
-                code, modifiers, ..
-            }) = event::read()?
-            {
+            if let Event::Key(KeyEvent { code, modifiers, .. }) = event::read()? {
                 match (code, modifiers) {
                     (KeyCode::Char('q'), _) | (KeyCode::Char('c'), KeyModifiers::CONTROL) => break,
                     (KeyCode::Char(' '), _) => timer.toggle_pause(),
@@ -44,7 +41,7 @@ fn event_loop(stdout: &mut impl Write, timer: &mut Timer) -> io::Result<()> {
             }
         }
 
-        if timer.state == State::Running {
+        if timer.state == TimerState::Running {
             timer.tick();
         }
     }
@@ -62,10 +59,7 @@ fn draw(stdout: &mut impl Write, timer: &Timer) -> io::Result<()> {
     let title = "termodoro";
     queue!(
         stdout,
-        cursor::MoveTo(
-            center_col.saturating_sub(title.len() as u16 / 2),
-            center_row - 5
-        ),
+        cursor::MoveTo(center_col.saturating_sub(title.len() as u16 / 2), center_row - 5),
         SetForegroundColor(Color::Cyan),
         SetAttribute(Attribute::Bold),
         Print(title),
@@ -82,10 +76,7 @@ fn draw(stdout: &mut impl Write, timer: &Timer) -> io::Result<()> {
     };
     queue!(
         stdout,
-        cursor::MoveTo(
-            center_col.saturating_sub(phase_label.len() as u16 / 2),
-            center_row - 3
-        ),
+        cursor::MoveTo(center_col.saturating_sub(phase_label.len() as u16 / 2), center_row - 3),
         SetForegroundColor(phase_color),
         SetAttribute(Attribute::Bold),
         Print(phase_label),
@@ -97,17 +88,14 @@ fn draw(stdout: &mut impl Write, timer: &Timer) -> io::Result<()> {
     let mins = timer.remaining_secs / 60;
     let secs = timer.remaining_secs % 60;
     let time_str = format!("{:02}:{:02}", mins, secs);
-    let time_color = if timer.state == State::Paused {
+    let time_color = if timer.state == TimerState::Paused {
         Color::DarkGrey
     } else {
         Color::White
     };
     queue!(
         stdout,
-        cursor::MoveTo(
-            center_col.saturating_sub(time_str.len() as u16 / 2),
-            center_row - 1
-        ),
+        cursor::MoveTo(center_col.saturating_sub(time_str.len() as u16 / 2), center_row - 1),
         SetForegroundColor(time_color),
         SetAttribute(Attribute::Bold),
         Print(&time_str),
@@ -140,10 +128,7 @@ fn draw(stdout: &mut impl Write, timer: &Timer) -> io::Result<()> {
     let sessions_str = format!("Sessions: {}", timer.sessions_completed);
     queue!(
         stdout,
-        cursor::MoveTo(
-            center_col.saturating_sub(sessions_str.len() as u16 / 2),
-            center_row + 3
-        ),
+        cursor::MoveTo(center_col.saturating_sub(sessions_str.len() as u16 / 2), center_row + 3),
         SetForegroundColor(Color::DarkGrey),
         Print(&sessions_str),
         ResetColor,
@@ -151,15 +136,12 @@ fn draw(stdout: &mut impl Write, timer: &Timer) -> io::Result<()> {
 
     // Status
     let status = match timer.state {
-        State::Running => "● Running",
-        State::Paused => "⏸ Paused",
+        TimerState::Running => "● Running",
+        TimerState::Paused => "⏸ Paused",
     };
     queue!(
         stdout,
-        cursor::MoveTo(
-            center_col.saturating_sub(status.len() as u16 / 2),
-            center_row + 4
-        ),
+        cursor::MoveTo(center_col.saturating_sub(status.len() as u16 / 2), center_row + 4),
         SetForegroundColor(Color::Yellow),
         Print(status),
         ResetColor,
@@ -169,10 +151,7 @@ fn draw(stdout: &mut impl Write, timer: &Timer) -> io::Result<()> {
     let hint = "[space] pause/resume  [s] skip  [r] reset  [q] quit";
     queue!(
         stdout,
-        cursor::MoveTo(
-            center_col.saturating_sub(hint.len() as u16 / 2),
-            center_row + 6
-        ),
+        cursor::MoveTo(center_col.saturating_sub(hint.len() as u16 / 2), center_row + 6),
         SetForegroundColor(Color::DarkGrey),
         Print(hint),
         ResetColor,
