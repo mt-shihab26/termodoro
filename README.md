@@ -34,15 +34,6 @@ cp target/release/termodoro ~/.local/bin/
 termodoro
 ```
 
-### Controls
-
-| Key        | Action                   |
-|------------|--------------------------|
-| `Space`    | Pause / Resume           |
-| `s`        | Skip to next phase       |
-| `r`        | Reset current phase      |
-| `q` / `Ctrl+C` | Quit               |
-
 ## Configuration
 
 Create a config file at `~/.config/termodoro/config.json` (or `$XDG_CONFIG_HOME/termodoro/config.json`):
@@ -69,3 +60,4 @@ All values are in minutes. The application uses defaults if the file is missing 
 
 - **State**: `~/.local/state/termodoro/state.json` — saves current phase, time remaining, and session count
 - **Logs**: `~/.local/state/termodoro/termodoro.log` — records errors during config/state loading
+
