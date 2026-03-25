@@ -2,49 +2,50 @@ use crate::config::Config;
 use crate::state::{Phase, State};
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum TimerState {
+pub enum Status {
     Running,
     Paused,
 }
 
 pub struct Timer {
-    pub phase: Phase,
-    pub state: TimerState,
-    pub remaining_secs: u64,
-    pub sessions_completed: u32,
-    config: Config,
+    pub status: Status,
+    pub config: Config,
+    pub state: State,
 }
 
 impl Timer {
     pub fn new(config: Config, saved: Option<State>) -> Self {
-        let (phase, remaining_secs, sessions_completed) = match saved {
-            Some(s) => (s.phase, s.remaining_secs, s.sessions_completed),
-            None => (Phase::Work, config.work_session_duration * 60, 0),
+        let state = match saved {
+            Some(s) => s,
+            None => State {
+                phase: Phase::Work,
+                remaining_secs: config.work_session_duration * 60,
+                sessions_completed: 0,
+            },
         };
+
         Self {
-            phase,
-            state: TimerState::Paused,
-            remaining_secs,
-            sessions_completed,
+            status: Status::Paused,
             config,
+            state,
         }
     }
 
     pub fn tick(&mut self) {
-        if self.state != TimerState::Running {
+        if self.status != Status::Running {
             return;
         }
-        if self.remaining_secs > 0 {
-            self.remaining_secs -= 1;
+        if self.state.remaining_secs > 0 {
+            self.state.remaining_secs -= 1;
         } else {
             self.advance();
         }
     }
 
     pub fn toggle_pause(&mut self) {
-        self.state = match self.state {
-            TimerState::Running => TimerState::Paused,
-            TimerState::Paused => TimerState::Running,
+        self.status = match self.status {
+            Status::Running => Status::Paused,
+            Status::Paused => Status::Running,
         };
     }
 
@@ -53,32 +54,32 @@ impl Timer {
     }
 
     pub fn reset(&mut self) {
-        self.remaining_secs = self.phase_duration();
-        self.state = TimerState::Paused;
+        self.state.remaining_secs = self.phase_duration();
+        self.status = Status::Paused;
     }
 
     fn advance(&mut self) {
-        match self.phase {
+        match self.state.phase {
             Phase::Work => {
-                self.sessions_completed += 1;
-                if self.sessions_completed % self.config.long_break_session_interval == 0 {
-                    self.phase = Phase::LongBreak;
-                    self.remaining_secs = self.config.long_break_session_duration * 60;
+                self.state.sessions_completed += 1;
+                if self.state.sessions_completed % self.config.long_break_session_interval == 0 {
+                    self.state.phase = Phase::LongBreak;
+                    self.state.remaining_secs = self.config.long_break_session_duration * 60;
                 } else {
-                    self.phase = Phase::Break;
-                    self.remaining_secs = self.config.break_session_duration * 60;
+                    self.state.phase = Phase::Break;
+                    self.state.remaining_secs = self.config.break_session_duration * 60;
                 }
             }
             Phase::Break | Phase::LongBreak => {
-                self.phase = Phase::Work;
-                self.remaining_secs = self.config.work_session_duration * 60;
+                self.state.phase = Phase::Work;
+                self.state.remaining_secs = self.config.work_session_duration * 60;
             }
         }
-        self.state = TimerState::Paused;
+        self.status = Status::Paused;
     }
 
     fn phase_duration(&self) -> u64 {
-        match self.phase {
+        match self.state.phase {
             Phase::Work => self.config.work_session_duration * 60,
             Phase::Break => self.config.break_session_duration * 60,
             Phase::LongBreak => self.config.long_break_session_duration * 60,

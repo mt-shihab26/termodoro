@@ -8,8 +8,8 @@ use crossterm::{
 use std::io::{self, Write};
 use std::time::Duration;
 
-use crate::state::{self, Phase, State};
-use crate::timer::{Timer, TimerState};
+use crate::state::{self, Phase};
+use crate::timer::{Status, Timer};
 
 pub fn run(mut timer: Timer) -> io::Result<()> {
     terminal::enable_raw_mode()?;
@@ -18,12 +18,7 @@ pub fn run(mut timer: Timer) -> io::Result<()> {
 
     let result = event_loop(&mut stdout, &mut timer);
 
-    let state = State {
-        phase: timer.phase.clone(),
-        remaining_secs: timer.remaining_secs,
-        sessions_completed: timer.sessions_completed,
-    };
-    state::save_state(&state);
+    state::save_state(&timer.state);
 
     execute!(stdout, terminal::LeaveAlternateScreen, cursor::Show)?;
     terminal::disable_raw_mode()?;
@@ -46,7 +41,7 @@ fn event_loop(stdout: &mut impl Write, timer: &mut Timer) -> io::Result<()> {
             }
         }
 
-        if timer.state == TimerState::Running {
+        if timer.status == Status::Running {
             timer.tick();
         }
     }
@@ -73,8 +68,8 @@ fn draw(stdout: &mut impl Write, timer: &Timer) -> io::Result<()> {
     )?;
 
     // Phase label
-    let phase_label = timer.phase.label();
-    let phase_color = match timer.phase {
+    let phase_label = timer.state.phase.label();
+    let phase_color = match timer.state.phase {
         Phase::Work => Color::Red,
         Phase::Break => Color::Green,
         Phase::LongBreak => Color::Blue,
@@ -90,10 +85,10 @@ fn draw(stdout: &mut impl Write, timer: &Timer) -> io::Result<()> {
     )?;
 
     // Timer display
-    let mins = timer.remaining_secs / 60;
-    let secs = timer.remaining_secs % 60;
+    let mins = timer.state.remaining_secs / 60;
+    let secs = timer.state.remaining_secs % 60;
     let time_str = format!("{:02}:{:02}", mins, secs);
-    let time_color = if timer.state == TimerState::Paused {
+    let time_color = if timer.status == Status::Paused {
         Color::DarkGrey
     } else {
         Color::White
@@ -110,7 +105,7 @@ fn draw(stdout: &mut impl Write, timer: &Timer) -> io::Result<()> {
 
     // Progress bar
     let bar_width = 30u16;
-    let elapsed = timer.total_secs().saturating_sub(timer.remaining_secs);
+    let elapsed = timer.total_secs().saturating_sub(timer.state.remaining_secs);
     let filled = if timer.total_secs() > 0 {
         (elapsed as f64 / timer.total_secs() as f64 * bar_width as f64) as u16
     } else {
@@ -130,7 +125,7 @@ fn draw(stdout: &mut impl Write, timer: &Timer) -> io::Result<()> {
     )?;
 
     // Session count
-    let sessions_str = format!("Sessions: {}", timer.sessions_completed);
+    let sessions_str = format!("Sessions: {}", timer.state.sessions_completed);
     queue!(
         stdout,
         cursor::MoveTo(center_col.saturating_sub(sessions_str.len() as u16 / 2), center_row + 3),
@@ -140,9 +135,9 @@ fn draw(stdout: &mut impl Write, timer: &Timer) -> io::Result<()> {
     )?;
 
     // Status
-    let status = match timer.state {
-        TimerState::Running => "● Running",
-        TimerState::Paused => "⏸ Paused",
+    let status = match timer.status {
+        Status::Running => "● Running",
+        Status::Paused => "⏸ Paused",
     };
     queue!(
         stdout,
