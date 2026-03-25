@@ -31,18 +31,12 @@ pub fn load_config() -> Config {
     };
 
     let Ok(contents) = read_to_string(&path) else {
-        log(&format!(
-            "config: could not read {}, using defaults",
-            path.display()
-        ));
+        log(&format!("config: could not read {}, using defaults", path.display()));
         return Config::default();
     };
 
     let Ok(config) = serde_json::from_str(&contents) else {
-        log(&format!(
-            "config: failed to parse {}, using defaults",
-            path.display()
-        ));
+        log(&format!("config: failed to parse {}, using defaults", path.display()));
         return Config::default();
     };
 
@@ -53,9 +47,7 @@ fn config_path() -> Option<PathBuf> {
     let base = match std::env::var("XDG_CONFIG_HOME") {
         Ok(xdg) => PathBuf::from(xdg),
         Err(e) => {
-            log(&format!(
-                "config: XDG_CONFIG_HOME not set ({e}), falling back to HOME"
-            ));
+            log(&format!("config: XDG_CONFIG_HOME not set ({e}), falling back to HOME"));
             match std::env::var("HOME") {
                 Ok(home) => PathBuf::from(home).join(".config"),
                 Err(e) => {
