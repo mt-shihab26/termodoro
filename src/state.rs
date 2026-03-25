@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use crate::timer::{Phase, Timer};
 
-pub struct SavedState {
+pub struct State {
     pub phase: Phase,
     pub remaining_secs: u64,
     pub sessions_completed: u32,
@@ -23,7 +23,7 @@ pub fn save(timer: &Timer) {
     let _ = fs::write(path, contents);
 }
 
-pub fn load_state() -> Option<SavedState> {
+pub fn load_state() -> Option<State> {
     let contents = fs::read_to_string(state_path()?).ok()?;
     let mut phase = None;
     let mut remaining_secs = None;
@@ -41,7 +41,7 @@ pub fn load_state() -> Option<SavedState> {
         }
     }
 
-    Some(SavedState {
+    Some(State {
         phase: phase?,
         remaining_secs: remaining_secs?,
         sessions_completed: sessions_completed?,
@@ -68,8 +68,6 @@ fn str_to_phase(s: &str) -> Option<Phase> {
 fn state_path() -> Option<PathBuf> {
     let base = std::env::var("XDG_STATE_HOME")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| {
-            PathBuf::from(std::env::var("HOME").unwrap_or_default()).join(".local/state")
-        });
+        .unwrap_or_else(|_| PathBuf::from(std::env::var("HOME").unwrap_or_default()).join(".local/state"));
     Some(base.join("termodoro").join("state"))
 }
