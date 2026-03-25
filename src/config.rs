@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::fs;
+use std::fs::read_to_string;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
@@ -22,26 +22,54 @@ impl Default for Config {
 }
 
 pub fn load_config() -> Config {
-    let mut cfg = Config::default();
-    let Some(path) = config_path() else { return cfg };
-    let Ok(contents) = fs::read_to_string(path) else { return cfg };
+    let mut config = Config::default();
+
+    let Some(path) = config_path() else {
+        return config;
+    };
+
+    let Ok(contents) = read_to_string(path) else {
+        return config;
+    };
 
     let map = parse_json_object(&contents);
 
-    if let Some(v) = map.get("work_session_duration").and_then(|s| s.parse().ok()) {
-        cfg.work_session_duration = v;
+    if let Some(v) = map
+        .get("work_session_duration")
+        .and_then(|s| s.parse().ok())
+    {
+        config.work_session_duration = v;
     }
-    if let Some(v) = map.get("break_session_duration").and_then(|s| s.parse().ok()) {
-        cfg.break_session_duration = v;
+    if let Some(v) = map
+        .get("break_session_duration")
+        .and_then(|s| s.parse().ok())
+    {
+        config.break_session_duration = v;
     }
-    if let Some(v) = map.get("long_break_session_duration").and_then(|s| s.parse().ok()) {
-        cfg.long_break_session_duration = v;
+    if let Some(v) = map
+        .get("long_break_session_duration")
+        .and_then(|s| s.parse().ok())
+    {
+        config.long_break_session_duration = v;
     }
-    if let Some(v) = map.get("long_break_session_interval").and_then(|s| s.parse().ok()) {
-        cfg.long_break_session_interval = v;
+    if let Some(v) = map
+        .get("long_break_session_interval")
+        .and_then(|s| s.parse().ok())
+    {
+        config.long_break_session_interval = v;
     }
 
-    cfg
+    config
+}
+
+fn config_path() -> Option<PathBuf> {
+    let base = std::env::var("XDG_CONFIG_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| {
+            PathBuf::from(std::env::var("HOME").unwrap_or_default()).join(".config")
+        });
+
+    Some(base.join("termodoro").join("config.json"))
 }
 
 /// Parses a flat JSON object of string keys and number values.
@@ -56,25 +84,14 @@ fn parse_json_object(s: &str) -> HashMap<String, String> {
             continue;
         }
         // Split on first ':'
-        let Some(colon) = entry.find(':') else { continue };
-        let key = entry[..colon]
-            .trim()
-            .trim_matches('"')
-            .to_string();
-        let value = entry[colon + 1..]
-            .trim()
-            .trim_matches('"')
-            .to_string();
+        let Some(colon) = entry.find(':') else {
+            continue;
+        };
+        let key = entry[..colon].trim().trim_matches('"').to_string();
+        let value = entry[colon + 1..].trim().trim_matches('"').to_string();
         if !key.is_empty() && !value.is_empty() {
             map.insert(key, value);
         }
     }
     map
-}
-
-fn config_path() -> Option<PathBuf> {
-    let base = std::env::var("XDG_CONFIG_HOME")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from(std::env::var("HOME").unwrap_or_default()).join(".config"));
-    Some(base.join("termodoro").join("config.json"))
 }
