@@ -5,6 +5,7 @@ use crossterm::{
     style::{Attribute, Color, Print, ResetColor, SetAttribute, SetForegroundColor},
     terminal::{self, ClearType},
 };
+
 use std::io::{self, Write};
 use std::time::Duration;
 
