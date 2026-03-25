@@ -12,22 +12,6 @@ A terminal-based Pomodoro timer built in Rust. Helps you manage focused work ses
 - Configurable durations
 - Follows XDG Base Directory spec
 
-## Installation
-
-Requires [Rust](https://www.rust-lang.org/tools/install).
-
-```bash
-git clone https://github.com/yourusername/termodoro
-cd termodoro
-cargo build --release
-```
-
-The binary will be at `./target/release/termodoro`. You can move it to a directory on your `$PATH`:
-
-```bash
-cp target/release/termodoro ~/.local/bin/
-```
-
 ## Usage
 
 ```bash
