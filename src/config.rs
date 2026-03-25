@@ -1,4 +1,4 @@
-use crate::logger;
+use crate::logger::{self, log};
 use serde::Deserialize;
 use std::fs::read_to_string;
 use std::path::PathBuf;
@@ -25,18 +25,21 @@ impl Default for Config {
 
 pub fn load_config() -> Config {
     let Some(path) = config_path() else {
-        logger::log("config: could not resolve config path (HOME not set?)");
+        log("config: could not resolve config path (HOME not set?), using defaults");
         return Config::default();
     };
 
     let Ok(contents) = read_to_string(&path) else {
-        logger::log(&format!("config: could not read file: {}", path.display()));
+        log(&format!(
+            "config: could not read {}, using defaults",
+            path.display()
+        ));
         return Config::default();
     };
 
     let Ok(config) = serde_json::from_str(&contents) else {
-        logger::log(&format!(
-            "config: failed to parse JSON in: {}",
+        log(&format!(
+            "config: failed to parse {}, using defaults",
             path.display()
         ));
         return Config::default();
