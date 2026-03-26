@@ -1,24 +1,17 @@
-use crossterm::{
-    cursor,
-    event::{
-        DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste, EnableMouseCapture, Event as CrosstermEvent,
-        EventStream, KeyEvent, KeyEventKind, MouseEvent,
-    },
-    terminal::{EnterAlternateScreen, LeaveAlternateScreen},
-};
+use crossterm::cursor;
+use crossterm::event::{DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste};
+use crossterm::event::{EnableMouseCapture, Event as CrosstermEvent};
+use crossterm::event::{EventStream, KeyEvent, KeyEventKind, MouseEvent};
+use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
 use futures::{FutureExt, StreamExt};
 use ratatui::backend::CrosstermBackend as Backend;
 use serde::{Deserialize, Serialize};
-use std::{
-    io::{Result, Stdout, stdout},
-    ops::{Deref, DerefMut},
-    time::Duration,
-};
-use tokio::{
-    sync::mpsc::{self, UnboundedReceiver, UnboundedSender},
-    task::JoinHandle,
-    time::interval,
-};
+use std::io::{Result, Stdout, stdout};
+use std::ops::{Deref, DerefMut};
+use std::time::Duration;
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
+use tokio::task::JoinHandle;
+use tokio::time::interval;
 use tokio_util::sync::CancellationToken;
 use tracing::error;
 
@@ -52,7 +45,7 @@ pub struct Tui {
 
 impl Tui {
     pub fn new() -> Result<Self> {
-        let (event_tx, event_rx) = mpsc::unbounded_channel();
+        let (event_tx, event_rx) = unbounded_channel();
 
         Ok(Self {
             terminal: ratatui::Terminal::new(Backend::new(stdout()))?,
