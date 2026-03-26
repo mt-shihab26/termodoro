@@ -3,6 +3,7 @@ use ratatui::{
     Frame,
     layout::{Rect, Size},
 };
+use std::io::Result;
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{action::Action, config::Config, tui::Event};
@@ -24,7 +25,7 @@ pub trait Component {
     /// # Returns
     ///
     /// * [`color_eyre::Result<()>`] - An Ok result or an error.
-    fn register_action_handler(&mut self, tx: UnboundedSender<Action>) -> color_eyre::Result<()> {
+    fn register_action_handler(&mut self, tx: UnboundedSender<Action>) -> Result<()> {
         let _ = tx; // to appease clippy
         Ok(())
     }
@@ -37,7 +38,7 @@ pub trait Component {
     /// # Returns
     ///
     /// * [`color_eyre::Result<()>`] - An Ok result or an error.
-    fn register_config_handler(&mut self, config: Config) -> color_eyre::Result<()> {
+    fn register_config_handler(&mut self, config: Config) -> Result<()> {
         let _ = config; // to appease clippy
         Ok(())
     }
@@ -50,7 +51,7 @@ pub trait Component {
     /// # Returns
     ///
     /// * [`color_eyre::Result<()>`] - An Ok result or an error.
-    fn init(&mut self, area: Size) -> color_eyre::Result<()> {
+    fn init(&mut self, area: Size) -> Result<()> {
         let _ = area; // to appease clippy
         Ok(())
     }
@@ -63,7 +64,7 @@ pub trait Component {
     /// # Returns
     ///
     /// * [`color_eyre::Result<Option<Action>>`] - An action to be processed or none.
-    fn handle_events(&mut self, event: Option<Event>) -> color_eyre::Result<Option<Action>> {
+    fn handle_events(&mut self, event: Option<Event>) -> Result<Option<Action>> {
         let action = match event {
             Some(Event::Key(key_event)) => self.handle_key_event(key_event)?,
             Some(Event::Mouse(mouse_event)) => self.handle_mouse_event(mouse_event)?,
@@ -80,7 +81,7 @@ pub trait Component {
     /// # Returns
     ///
     /// * [`color_eyre::Result<Option<Action>>`] - An action to be processed or none.
-    fn handle_key_event(&mut self, key: KeyEvent) -> color_eyre::Result<Option<Action>> {
+    fn handle_key_event(&mut self, key: KeyEvent) -> Result<Option<Action>> {
         let _ = key; // to appease clippy
         Ok(None)
     }
@@ -93,7 +94,7 @@ pub trait Component {
     /// # Returns
     ///
     /// * [`color_eyre::Result<Option<Action>>`] - An action to be processed or none.
-    fn handle_mouse_event(&mut self, mouse: MouseEvent) -> color_eyre::Result<Option<Action>> {
+    fn handle_mouse_event(&mut self, mouse: MouseEvent) -> Result<Option<Action>> {
         let _ = mouse; // to appease clippy
         Ok(None)
     }
@@ -106,7 +107,7 @@ pub trait Component {
     /// # Returns
     ///
     /// * [`color_eyre::Result<Option<Action>>`] - An action to be processed or none.
-    fn update(&mut self, action: Action) -> color_eyre::Result<Option<Action>> {
+    fn update(&mut self, action: Action) -> Result<Option<Action>> {
         let _ = action; // to appease clippy
         Ok(None)
     }
@@ -120,5 +121,5 @@ pub trait Component {
     /// # Returns
     ///
     /// * [`color_eyre::Result<()>`] - An Ok result or an error.
-    fn draw(&mut self, frame: &mut Frame, area: Rect) -> color_eyre::Result<()>;
+    fn draw(&mut self, frame: &mut Frame, area: Rect) -> Result<()>;
 }

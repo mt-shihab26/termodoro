@@ -75,7 +75,7 @@ impl App {
                 tui.suspend()?;
                 action_tx.send(Action::Resume)?;
                 action_tx.send(Action::ClearScreen)?;
-                // tui.mouse(true);
+                tui.mouse(true);
                 tui.enter()?;
             } else if self.should_quit {
                 tui.stop()?;
@@ -86,7 +86,7 @@ impl App {
         Ok(())
     }
 
-    async fn handle_events(&mut self, tui: &mut Tui) -> color_eyre::Result<()> {
+    async fn handle_events(&mut self, tui: &mut Tui) -> Result<()> {
         let Some(event) = tui.next_event().await else {
             return Ok(());
         };
@@ -107,7 +107,7 @@ impl App {
         Ok(())
     }
 
-    fn handle_key_event(&mut self, key: KeyEvent) -> color_eyre::Result<()> {
+    fn handle_key_event(&mut self, key: KeyEvent) -> Result<()> {
         let action_tx = self.action_tx.clone();
         let Some(keymap) = self.config.keybindings.0.get(&self.mode) else {
             return Ok(());
@@ -132,7 +132,7 @@ impl App {
         Ok(())
     }
 
-    fn handle_actions(&mut self, tui: &mut Tui) -> color_eyre::Result<()> {
+    fn handle_actions(&mut self, tui: &mut Tui) -> Result<()> {
         while let Ok(action) = self.action_rx.try_recv() {
             if action != Action::Tick && action != Action::Render {
                 debug!("{action:?}");
@@ -158,13 +158,13 @@ impl App {
         Ok(())
     }
 
-    fn handle_resize(&mut self, tui: &mut Tui, w: u16, h: u16) -> color_eyre::Result<()> {
+    fn handle_resize(&mut self, tui: &mut Tui, w: u16, h: u16) -> Result<()> {
         tui.resize(Rect::new(0, 0, w, h))?;
         self.render(tui)?;
         Ok(())
     }
 
-    fn render(&mut self, tui: &mut Tui) -> color_eyre::Result<()> {
+    fn render(&mut self, tui: &mut Tui) -> Result<()> {
         tui.draw(|frame| {
             for component in self.components.iter_mut() {
                 if let Err(err) = component.draw(frame, frame.area()) {

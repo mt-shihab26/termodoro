@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{io::Result, time::Instant};
 
 use ratatui::{
     Frame,
@@ -41,7 +41,7 @@ impl FpsCounter {
         }
     }
 
-    fn app_tick(&mut self) -> color_eyre::Result<()> {
+    fn app_tick(&mut self) -> Result<()> {
         self.tick_count += 1;
         let now = Instant::now();
         let elapsed = (now - self.last_tick_update).as_secs_f64();
@@ -53,7 +53,7 @@ impl FpsCounter {
         Ok(())
     }
 
-    fn render_tick(&mut self) -> color_eyre::Result<()> {
+    fn render_tick(&mut self) -> Result<()> {
         self.frame_count += 1;
         let now = Instant::now();
         let elapsed = (now - self.last_frame_update).as_secs_f64();
@@ -67,7 +67,7 @@ impl FpsCounter {
 }
 
 impl Component for FpsCounter {
-    fn update(&mut self, action: Action) -> color_eyre::Result<Option<Action>> {
+    fn update(&mut self, action: Action) -> Result<Option<Action>> {
         match action {
             Action::Tick => self.app_tick()?,
             Action::Render => self.render_tick()?,
@@ -76,7 +76,7 @@ impl Component for FpsCounter {
         Ok(None)
     }
 
-    fn draw(&mut self, frame: &mut Frame, area: Rect) -> color_eyre::Result<()> {
+    fn draw(&mut self, frame: &mut Frame, area: Rect) -> Result<()> {
         let [top, _] = Layout::vertical([Constraint::Length(1), Constraint::Min(0)]).areas(area);
         let message = format!(
             "{:.2} ticks/sec, {:.2} FPS",
