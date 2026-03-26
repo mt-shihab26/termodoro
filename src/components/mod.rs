@@ -1,9 +1,8 @@
-use crossterm::event::{KeyEvent, MouseEvent};
-use ratatui::{
-    Frame,
-    layout::{Rect, Size},
-};
 use std::io::Result;
+
+use crossterm::event::{KeyEvent, MouseEvent};
+use ratatui::Frame;
+use ratatui::layout::{Rect, Size};
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::{action::Action, config::Config, tui::Event};

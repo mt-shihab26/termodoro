@@ -1,7 +1,8 @@
+use std::error::Error;
+
 use crossterm::event::KeyEvent;
 use ratatui::prelude::Rect;
 use serde::{Deserialize, Serialize};
-use std::error::Error;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, error::SendError, unbounded_channel};
 use tracing::{debug, info};
 

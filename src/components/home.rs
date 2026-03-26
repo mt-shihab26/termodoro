@@ -3,8 +3,9 @@ use std::io::Result;
 use ratatui::{prelude::*, widgets::*};
 use tokio::sync::mpsc::UnboundedSender;
 
-use super::Component;
 use crate::{action::Action, config::Config};
+
+use super::Component;
 
 #[derive(Default)]
 pub struct Home {

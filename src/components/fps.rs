@@ -1,16 +1,12 @@
 use std::{io::Result, time::Instant};
 
-use ratatui::{
-    Frame,
-    layout::{Constraint, Layout, Rect},
-    style::Style,
-    text::Span,
-    widgets::Paragraph,
-};
-
-use super::Component;
+use ratatui::Frame;
+use ratatui::layout::{Constraint, Layout, Rect};
+use ratatui::{style::Style, text::Span, widgets::Paragraph};
 
 use crate::action::Action;
+
+use super::Component;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FpsCounter {

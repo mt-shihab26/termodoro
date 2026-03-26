@@ -1,3 +1,7 @@
+use std::io::{Result, Stdout, stdout};
+use std::ops::{Deref, DerefMut};
+use std::time::Duration;
+
 use crossterm::cursor;
 use crossterm::event::{DisableBracketedPaste, DisableMouseCapture, EnableBracketedPaste};
 use crossterm::event::{EnableMouseCapture, Event as CrosstermEvent};
@@ -6,9 +10,6 @@ use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen};
 use futures::{FutureExt, StreamExt};
 use ratatui::backend::CrosstermBackend as Backend;
 use serde::{Deserialize, Serialize};
-use std::io::{Result, Stdout, stdout};
-use std::ops::{Deref, DerefMut};
-use std::time::Duration;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender, unbounded_channel};
 use tokio::task::JoinHandle;
 use tokio::time::interval;
