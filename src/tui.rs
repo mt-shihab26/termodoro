@@ -10,7 +10,7 @@ use futures::{FutureExt, StreamExt};
 use ratatui::backend::CrosstermBackend as Backend;
 use serde::{Deserialize, Serialize};
 use std::{
-    io::{Stdout, stdout},
+    io::{Result, Stdout, stdout},
     ops::{Deref, DerefMut},
     time::Duration,
 };
@@ -51,8 +51,9 @@ pub struct Tui {
 }
 
 impl Tui {
-    pub fn new() -> color_eyre::Result<Self> {
+    pub fn new() -> Result<Self> {
         let (event_tx, event_rx) = mpsc::unbounded_channel();
+
         Ok(Self {
             terminal: ratatui::Terminal::new(Backend::new(stdout()))?,
             task: tokio::spawn(async {}),
@@ -141,7 +142,7 @@ impl Tui {
         cancellation_token.cancel();
     }
 
-    pub fn stop(&self) -> color_eyre::Result<()> {
+    pub fn stop(&self) -> Result<()> {
         self.cancel();
         let mut counter = 0;
         while !self.task.is_finished() {
@@ -158,7 +159,7 @@ impl Tui {
         Ok(())
     }
 
-    pub fn enter(&mut self) -> color_eyre::Result<()> {
+    pub fn enter(&mut self) -> Result<()> {
         crossterm::terminal::enable_raw_mode()?;
         crossterm::execute!(stdout(), EnterAlternateScreen, cursor::Hide)?;
         if self.mouse {
@@ -171,7 +172,7 @@ impl Tui {
         Ok(())
     }
 
-    pub fn exit(&mut self) -> color_eyre::Result<()> {
+    pub fn exit(&mut self) -> Result<()> {
         self.stop()?;
         if crossterm::terminal::is_raw_mode_enabled()? {
             self.flush()?;
@@ -191,14 +192,14 @@ impl Tui {
         self.cancellation_token.cancel();
     }
 
-    pub fn suspend(&mut self) -> color_eyre::Result<()> {
+    pub fn suspend(&mut self) -> Result<()> {
         self.exit()?;
         #[cfg(not(windows))]
         signal_hook::low_level::raise(signal_hook::consts::signal::SIGTSTP)?;
         Ok(())
     }
 
-    pub fn resume(&mut self) -> color_eyre::Result<()> {
+    pub fn resume(&mut self) -> Result<()> {
         self.enter()?;
         Ok(())
     }

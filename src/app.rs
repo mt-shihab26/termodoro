@@ -1,8 +1,7 @@
-use std::io::Result;
-
 use crossterm::event::KeyEvent;
 use ratatui::prelude::Rect;
 use serde::{Deserialize, Serialize};
+use std::io::Result;
 use tokio::sync::mpsc;
 use tracing::{debug, info};
 
@@ -42,7 +41,7 @@ impl App {
             components: vec![Box::new(Home::new()), Box::new(FpsCounter::default())],
             should_quit: false,
             should_suspend: false,
-            config: Config::new().unwrap(),
+            config: Config::new(),
             mode: Mode::Home,
             last_tick_key_events: Vec::new(),
             action_tx,
@@ -52,9 +51,10 @@ impl App {
 
     pub async fn run(&mut self) -> Result<()> {
         let mut tui = Tui::new()?
-            // .mouse(true) // uncomment this line to enable mouse support
+            .mouse(true)
             .tick_rate(self.tick_rate)
             .frame_rate(self.frame_rate);
+
         tui.enter()?;
 
         for component in self.components.iter_mut() {
