@@ -1,11 +1,3 @@
-#![allow(dead_code)] // Remove this once you start using the code
-
-use std::{
-    io::{Stdout, stdout},
-    ops::{Deref, DerefMut},
-    time::Duration,
-};
-
 use crossterm::{
     cursor,
     event::{
@@ -17,6 +9,11 @@ use crossterm::{
 use futures::{FutureExt, StreamExt};
 use ratatui::backend::CrosstermBackend as Backend;
 use serde::{Deserialize, Serialize};
+use std::{
+    io::{Stdout, stdout},
+    ops::{Deref, DerefMut},
+    time::Duration,
+};
 use tokio::{
     sync::mpsc::{self, UnboundedReceiver, UnboundedSender},
     task::JoinHandle,

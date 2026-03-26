@@ -1,5 +1,3 @@
-#![allow(dead_code)] // Remove this once you start using the code
-
 use std::{collections::HashMap, env, path::PathBuf};
 
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
