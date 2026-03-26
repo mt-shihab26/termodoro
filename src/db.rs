@@ -15,7 +15,6 @@ pub struct Project {
 #[derive(Debug, Clone)]
 pub struct TodoRow {
     pub id: i64,
-    pub project_id: Option<i64>,
     pub title: String,
     pub due_date: Option<String>,
     pub completed_at: Option<i64>,
@@ -24,7 +23,6 @@ pub struct TodoRow {
 
 #[derive(Debug, Clone)]
 pub struct TodoBrief {
-    pub id: i64,
     pub title: String,
     pub project_name: Option<String>,
 }
@@ -178,7 +176,6 @@ impl Db {
         let sql = format!(
             "SELECT
                 t.id,
-                t.project_id,
                 t.title,
                 t.due_date,
                 t.completed_at,
@@ -199,11 +196,10 @@ impl Db {
         let rows = stmt.query_map(rusqlite::params_from_iter(params_vec.iter()), |row| {
             Ok(TodoRow {
                 id: row.get(0)?,
-                project_id: row.get(1)?,
-                title: row.get(2)?,
-                due_date: row.get(3)?,
-                completed_at: row.get(4)?,
-                work_secs: row.get::<_, i64>(5)?.max(0) as u64,
+                title: row.get(1)?,
+                due_date: row.get(2)?,
+                completed_at: row.get(3)?,
+                work_secs: row.get::<_, i64>(4)?.max(0) as u64,
             })
         })?;
         rows.collect()
@@ -212,16 +208,15 @@ impl Db {
     pub fn todo_brief(&self, todo_id: i64) -> rusqlite::Result<Option<TodoBrief>> {
         self.conn
             .query_row(
-                "SELECT t.id, t.title, p.name
+                "SELECT t.title, p.name
                  FROM todos t
                  LEFT JOIN projects p ON p.id = t.project_id
                  WHERE t.id = ?1",
                 params![todo_id],
                 |row| {
                     Ok(TodoBrief {
-                        id: row.get(0)?,
-                        title: row.get(1)?,
-                        project_name: row.get(2)?,
+                        title: row.get(0)?,
+                        project_name: row.get(1)?,
                     })
                 },
             )
