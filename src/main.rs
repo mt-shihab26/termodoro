@@ -1,10 +1,14 @@
-use clap::Parser;
+use std::io::Result;
+
 use termodoro::{app::App, cli::Cli};
 
 #[tokio::main]
-async fn main() -> color_eyre::Result<()> {
-    let args = Cli::parse();
-    let mut app = App::new(args.tick_rate, args.frame_rate)?;
+async fn main() -> Result<()> {
+    let cli = Cli::new();
+
+    let mut app = App::new(&cli)?;
+
     app.run().await?;
+
     Ok(())
 }

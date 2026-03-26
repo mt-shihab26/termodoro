@@ -1,3 +1,5 @@
+use std::io::Result;
+
 use crossterm::event::KeyEvent;
 use ratatui::prelude::Rect;
 use serde::{Deserialize, Serialize};
@@ -6,10 +8,17 @@ use tracing::{debug, info};
 
 use crate::{
     action::Action,
+    cli::Cli,
     components::{Component, fps::FpsCounter, home::Home},
     config::Config,
     tui::{Event, Tui},
 };
+
+#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum Mode {
+    #[default]
+    Home,
+}
 
 pub struct App {
     config: Config,
@@ -24,22 +33,16 @@ pub struct App {
     action_rx: mpsc::UnboundedReceiver<Action>,
 }
 
-#[derive(Default, Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum Mode {
-    #[default]
-    Home,
-}
-
 impl App {
-    pub fn new(tick_rate: f64, frame_rate: f64) -> color_eyre::Result<Self> {
+    pub fn new(cli: &Cli) -> Result<Self> {
         let (action_tx, action_rx) = mpsc::unbounded_channel();
         Ok(Self {
-            tick_rate,
-            frame_rate,
+            tick_rate: cli.tick_rate,
+            frame_rate: cli.frame_rate,
             components: vec![Box::new(Home::new()), Box::new(FpsCounter::default())],
             should_quit: false,
             should_suspend: false,
-            config: Config::new()?,
+            config: Config::new().unwrap(),
             mode: Mode::Home,
             last_tick_key_events: Vec::new(),
             action_tx,
@@ -47,7 +50,7 @@ impl App {
         })
     }
 
-    pub async fn run(&mut self) -> color_eyre::Result<()> {
+    pub async fn run(&mut self) -> Result<()> {
         let mut tui = Tui::new()?
             // .mouse(true) // uncomment this line to enable mouse support
             .tick_rate(self.tick_rate)

@@ -14,6 +14,17 @@ pub struct Cli {
     pub frame_rate: f64,
 }
 
+impl Cli {
+    pub fn new() -> Self {
+        let args = Self::parse();
+
+        Self {
+            tick_rate: args.tick_rate,
+            frame_rate: args.frame_rate,
+        }
+    }
+}
+
 const VERSION_MESSAGE: &str = concat!(
     env!("CARGO_PKG_VERSION"),
     "-",
