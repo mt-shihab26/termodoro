@@ -13,6 +13,11 @@ pub struct Timer {
     pub state: State,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct CompletedWork {
+    pub duration_secs: u64,
+}
+
 impl Timer {
     pub fn new(config: Config, saved: Option<State>) -> Self {
         let state = match saved {
@@ -40,10 +45,10 @@ impl Timer {
         state::save_state(&self.state);
     }
 
-    pub fn skip(&mut self) {
-        self.advance();
-
+    pub fn skip(&mut self) -> Option<CompletedWork> {
+        let completed = self.complete_current_phase();
         state::save_state(&self.state);
+        completed
     }
 
     pub fn reset(&mut self) {
@@ -53,14 +58,31 @@ impl Timer {
         state::save_state(&self.state);
     }
 
-    pub fn tick(&mut self) {
+    pub fn tick(&mut self) -> Option<CompletedWork> {
         if self.status != Status::Running {
-            return;
+            return None;
         }
         if self.state.remaining_secs > 0 {
             self.state.remaining_secs -= 1;
+            None
         } else {
-            self.advance();
+            let completed = self.complete_current_phase();
+            state::save_state(&self.state);
+            completed
+        }
+    }
+
+    fn complete_current_phase(&mut self) -> Option<CompletedWork> {
+        let total = self.phase_duration();
+        let elapsed = total.saturating_sub(self.state.remaining_secs);
+        let was_work = self.state.phase == Phase::Work;
+
+        self.advance();
+
+        if was_work && elapsed > 0 {
+            Some(CompletedWork { duration_secs: elapsed })
+        } else {
+            None
         }
     }
 

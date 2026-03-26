@@ -1,5 +1,5 @@
-use ratatui::{Frame, layout::Rect};
 use ratatui::crossterm::event::KeyEvent;
+use ratatui::{Frame, layout::Rect};
 
 use crate::state::Phase;
 use ratatui::style::Color;

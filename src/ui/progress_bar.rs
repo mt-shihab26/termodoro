@@ -23,20 +23,13 @@ impl Component for ProgressBar<'_> {
             0.0
         };
 
-        let [_, center, _] = ratatui::layout::Layout::horizontal([
-            Constraint::Fill(1),
-            Constraint::Max(40),
-            Constraint::Fill(1),
-        ])
-        .areas(area);
+        let [_, center, _] =
+            ratatui::layout::Layout::horizontal([Constraint::Fill(1), Constraint::Max(40), Constraint::Fill(1)])
+                .areas(area);
 
         frame.render_widget(
             Gauge::default()
-                .gauge_style(
-                    Style::default()
-                        .fg(phase_color(self.phase))
-                        .bg(Color::DarkGray),
-                )
+                .gauge_style(Style::default().fg(phase_color(self.phase)).bg(Color::DarkGray))
                 .ratio(ratio)
                 .label(""),
             center,

@@ -12,7 +12,7 @@ pub struct Hints;
 impl Component for Hints {
     fn render(&self, frame: &mut Frame, area: Rect) {
         frame.render_widget(
-            Paragraph::new("[space] pause/resume  [s] skip  [r] reset  [q] quit")
+            Paragraph::new("[tab] switch tab  [space] pause/resume  [s] skip  [r] reset  [q] quit")
                 .style(Style::default().fg(Color::DarkGray))
                 .alignment(Alignment::Center),
             area,
