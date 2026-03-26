@@ -7,7 +7,7 @@ use crossterm::{
 };
 
 use std::io::{self, Write};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use crate::state::{self, Phase};
 use crate::timer::{Status, Timer};
@@ -27,10 +27,15 @@ pub fn run(mut timer: Timer) -> io::Result<()> {
 }
 
 fn event_loop(stdout: &mut impl Write, timer: &mut Timer) -> io::Result<()> {
+    let mut last_tick = Instant::now();
+
     loop {
         draw(stdout, timer)?;
 
-        if event::poll(Duration::from_secs(1))? {
+        let elapsed = last_tick.elapsed();
+        let timeout = Duration::from_secs(1).saturating_sub(elapsed);
+
+        if event::poll(timeout)? {
             if let Event::Key(event) = event::read()? {
                 match (event.code, event.modifiers) {
                     (KeyCode::Char('c'), KeyModifiers::CONTROL) => break,
@@ -47,7 +52,10 @@ fn event_loop(stdout: &mut impl Write, timer: &mut Timer) -> io::Result<()> {
             }
         }
 
-        timer.tick();
+        if last_tick.elapsed() >= Duration::from_secs(1) {
+            timer.tick();
+            last_tick = Instant::now();
+        }
     }
     Ok(())
 }
