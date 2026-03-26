@@ -1,100 +1,156 @@
+use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     Frame,
-    layout::{Constraint, Rect},
+    layout::{Constraint, Direction, Layout},
+    style::{Color, Modifier, Style},
+    text::Line,
+    widgets::{Block, Borders, Tabs},
 };
 
-use crate::timer::Timer;
+use crate::db::Db;
+use crate::timer::{CompletedWork, Timer};
+use crate::ui::tabs;
+use crate::ui::util::unix_now;
 
-use super::{
-    component::Component, hints::Hints, phase_label::PhaseLabel, progress_bar::ProgressBar, sessions::Sessions,
-    status::StatusIndicator, timer_display::TimerDisplay, title::Title,
-};
-
-pub struct App<'a> {
-    pub timer: &'a Timer,
-    pub active_todo: Option<&'a str>,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ActiveTab {
+    Timer,
+    Todos,
 }
 
-impl Component for App<'_> {
-    fn render(&self, frame: &mut Frame, area: Rect) {
-        let [
-            _,
-            title,
-            _,
-            phase,
-            focus,
-            _,
-            time,
-            _,
-            progress,
-            _,
-            sessions,
-            status,
-            _,
-            hints,
-            _,
-        ] = ratatui::layout::Layout::vertical([
-            Constraint::Fill(1),   // top spacer
-            Constraint::Length(1), // title
-            Constraint::Length(2), // gap
-            Constraint::Length(1), // phase label
-            Constraint::Length(1), // focus
-            Constraint::Length(1), // gap
-            Constraint::Length(1), // timer
-            Constraint::Length(1), // gap
-            Constraint::Length(1), // progress bar
-            Constraint::Length(2), // gap
-            Constraint::Length(1), // sessions
-            Constraint::Length(1), // status
-            Constraint::Length(2), // gap
-            Constraint::Length(1), // hints
-            Constraint::Fill(1),   // bottom spacer
-        ])
-        .areas(area);
+pub struct Shared {
+    pub timer: Timer,
+    pub db: Db,
+    pub active_todo_id: Option<i64>,
+    pub message: Option<String>,
+}
 
-        let elapsed = self.timer.total_secs().saturating_sub(self.timer.state.remaining_secs);
+impl Shared {
+    pub fn clear_active_todo(&mut self) {
+        self.set_active_todo(None);
+    }
 
-        Title.render(frame, title);
-        PhaseLabel {
-            phase: &self.timer.state.phase,
+    pub fn set_active_todo(&mut self, todo_id: Option<i64>) {
+        self.active_todo_id = todo_id;
+        let _ = self.db.set_active_todo_id(todo_id);
+    }
+
+    pub fn active_todo_label(&self) -> Option<String> {
+        let id = self.active_todo_id?;
+        match self.db.todo_brief(id) {
+            Ok(Some(t)) => {
+                if let Some(p) = t.project_name {
+                    Some(format!("{p} / {}", t.title))
+                } else {
+                    Some(t.title)
+                }
+            }
+            _ => None,
         }
-        .render(frame, phase);
+    }
+
+    pub fn record_completed_work(&mut self, completed: Option<CompletedWork>) -> bool {
+        let Some(c) = completed else { return false };
+        let ended_at = unix_now();
+        if let Err(e) = self
+            .db
+            .insert_work_session(self.active_todo_id, c.duration_secs, ended_at)
         {
-            use ratatui::{
-                layout::Alignment,
-                style::{Color, Style},
-                widgets::Paragraph,
-            };
-            let text = match self.active_todo {
-                Some(t) => format!("On: {t}"),
-                None => "On: (no todo selected)".to_string(),
-            };
-            frame.render_widget(
-                Paragraph::new(text)
-                    .style(Style::default().fg(Color::DarkGray))
-                    .alignment(Alignment::Center),
-                focus,
-            );
+            self.message = Some(format!("db: failed to insert session: {e}"));
         }
-        TimerDisplay {
-            remaining_secs: self.timer.state.remaining_secs,
-            status: &self.timer.status,
+        true
+    }
+}
+
+pub struct App {
+    pub tab: ActiveTab,
+    pub shared: Shared,
+    timer_tab: tabs::timer::App,
+    todos_tab: tabs::todos::App,
+}
+
+impl App {
+    pub fn new(timer: Timer, db: Db) -> Self {
+        let active_todo_id = db.get_active_todo_id().ok().flatten();
+
+        let mut app = Self {
+            tab: ActiveTab::Timer,
+            shared: Shared {
+                timer,
+                db,
+                active_todo_id,
+                message: None,
+            },
+            timer_tab: tabs::timer::App::new(),
+            todos_tab: tabs::todos::App::new(),
+        };
+
+        app.todos_tab.refresh(&mut app.shared);
+        app
+    }
+
+    pub fn handle_key(&mut self, key: KeyEvent) {
+        match key.code {
+            KeyCode::Tab => {
+                self.tab = match self.tab {
+                    ActiveTab::Timer => ActiveTab::Todos,
+                    ActiveTab::Todos => ActiveTab::Timer,
+                };
+                return;
+            }
+            KeyCode::Char('1') => {
+                self.tab = ActiveTab::Timer;
+                return;
+            }
+            KeyCode::Char('2') => {
+                self.tab = ActiveTab::Todos;
+                return;
+            }
+            _ => {}
         }
-        .render(frame, time);
-        ProgressBar {
-            elapsed,
-            total: self.timer.total_secs(),
-            phase: &self.timer.state.phase,
+
+        match self.tab {
+            ActiveTab::Timer => self.timer_tab.handle_key(&mut self.shared, key),
+            ActiveTab::Todos => self.todos_tab.handle_key(&mut self.shared, key),
         }
-        .render(frame, progress);
-        Sessions {
-            count: self.timer.state.sessions_completed,
+    }
+
+    pub fn on_tick(&mut self) {
+        let completed = self.shared.timer.tick();
+        if self.shared.record_completed_work(completed) {
+            self.todos_tab.on_work_logged(&mut self.shared);
         }
-        .render(frame, sessions);
-        StatusIndicator {
-            status: &self.timer.status,
+    }
+
+    pub fn render(&mut self, frame: &mut Frame) {
+        let area = frame.area();
+        let [header, body] = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Length(3), Constraint::Fill(1)])
+            .areas(area);
+
+        self.render_tabs(frame, header);
+
+        match self.tab {
+            ActiveTab::Timer => self.timer_tab.render(&mut self.shared, frame, body),
+            ActiveTab::Todos => self.todos_tab.render(&mut self.shared, frame, body),
         }
-        .render(frame, status);
-        Hints.render(frame, hints);
+    }
+
+    fn render_tabs(&self, frame: &mut Frame, area: ratatui::layout::Rect) {
+        let titles = vec![Line::from("Timer"), Line::from("Todos")];
+        let selected = match self.tab {
+            ActiveTab::Timer => 0,
+            ActiveTab::Todos => 1,
+        };
+
+        frame.render_widget(
+            Tabs::new(titles)
+                .select(selected)
+                .block(Block::default().borders(Borders::ALL).title("termodoro"))
+                .style(Style::default().fg(Color::DarkGray))
+                .highlight_style(Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+            area,
+        );
     }
 }
