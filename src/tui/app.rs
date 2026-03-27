@@ -89,7 +89,7 @@ impl App {
 
         match self.selected {
             0 => Todos.render(main, frame.buffer_mut()),
-            1 => self.timer.draw(frame, main),
+            1 => frame.render_widget(&self.timer, main),
             _ => unreachable!(),
         }
     }

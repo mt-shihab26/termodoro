@@ -1,4 +1,3 @@
-use ratatui::Frame;
 use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Alignment, Constraint, Layout, Rect};
@@ -96,10 +95,6 @@ impl Timer {
         }
     }
 
-    pub fn draw(&self, frame: &mut Frame, area: Rect) {
-        self.render_widget(area, frame.buffer_mut());
-    }
-
     fn advance(&mut self) {
         match self.phase {
             Phase::Work => {
@@ -118,7 +113,10 @@ impl Timer {
         self.running = false;
     }
 
-    fn render_widget(&self, area: Rect, buf: &mut Buffer) {
+}
+
+impl Widget for &Timer {
+    fn render(self, area: Rect, buf: &mut Buffer) {
         let mins = self.seconds / 60;
         let secs = self.seconds % 60;
 
