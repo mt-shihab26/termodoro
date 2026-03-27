@@ -74,7 +74,7 @@ impl App {
             .centered()
             .render(top, frame.buffer_mut());
 
-        let highlight_color = match self.selected_tab {
+        let highlight_color = match self.selected {
             0 => todos::COLOR,
             _ => timer::COLOR,
         };
@@ -82,14 +82,14 @@ impl App {
         Tabs::new(vec!["Todos", "Timer"])
             .style(Color::White)
             .highlight_style(Style::default().fg(highlight_color).on_black().bold())
-            .select(self.selected_tab)
+            .select(self.selected)
             .divider(symbols::DOT)
             .padding(" ", " ")
             .render(tabs_area, frame.buffer_mut());
 
-        match self.selected_tab {
+        match self.selected {
             0 => Todos.render(main, frame.buffer_mut()),
-            1 => Timer::new(self.timer).render(main, frame.buffer_mut()),
+            1 => Timer::new(&self.timer).render(main, frame.buffer_mut()),
             _ => unreachable!(),
         }
     }
