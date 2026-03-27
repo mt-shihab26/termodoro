@@ -96,9 +96,12 @@ impl Timer {
         }));
 
         let thread_inner = Arc::clone(&inner);
-        thread::spawn(move || loop {
-            thread::sleep(Duration::from_secs(1));
-            thread_inner.lock().unwrap().tick();
+
+        thread::spawn(move || {
+            loop {
+                thread::sleep(Duration::from_secs(1));
+                thread_inner.lock().unwrap().tick();
+            }
         });
 
         Self { inner }
@@ -132,8 +135,7 @@ impl Tab for Timer {
         let hint = "[Space] Toggle   [R] Reset   [N] Skip";
 
         let [_, center, _] =
-            Layout::vertical([Constraint::Fill(1), Constraint::Length(10), Constraint::Fill(1)])
-                .areas(area);
+            Layout::vertical([Constraint::Fill(1), Constraint::Length(10), Constraint::Fill(1)]).areas(area);
 
         let block = Block::bordered().fg(COLOR);
         let inner = block.inner(center);
