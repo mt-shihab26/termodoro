@@ -47,26 +47,27 @@ impl Tab for Timer {
 
         block.render(area, buf);
 
-        let [phase_row, session_row, time_row, status_row, hint_row] = Layout::vertical([
-            Constraint::Fill(1),
-            Constraint::Length(1),
-            Constraint::Length(1),
-            Constraint::Length(1),
+        let [session_row, _, phase_row, time_row, status_row, _, hint_row] = Layout::vertical([
             Constraint::Length(1),
             Constraint::Fill(1),
+            Constraint::Length(1),
+            Constraint::Length(1),
+            Constraint::Length(1),
+            Constraint::Fill(1),
+            Constraint::Length(1),
         ])
         .areas(inner);
+
+        Paragraph::new(format!("Session {} / {}", s.sessions + 1, LONG_BREAK_INTERVAL))
+            .alignment(Alignment::Center)
+            .fg(Color::DarkGray)
+            .render(session_row, buf);
 
         Paragraph::new(s.phase.label().to_string())
             .alignment(Alignment::Center)
             .bold()
             .fg(COLOR)
             .render(phase_row, buf);
-
-        Paragraph::new(format!("Session {} / {}", s.sessions + 1, LONG_BREAK_INTERVAL))
-            .alignment(Alignment::Center)
-            .fg(Color::DarkGray)
-            .render(session_row, buf);
 
         let (mins, secs, ms) = s.time_parts();
 
