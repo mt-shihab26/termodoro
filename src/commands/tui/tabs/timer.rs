@@ -4,10 +4,10 @@ use std::sync::{Arc, Mutex};
 
 use ratatui::Frame;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
-use ratatui::layout::{Alignment, Constraint, Layout, Rect};
-use ratatui::style::{Color, Stylize};
-use ratatui::text::{Line, Text};
+use ratatui::layout::{Constraint, Layout, Rect};
+use ratatui::style::{Color, Style, Stylize};
 use ratatui::widgets::{Block, Paragraph, Widget};
+use tui_big_text::{BigText, PixelSize};
 
 use crate::commands::tui::tabs::Tab;
 use crate::domains::timer::{LONG_BREAK_INTERVAL, SHOW_MILLIS, TimerState};
@@ -50,7 +50,7 @@ impl Tab for Timer {
             Constraint::Length(1),
             Constraint::Fill(1),
             Constraint::Length(1),
-            Constraint::Length(12),
+            Constraint::Length(8),
             Constraint::Length(1),
             Constraint::Fill(1),
             Constraint::Length(1),
@@ -58,12 +58,12 @@ impl Tab for Timer {
         .areas(inner);
 
         Paragraph::new(format!("Session {} / {}", s.sessions + 1, LONG_BREAK_INTERVAL))
-            .alignment(Alignment::Center)
+            .centered()
             .fg(Color::DarkGray)
             .render(session_row, buf);
 
         Paragraph::new(s.phase.label().to_string())
-            .alignment(Alignment::Center)
+            .centered()
             .bold()
             .fg(COLOR)
             .render(phase_row, buf);
@@ -76,23 +76,23 @@ impl Tab for Timer {
             format!("{:02}:{:02}", mins, secs)
         };
 
-        let rows = big_digits(&time);
-
-        Paragraph::new(Text::from(rows.map(Line::from).to_vec()))
-            .alignment(Alignment::Center)
-            .bold()
-            .fg(COLOR)
+        BigText::builder()
+            .pixel_size(PixelSize::Full)
+            .style(Style::new().fg(COLOR).bold())
+            .lines(vec![time.as_str().into()])
+            .centered()
+            .build()
             .render(time_row, buf);
 
         let status = if s.running { "Running" } else { "Paused" };
 
         Paragraph::new(status)
-            .alignment(Alignment::Center)
+            .centered()
             .fg(if s.running { Color::Green } else { Color::DarkGray })
             .render(status_row, buf);
 
         Paragraph::new("[Space] Toggle   [R] Reset   [N] Skip")
-            .alignment(Alignment::Center)
+            .centered()
             .fg(Color::DarkGray)
             .render(hint_row, buf);
 
@@ -112,41 +112,4 @@ impl Tab for Timer {
         }
         Ok(())
     }
-}
-
-fn big_digits(text: &str) -> [String; 12] {
-    #[rustfmt::skip]
-    const DIGITS: [[&str; 12]; 10] = [
-        [" ▄█████▄ ", "▄██   ██▄", "██     ██", "██     ██", "██     ██", "██     ██", "██     ██", "██     ██", "██     ██", "██     ██", "▀██   ██▀", " ▀█████▀ "], // 0
-        ["   ▄██   ", "  ████   ", "   ██    ", "   ██    ", "   ██    ", "   ██    ", "   ██    ", "   ██    ", "   ██    ", "   ██    ", "   ██    ", "█████████"], // 1
-        [" ▄█████▄ ", "▄██   ██▄", "██     ██", "      ███", "     ███ ", "    ███  ", "   ███   ", "  ███    ", " ███     ", "███      ", "██       ", "█████████"], // 2
-        [" ▄█████▄ ", "▄██   ██▄", "██     ██", "       ██", "      ███", "   █████ ", "   █████ ", "      ███", "       ██", "██     ██", "▀██   ██▀", " ▀█████▀ "], // 3
-        ["██      █", "██      █", "██      █", "██      █", "██     ██", "███   ███", "█████████", "       ██", "       ██", "       ██", "       ██", "       ██"], // 4
-        ["█████████", "██       ", "██       ", "██       ", "████████ ", "      ███", "       ██", "       ██", "       ██", "██     ██", "▀██   ██▀", " ▀█████▀ "], // 5
-        [" ▄█████▄ ", "▄██   ██▄", "██     ██", "██       ", "████████ ", "██     ██", "██     ██", "██     ██", "██     ██", "██     ██", "▀██   ██▀", " ▀█████▀ "], // 6
-        ["█████████", "       ██", "      ██ ", "     ██  ", "    ██   ", "   ██    ", "   ██    ", "   ██    ", "   ██    ", "   ██    ", "   ██    ", "   ██    "], // 7
-        [" ▄█████▄ ", "▄██   ██▄", "██     ██", "██     ██", "▀██   ██▀", " ▄█████▄ ", "▄██   ██▄", "██     ██", "██     ██", "██     ██", "▀██   ██▀", " ▀█████▀ "], // 8
-        [" ▄█████▄ ", "▄██   ██▄", "██     ██", "██     ██", "██     ██", " ████████", "       ██", "       ██", "       ██", "██     ██", "▀██   ██▀", " ▀█████▀ "], // 9
-    ];
-
-    let mut rows: [String; 12] = Default::default();
-    let mut first = true;
-
-    for ch in text.chars() {
-        let cols: [&str; 12] = match ch {
-            '0'..='9' => DIGITS[(ch as u8 - b'0') as usize],
-            ':' => ["   ", "   ", " █ ", " █ ", "   ", "   ", "   ", "   ", " █ ", " █ ", "   ", "   "],
-            '.' => ["   ", "   ", "   ", "   ", "   ", "   ", "   ", "   ", "   ", "   ", " █ ", " █ "],
-            _ => ["         "; 12],
-        };
-        for (row, col) in rows.iter_mut().zip(cols) {
-            if !first {
-                row.push(' ');
-            }
-            row.push_str(col);
-        }
-        first = false;
-    }
-
-    rows
 }
