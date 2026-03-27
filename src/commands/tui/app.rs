@@ -11,6 +11,7 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Tabs, Widget};
 
 use crate::event::Event;
+use crate::log_error;
 use crate::workers::term_worker;
 
 use super::fps::Fps;
@@ -57,10 +58,14 @@ impl App {
         while self.alive {
             self.fps.tick();
 
-            terminal.draw(|frame| self.render_frame(frame))?;
+            if let Err(e) = terminal.draw(|frame| self.render_frame(frame)) {
+                log_error!("terminal draw failed: {e}");
+                return Err(e);
+            }
 
             match self.events.recv() {
                 Err(e) => {
+                    log_error!("event channel disconnected: {e}");
                     return Err(Error::new(ErrorKind::BrokenPipe, e));
                 }
                 Ok(Event::Key(key)) => match key.code {
@@ -74,7 +79,10 @@ impl App {
                         self.selected = (self.selected + 1) % self.tabs.len();
                     }
                     _ => {
-                        self.tabs[self.selected].handle(key)?;
+                        if let Err(e) = self.tabs[self.selected].handle(key) {
+                            log_error!("tab handle error: {e}");
+                            return Err(e);
+                        }
                     }
                 },
                 Ok(Event::Tick) => {}
