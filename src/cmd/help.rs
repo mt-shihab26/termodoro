@@ -9,12 +9,10 @@ pub struct Help {
 
 impl Help {
     pub fn new(cmds: &HashMap<&str, Box<dyn Cmd>>) -> Self {
-        let mut lines: Vec<Vec<String>> = cmds
+        let lines: Vec<Vec<String>> = cmds
             .values()
             .map(|c| c.help().iter().map(|s| s.to_string()).collect())
             .collect();
-
-        lines.sort_by(|a, b| a[0].cmp(&b[0]));
 
         Self { lines }
     }
@@ -37,7 +35,6 @@ impl Cmd for Help {
             let strs: Vec<&str> = entries.iter().map(|s| s.as_str()).collect();
             println!("  {}", Self::format(&strs));
         }
-        println!("  {}", Self::format(self.help()));
         Ok(())
     }
 }
