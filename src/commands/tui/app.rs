@@ -27,7 +27,7 @@ impl App {
 
         term_worker::spawn(sender.clone());
 
-        let tabs: Vec<Box<dyn Tab>> = vec![Box::new(Todos), Box::new(Timer::new(sender))];
+        let tabs: Vec<Box<dyn Tab>> = vec![Box::new(Todos::new()), Box::new(Timer::new(sender))];
 
         Self {
             alive: true,

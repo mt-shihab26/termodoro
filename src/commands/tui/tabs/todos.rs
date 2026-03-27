@@ -1,34 +1,123 @@
+use std::cell::RefCell;
 use std::io::Result;
 
 use ratatui::Frame;
-use ratatui::crossterm::event::KeyEvent;
-use ratatui::layout::{Alignment, Rect};
-use ratatui::style::{Color, Stylize};
-use ratatui::widgets::{Block, Paragraph};
+use ratatui::crossterm::event::{KeyCode, KeyEvent};
+use ratatui::layout::{Constraint, Layout, Rect};
+use ratatui::style::{Color, Modifier, Style, Stylize};
+use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph};
 
 use crate::commands::tui::tabs::Tab;
+use crate::domains::todos::{Mode, TodosState};
 
-pub struct Todos;
+const COLOR: Color = Color::Cyan;
+
+pub struct Todos {
+    state: TodosState,
+    list: RefCell<ListState>,
+}
+
+impl Todos {
+    pub fn new() -> Self {
+        let state = TodosState::new();
+        let mut list_state = ListState::default();
+        list_state.select(Some(state.selected));
+        Self {
+            state,
+            list: RefCell::new(list_state),
+        }
+    }
+
+    fn sync_list_state(&self) {
+        let selected = if self.state.items.is_empty() {
+            None
+        } else {
+            Some(self.state.selected)
+        };
+        self.list.borrow_mut().select(selected);
+    }
+}
 
 impl Tab for Todos {
     fn name(&self) -> &str {
         "Todos [1]"
     }
+
     fn color(&self) -> Color {
-        Color::Cyan
+        COLOR
     }
 
     fn render(&self, frame: &mut Frame, area: Rect) {
-        frame.render_widget(
-            Paragraph::new("Great terminal interfaces start with a single widget.")
-                .alignment(Alignment::Center)
-                .fg(self.color())
-                .block(Block::bordered().fg(self.color())),
-            area,
-        );
+        let (list_area, hint_area, input_area) = match self.state.mode {
+            Mode::Normal => {
+                let [list, hint] = Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).areas(area);
+                (list, hint, None)
+            }
+            Mode::Adding => {
+                let [list, hint, input] =
+                    Layout::vertical([Constraint::Fill(1), Constraint::Length(1), Constraint::Length(3)]).areas(area);
+                (list, hint, Some(input))
+            }
+        };
+
+        let items: Vec<ListItem> = self
+            .state
+            .items
+            .iter()
+            .map(|todo| {
+                let check = if todo.done { "[x]" } else { "[ ]" };
+                let style = if todo.done {
+                    Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)
+                } else {
+                    Style::default().fg(Color::White)
+                };
+                ListItem::new(format!(" {} {}", check, todo.text)).style(style)
+            })
+            .collect();
+
+        let list = List::new(items)
+            .highlight_style(Style::default().fg(COLOR).bold())
+            .highlight_symbol(">");
+
+        frame.render_stateful_widget(list, list_area, &mut self.list.borrow_mut());
+
+        let hint = match self.state.mode {
+            Mode::Normal => "[j/k] Navigate  [Space] Toggle  [a] Add  [d] Delete",
+            Mode::Adding => "[Enter] Confirm  [Esc] Cancel  [Backspace] Delete char",
+        };
+        frame.render_widget(Paragraph::new(hint).centered().fg(Color::DarkGray), hint_area);
+
+        if let Some(area) = input_area {
+            let block = Block::bordered()
+                .title(" New Todo ")
+                .border_style(Style::default().fg(COLOR));
+            let inner = block.inner(area);
+            frame.render_widget(block, area);
+            frame.render_widget(Paragraph::new(format!("{}_", self.state.input)).fg(Color::White), inner);
+        }
     }
 
-    fn handle(&mut self, _key: KeyEvent) -> Result<()> {
+    fn handle(&mut self, key: KeyEvent) -> Result<()> {
+        match self.state.mode {
+            Mode::Normal => match key.code {
+                KeyCode::Char('j') | KeyCode::Down => self.state.move_down(),
+                KeyCode::Char('k') | KeyCode::Up => self.state.move_up(),
+                KeyCode::Char(' ') | KeyCode::Enter => self.state.toggle_selected(),
+                KeyCode::Char('a') => self.state.start_adding(),
+                KeyCode::Char('d') => self.state.delete_selected(),
+                _ => {}
+            },
+            Mode::Adding => match key.code {
+                KeyCode::Enter => self.state.confirm_add(),
+                KeyCode::Esc => self.state.cancel_add(),
+                KeyCode::Backspace => {
+                    self.state.input.pop();
+                }
+                KeyCode::Char(c) => self.state.input.push(c),
+                _ => {}
+            },
+        }
+        self.sync_list_state();
         Ok(())
     }
 }
