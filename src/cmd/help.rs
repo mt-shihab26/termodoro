@@ -3,17 +3,19 @@ use std::io::Result;
 
 use super::Cmd;
 
-pub struct Help<'a> {
-    pub cmds: &'a HashMap<&'a str, Box<dyn Cmd>>,
+pub struct Help {
+    lines: Vec<String>,
 }
 
-impl<'a> Help<'a> {
-    pub fn new(cmds: &'a HashMap<&'a str, Box<dyn Cmd>>) -> Self {
-        Self { cmds }
+impl Help {
+    pub fn new(cmds: &HashMap<&str, Box<dyn Cmd>>) -> Self {
+        let mut lines: Vec<String> = cmds.values().map(|c| c.help().to_string()).collect();
+        lines.sort();
+        Self { lines }
     }
 }
 
-impl<'a> Cmd for Help<'a> {
+impl Cmd for Help {
     fn help(&self) -> &str {
         "help    Show help for all commands"
     }
@@ -21,9 +23,7 @@ impl<'a> Cmd for Help<'a> {
     fn run(&self) -> Result<()> {
         println!("Usage: termodoro <command>\n");
         println!("Commands:");
-        let mut lines: Vec<&str> = self.cmds.values().map(|c| c.help()).collect();
-        lines.sort();
-        for line in lines {
+        for line in &self.lines {
             println!("  {line}");
         }
         println!("  {}", self.help());
