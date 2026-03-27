@@ -6,6 +6,7 @@ use std::time::Duration;
 
 use crate::domains::timer::{TimerState, tick_interval};
 use crate::event::Event;
+use crate::{log_error, log_warn};
 
 pub fn spawn(render_count: Arc<AtomicU8>, sender: Sender<Event>) -> Arc<Mutex<TimerState>> {
     let state = Arc::new(Mutex::new(TimerState::new()));
@@ -20,7 +21,10 @@ pub fn spawn(render_count: Arc<AtomicU8>, sender: Sender<Event>) -> Arc<Mutex<Ti
 
             let mut state = match thread_state.lock() {
                 Ok(guard) => guard,
-                Err(poisoned) => poisoned.into_inner(),
+                Err(poisoned) => {
+                    log_warn!("timer state mutex poisoned in worker, recovering");
+                    poisoned.into_inner()
+                }
             };
 
             state.tick();
@@ -34,6 +38,7 @@ pub fn spawn(render_count: Arc<AtomicU8>, sender: Sender<Event>) -> Arc<Mutex<Ti
             if running && current_render_count != last_render_count {
                 last_render_count = current_render_count;
                 if sender.send(Event::Tick).is_err() {
+                    log_error!("timer worker: event channel closed, stopping");
                     break;
                 }
             }

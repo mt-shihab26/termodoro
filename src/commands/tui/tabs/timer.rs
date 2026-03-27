@@ -1,4 +1,4 @@
-use std::io::Result;
+use std::io::{Error, ErrorKind, Result};
 use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
@@ -53,7 +53,10 @@ impl Tab for Timer {
 
         let s = match self.state.lock() {
             Ok(guard) => guard,
-            Err(poisoned) => poisoned.into_inner(),
+            Err(poisoned) => {
+                log_warn!("timer state mutex poisoned in render, recovering");
+                poisoned.into_inner()
+            }
         };
 
         let buf = frame.buffer_mut();
@@ -118,10 +121,11 @@ impl Tab for Timer {
     }
 
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
-        let mut s = self
-            .state
-            .lock()
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+        let mut s = self.state.lock().map_err(|e| {
+            let err = Error::new(ErrorKind::Other, e.to_string());
+            log_error!("timer state mutex poisoned in handle: {err}");
+            err
+        })?;
 
         match key.code {
             KeyCode::Char(' ') => {

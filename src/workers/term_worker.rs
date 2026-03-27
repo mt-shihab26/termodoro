@@ -4,16 +4,24 @@ use std::thread;
 use ratatui::crossterm::event::{self, Event as TerminalEvent, KeyEventKind};
 
 use crate::event::Event;
+use crate::{log_error, log_warn};
 
 pub fn spawn(sender: Sender<Event>) {
     thread::spawn(move || {
         loop {
-            if let Ok(TerminalEvent::Key(key)) = event::read() {
-                if key.kind == KeyEventKind::Press {
-                    if sender.send(Event::Key(key)).is_err() {
-                        break;
+            match event::read() {
+                Err(e) => {
+                    log_warn!("term worker: failed to read terminal event: {e}");
+                }
+                Ok(TerminalEvent::Key(key)) => {
+                    if key.kind == KeyEventKind::Press {
+                        if sender.send(Event::Key(key)).is_err() {
+                            log_error!("term worker: event channel closed, stopping");
+                            break;
+                        }
                     }
                 }
+                Ok(_) => {}
             }
         }
     });
