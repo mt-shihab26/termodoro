@@ -1,5 +1,6 @@
 use std::io::Result;
 use std::sync::mpsc;
+use std::time::Instant;
 
 use ratatui::Frame;
 use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind};
@@ -21,6 +22,9 @@ pub struct App {
     selected: usize,
     tabs: Vec<Box<dyn Tab>>,
     events: mpsc::Receiver<AppEvent>,
+    fps: f64,
+    frame_count: u32,
+    fps_timer: Instant,
 }
 
 impl App {
@@ -36,6 +40,9 @@ impl App {
             selected: 0,
             tabs,
             events,
+            fps: 0.0,
+            frame_count: 0,
+            fps_timer: Instant::now(),
         }
     }
 
@@ -45,7 +52,10 @@ impl App {
         while self.alive {
             terminal.draw(|frame| self.render_frame(frame))?;
 
+            self.update_fps();
+
             match self.events.recv() {
+                Err(_) => self.alive = false,
                 Ok(AppEvent::Term(Event::Key(key))) if key.kind == KeyEventKind::Press => match key.code {
                     KeyCode::Char('q') => self.alive = false,
                     KeyCode::Tab => self.selected = (self.selected + 1) % self.tabs.len(),
@@ -53,7 +63,6 @@ impl App {
                 },
                 Ok(AppEvent::Tick) => {}
                 Ok(_) => {}
-                Err(_) => self.alive = false,
             }
         }
 
@@ -61,13 +70,26 @@ impl App {
         Ok(())
     }
 
+    fn update_fps(&mut self) {
+        self.frame_count += 1;
+        let elapsed = self.fps_timer.elapsed().as_secs_f64();
+        if elapsed >= 1.0 {
+            self.fps = self.frame_count as f64 / elapsed;
+            self.frame_count = 0;
+            self.fps_timer = Instant::now();
+        }
+    }
+
     fn render_frame(&mut self, frame: &mut Frame) {
         let [top, tabs_area, main] =
             Layout::vertical([Constraint::Length(1), Constraint::Length(1), Constraint::Fill(1)]).areas(frame.area());
 
-        Line::from_iter([Span::from("Orivo").bold().fg(Color::Green)])
-            .centered()
-            .render(top, frame.buffer_mut());
+        Line::from_iter([
+            Span::from("Orivo").bold().fg(Color::Green),
+            Span::from(format!("  {:.0} fps", self.fps)).fg(Color::DarkGray),
+        ])
+        .centered()
+        .render(top, frame.buffer_mut());
 
         let highlight_color = self.tabs[self.selected].color();
         let names: Vec<&str> = self.tabs.iter().map(|t| t.name()).collect();

@@ -86,8 +86,13 @@ pub fn spawn(sender: Sender<AppEvent>) -> Arc<Mutex<TimerState>> {
     thread::spawn(move || {
         loop {
             thread::sleep(Duration::from_secs(1));
-            thread_state.lock().unwrap().tick();
-            sender.send(AppEvent::Tick).unwrap();
+            let mut state = thread_state.lock().unwrap();
+            state.tick();
+            let running = state.running;
+            drop(state);
+            if running {
+                let _ = sender.send(AppEvent::Tick);
+            }
         }
     });
 
