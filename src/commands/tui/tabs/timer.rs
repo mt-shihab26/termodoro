@@ -14,6 +14,7 @@ use crate::commands::tui::tabs::Tab;
 use crate::domains::timer::{LONG_BREAK_INTERVAL, SHOW_MILLIS, TimerState};
 use crate::event::Event;
 use crate::workers::timer_worker;
+use crate::{log_error, log_warn};
 
 pub const COLOR: Color = Color::Yellow;
 
