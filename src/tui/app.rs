@@ -9,6 +9,7 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Tabs, Widget};
 use ratatui::{DefaultTerminal, Frame};
 
+use super::tabs::Event as TabEvent;
 use super::tabs::timer::{self, Timer};
 use super::tabs::todos::{self, Todos};
 
@@ -52,6 +53,8 @@ impl App {
                     _ => {
                         if self.selected == 1 {
                             self.timer.handle(key);
+
+                            let _ = TabEvent::handle(&mut (&mut self.timer), key);
                         }
                     }
                 },

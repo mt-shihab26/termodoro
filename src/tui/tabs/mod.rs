@@ -5,6 +5,6 @@ use std::io::Result;
 
 use ratatui::crossterm::event::KeyEvent;
 
-trait Event {
+pub trait Event {
     fn handle(&mut self, key: KeyEvent) -> Result<()>;
 }
