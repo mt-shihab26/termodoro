@@ -47,8 +47,9 @@ impl App {
         let mut terminal = ratatui::init();
 
         while self.alive {
-            terminal.draw(|frame| self.render_frame(frame))?;
             self.fps.tick();
+
+            terminal.draw(|frame| self.render_frame(frame))?;
 
             match self.events.recv() {
                 Err(_) => self.alive = false,
