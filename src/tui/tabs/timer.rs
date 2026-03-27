@@ -1,4 +1,7 @@
 use std::io::Result;
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
 
 use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
@@ -42,24 +45,15 @@ impl Phase {
     }
 }
 
-pub struct Timer {
+struct TimerInner {
     phase: Phase,
     seconds: u64,
     sessions: u32,
     running: bool,
 }
 
-impl Timer {
-    pub fn new() -> Self {
-        Self {
-            phase: Phase::Work,
-            seconds: WORK_DURATION,
-            sessions: 0,
-            running: false,
-        }
-    }
-
-    pub fn tick(&mut self) {
+impl TimerInner {
+    fn tick(&mut self) {
         if !self.running {
             return;
         }
@@ -89,28 +83,51 @@ impl Timer {
     }
 }
 
+pub struct Timer {
+    inner: Arc<Mutex<TimerInner>>,
+}
+
+impl Timer {
+    pub fn new() -> Self {
+        let inner = Arc::new(Mutex::new(TimerInner {
+            phase: Phase::Work,
+            seconds: WORK_DURATION,
+            sessions: 0,
+            running: false,
+        }));
+
+        let thread_inner = Arc::clone(&inner);
+        thread::spawn(move || loop {
+            thread::sleep(Duration::from_secs(1));
+            thread_inner.lock().unwrap().tick();
+        });
+
+        Self { inner }
+    }
+}
+
 impl Tab for Timer {
     fn name(&self) -> &str {
         "Timer"
     }
+
     fn color(&self) -> Color {
         COLOR
     }
-
-    fn tick(&mut self) { self.tick(); }
 
     fn render(&self, frame: &mut Frame, area: Rect) {
         frame.render_widget(self, area);
     }
 
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
+        let mut s = self.inner.lock().unwrap();
         match key.code {
-            KeyCode::Char(' ') => self.running = !self.running,
+            KeyCode::Char(' ') => s.running = !s.running,
             KeyCode::Char('r') => {
-                self.seconds = self.phase.duration();
-                self.running = false;
+                s.seconds = s.phase.duration();
+                s.running = false;
             }
-            KeyCode::Char('n') => self.advance(),
+            KeyCode::Char('n') => s.advance(),
             _ => {}
         }
         Ok(())
@@ -119,17 +136,22 @@ impl Tab for Timer {
 
 impl Widget for &Timer {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let mins = self.seconds / 60;
-        let secs = self.seconds % 60;
+        let s = self.inner.lock().unwrap();
 
-        let status = if self.running { "Running" } else { "Paused" };
-        let phase = self.phase.label();
+        let mins = s.seconds / 60;
+        let secs = s.seconds % 60;
+
+        let status = if s.running { "Running" } else { "Paused" };
+        let phase = s.phase.label().to_string();
         let time = format!("{:02}:{:02}", mins, secs);
-        let session = format!("Session {} / {}", self.sessions + 1, LONG_BREAK_INTERVAL);
+        let session = format!("Session {} / {}", s.sessions + 1, LONG_BREAK_INTERVAL);
         let hint = "[Space] Toggle   [R] Reset   [N] Skip";
 
+        drop(s);
+
         let [_, center, _] =
-            Layout::vertical([Constraint::Fill(1), Constraint::Length(10), Constraint::Fill(1)]).areas(area);
+            Layout::vertical([Constraint::Fill(1), Constraint::Length(10), Constraint::Fill(1)])
+                .areas(area);
 
         let block = Block::bordered().fg(COLOR);
         let inner = block.inner(center);
@@ -161,7 +183,11 @@ impl Widget for &Timer {
             .render(time_row, buf);
         Paragraph::new(status)
             .alignment(Alignment::Center)
-            .fg(if self.running { Color::Green } else { Color::DarkGray })
+            .fg(if status == "Running" {
+                Color::Green
+            } else {
+                Color::DarkGray
+            })
             .render(status_row, buf);
         Paragraph::new(hint)
             .alignment(Alignment::Center)

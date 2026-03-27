@@ -12,5 +12,4 @@ pub trait Tab {
     fn color(&self) -> Color;
     fn render(&self, frame: &mut Frame, area: Rect);
     fn handle(&mut self, key: KeyEvent) -> Result<()>;
-    fn tick(&mut self) {}
 }

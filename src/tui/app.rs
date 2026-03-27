@@ -44,7 +44,7 @@ impl App {
     }
 
     fn handle_events(&mut self) -> Result<()> {
-        if event::poll(Duration::from_secs(1))? {
+        if event::poll(Duration::from_millis(33))? {
             match event::read()? {
                 Event::Key(key) if key.kind == KeyEventKind::Press => match key.code {
                     KeyCode::Char('q') => self.alive = false,
@@ -52,10 +52,6 @@ impl App {
                     _ => self.tabs[self.selected].handle(key)?,
                 },
                 _ => {}
-            }
-        } else {
-            for tab in &mut self.tabs {
-                tab.tick();
             }
         }
         Ok(())
