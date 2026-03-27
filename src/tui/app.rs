@@ -30,24 +30,24 @@ pub struct App {
 
 impl App {
     pub fn new() -> Self {
-        let (tx, rx) = mpsc::channel::<AppEvent>();
+        let (sender, events) = mpsc::channel::<AppEvent>();
 
-        let key_tx = tx.clone();
+        let key_sender = sender.clone();
         thread::spawn(move || {
             loop {
                 if let Ok(Event::Key(key)) = event::read() {
-                    if key_tx.send(AppEvent::Key(key)).is_err() {
+                    if key_sender.send(AppEvent::Key(key)).is_err() {
                         break;
                     }
                 }
             }
         });
 
-        let tick_tx = tx;
+        let tick_sender = sender;
         let tabs: Vec<Box<dyn Tab>> = vec![
             Box::new(Todos),
             Box::new(Timer::new(move || {
-                let _ = tick_tx.send(AppEvent::Tick);
+                let _ = tick_sender.send(AppEvent::Tick);
             })),
         ];
 
@@ -55,7 +55,7 @@ impl App {
             alive: true,
             selected: 0,
             tabs,
-            rx,
+            events,
         }
     }
 
@@ -65,7 +65,7 @@ impl App {
         while self.alive {
             terminal.draw(|frame| self.render_frame(frame))?;
 
-            match self.rx.recv() {
+            match self.events.recv() {
                 Ok(AppEvent::Key(key)) if key.kind == KeyEventKind::Press => match key.code {
                     KeyCode::Char('q') => self.alive = false,
                     KeyCode::Tab => self.selected = (self.selected + 1) % self.tabs.len(),
