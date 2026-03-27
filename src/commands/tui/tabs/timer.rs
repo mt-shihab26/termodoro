@@ -39,27 +39,12 @@ impl Tab for Timer {
     fn render(&self, frame: &mut Frame, area: Rect) {
         let s = self.state.lock().unwrap();
 
-        let mins = s.millis / 60000;
-        let secs = (s.millis / 1000) % 60;
-        let ms = (s.millis % 1000) / 10;
-
-        let status = if s.running { "Running" } else { "Paused" };
-        let phase = s.phase.label().to_string();
-        let time = if SHOW_MILLIS {
-            format!("{:02}:{:02}.{:02}", mins, secs, ms)
-        } else {
-            format!("{:02}:{:02}", mins, secs)
-        };
-        let session = format!("Session {} / {}", s.sessions + 1, LONG_BREAK_INTERVAL);
-        let running = s.running;
-
-        drop(s);
-
         let buf = frame.buffer_mut();
-        let hint = "[Space] Toggle   [R] Reset   [N] Skip";
 
         let block = Block::bordered().fg(COLOR);
+
         let inner = block.inner(area);
+
         block.render(area, buf);
 
         let [phase_row, session_row, time_row, status_row, _, hint_row] = Layout::vertical([
@@ -72,28 +57,40 @@ impl Tab for Timer {
         ])
         .areas(inner);
 
-        Paragraph::new(phase)
+        Paragraph::new(s.phase.label().to_string())
             .alignment(Alignment::Center)
             .bold()
             .fg(COLOR)
             .render(phase_row, buf);
-        Paragraph::new(session)
+
+        Paragraph::new(format!("Session {} / {}", s.sessions + 1, LONG_BREAK_INTERVAL))
             .alignment(Alignment::Center)
             .fg(Color::DarkGray)
             .render(session_row, buf);
-        Paragraph::new(time)
+
+        let (mins, secs, ms) = s.time_parts();
+
+        Paragraph::new(if SHOW_MILLIS {
+            format!("{:02}:{:02}.{:02}", mins, secs, ms)
+        } else {
+            format!("{:02}:{:02}", mins, secs)
+        })
+        .alignment(Alignment::Center)
+        .bold()
+        .fg(COLOR)
+        .render(time_row, buf);
+
+        Paragraph::new(if s.running { "Running" } else { "Paused" })
             .alignment(Alignment::Center)
-            .bold()
-            .fg(COLOR)
-            .render(time_row, buf);
-        Paragraph::new(status)
-            .alignment(Alignment::Center)
-            .fg(if running { Color::Green } else { Color::DarkGray })
+            .fg(if s.running { Color::Green } else { Color::DarkGray })
             .render(status_row, buf);
-        Paragraph::new(hint)
+
+        Paragraph::new("[Space] Toggle   [R] Reset   [N] Skip")
             .alignment(Alignment::Center)
             .fg(Color::DarkGray)
             .render(hint_row, buf);
+
+        drop(s);
     }
 
     fn handle(&mut self, key: KeyEvent) -> Result<()> {

@@ -49,4 +49,11 @@ impl TimerState {
         self.millis = self.phase.duration();
         self.running = false;
     }
+
+    pub fn time_parts(&self) -> (u64, u64, u64) {
+        let mins = self.millis / 60000;
+        let secs = (self.millis / 1000) % 60;
+        let cs = (self.millis % 1000) / 10;
+        (mins, secs, cs)
+    }
 }
