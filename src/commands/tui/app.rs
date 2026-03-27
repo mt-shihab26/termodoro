@@ -36,7 +36,7 @@ impl App {
 
         Self {
             alive: true,
-            selected: 0,
+            selected: 1,
             tabs,
             events,
             fps: Fps::new(),

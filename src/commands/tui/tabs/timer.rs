@@ -46,11 +46,13 @@ impl Tab for Timer {
         let inner = block.inner(area);
         block.render(area, buf);
 
-        let [session_row, _, phase_row, time_row, status_row, _, hint_row] = Layout::vertical([
+        let [session_row, _, phase_row, _, time_row, _, status_row, _, hint_row] = Layout::vertical([
             Constraint::Length(1),
             Constraint::Fill(1),
             Constraint::Length(1),
+            Constraint::Length(1),
             Constraint::Length(8),
+            Constraint::Length(1),
             Constraint::Length(1),
             Constraint::Fill(1),
             Constraint::Length(1),
