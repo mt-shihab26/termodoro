@@ -10,18 +10,18 @@ use ratatui::widgets::{Block, Paragraph, Widget};
 
 use crate::tui::event::AppEvent;
 use crate::tui::tabs::Tab;
-use crate::tui::workers::timer_worker::{self, LONG_BREAK_INTERVAL, TimerWorker};
+use crate::tui::workers::timer_worker::{self, LONG_BREAK_INTERVAL, TimerState};
 
 pub const COLOR: Color = Color::Yellow;
 
 pub struct Timer {
-    worker: Arc<Mutex<TimerWorker>>,
+    state: Arc<Mutex<TimerState>>,
 }
 
 impl Timer {
     pub fn new(sender: Sender<AppEvent>) -> Self {
         Self {
-            worker: timer_worker::spawn(sender),
+            state: timer_worker::spawn(sender),
         }
     }
 }
@@ -36,7 +36,7 @@ impl Tab for Timer {
     }
 
     fn render(&self, frame: &mut Frame, area: Rect) {
-        let s = self.worker.lock().unwrap();
+        let s = self.state.lock().unwrap();
 
         let mins = s.seconds / 60;
         let secs = s.seconds % 60;
@@ -91,7 +91,7 @@ impl Tab for Timer {
     }
 
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
-        let mut s = self.worker.lock().unwrap();
+        let mut s = self.state.lock().unwrap();
         match key.code {
             KeyCode::Char(' ') => s.running = !s.running,
             KeyCode::Char('r') => {

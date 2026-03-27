@@ -35,14 +35,14 @@ impl Phase {
     }
 }
 
-pub struct TimerWorker {
+pub struct TimerState {
     pub phase: Phase,
     pub seconds: u64,
     pub sessions: u32,
     pub running: bool,
 }
 
-impl TimerWorker {
+impl TimerState {
     pub fn tick(&mut self) {
         if !self.running {
             return;
@@ -73,8 +73,8 @@ impl TimerWorker {
     }
 }
 
-pub fn spawn(sender: Sender<AppEvent>) -> Arc<Mutex<TimerWorker>> {
-    let state = Arc::new(Mutex::new(TimerWorker {
+pub fn spawn(sender: Sender<AppEvent>) -> Arc<Mutex<TimerState>> {
+    let state = Arc::new(Mutex::new(TimerState {
         phase: Phase::Work,
         seconds: WORK_DURATION,
         sessions: 0,
