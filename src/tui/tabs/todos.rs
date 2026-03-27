@@ -1,11 +1,10 @@
 use std::io::Result;
 
 use ratatui::Frame;
-use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::KeyEvent;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Stylize};
-use ratatui::widgets::{Block, Paragraph, Widget};
+use ratatui::widgets::{Block, Paragraph};
 
 use crate::tui::tabs::Tab;
 
@@ -22,20 +21,16 @@ impl Tab for Todos {
     }
 
     fn render(&self, frame: &mut Frame, area: Rect) {
-        frame.render_widget(self, area);
+        frame.render_widget(
+            Paragraph::new("Great terminal interfaces start with a single widget.")
+                .alignment(Alignment::Center)
+                .fg(COLOR)
+                .block(Block::bordered().fg(COLOR)),
+            area,
+        );
     }
 
     fn handle(&mut self, _key: KeyEvent) -> Result<()> {
         Ok(())
-    }
-}
-
-impl Widget for &Todos {
-    fn render(self, area: Rect, buf: &mut Buffer) {
-        Paragraph::new("Great terminal interfaces start with a single widget.")
-            .alignment(Alignment::Center)
-            .fg(COLOR)
-            .block(Block::bordered().fg(COLOR))
-            .render(area, buf);
     }
 }
