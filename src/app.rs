@@ -8,7 +8,7 @@ use tracing::{debug, info};
 
 use crate::action::Action;
 use crate::cli::Cli;
-use crate::components::{Component, fps::FpsCounter, home::Home};
+use crate::components::{Component, fps_counter::FpsCounter, home::Home};
 use crate::config::Config;
 use crate::tui::{Event, Tui};
 
