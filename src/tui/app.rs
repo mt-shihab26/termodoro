@@ -1,6 +1,5 @@
 use std::io::Result;
 use std::sync::mpsc;
-use std::time::Instant;
 
 use ratatui::Frame;
 use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind};
@@ -12,6 +11,7 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Tabs, Widget};
 
 use super::event::AppEvent;
+use super::fps::Fps;
 use super::tabs::Tab;
 use super::tabs::timer::Timer;
 use super::tabs::todos::Todos;
@@ -22,10 +22,7 @@ pub struct App {
     selected: usize,
     tabs: Vec<Box<dyn Tab>>,
     events: mpsc::Receiver<AppEvent>,
-    fps: f64,
-    frame_count: u32,
-    total_frames: u64,
-    fps_timer: Instant,
+    fps: Fps,
 }
 
 impl App {
@@ -41,10 +38,7 @@ impl App {
             selected: 0,
             tabs,
             events,
-            fps: 0.0,
-            frame_count: 0,
-            total_frames: 0,
-            fps_timer: Instant::now(),
+            fps: Fps::new(),
         }
     }
 
@@ -54,7 +48,7 @@ impl App {
         while self.alive {
             terminal.draw(|frame| self.render_frame(frame))?;
 
-            self.update_fps();
+            self.fps.tick();
 
             match self.events.recv() {
                 Err(_) => self.alive = false,
@@ -72,24 +66,17 @@ impl App {
         Ok(())
     }
 
-    fn update_fps(&mut self) {
-        self.frame_count += 1;
-        self.total_frames += 1;
-        let elapsed = self.fps_timer.elapsed().as_secs_f64();
-        if elapsed >= 1.0 {
-            self.fps = self.frame_count as f64 / elapsed;
-            self.frame_count = 0;
-            self.fps_timer = Instant::now();
-        }
-    }
-
     fn render_frame(&mut self, frame: &mut Frame) {
         let [top, tabs_area, main] =
             Layout::vertical([Constraint::Length(1), Constraint::Length(1), Constraint::Fill(1)]).areas(frame.area());
 
         Line::from_iter([
             Span::from("Orivo").bold().fg(Color::Green),
-            Span::from(format!("  {:.0} fps  {} frames", self.fps, self.total_frames)).fg(Color::DarkGray),
+            Span::from(format!(
+                "  {:.0} fps  {} frames",
+                self.fps.per_second, self.fps.per_lifetime
+            ))
+            .fg(Color::DarkGray),
         ])
         .centered()
         .render(top, frame.buffer_mut());

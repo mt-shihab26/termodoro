@@ -1,0 +1,32 @@
+use std::time::Instant;
+
+pub struct Fps {
+    pub per_second: f64,
+    pub per_lifetime: u64,
+    frame_count_per_second: u32,
+    timer: Instant,
+}
+
+impl Fps {
+    pub fn new() -> Self {
+        Self {
+            per_second: 0.0,
+            per_lifetime: 0,
+            frame_count_per_second: 0,
+            timer: Instant::now(),
+        }
+    }
+
+    pub fn tick(&mut self) {
+        self.per_lifetime += 1;
+
+        self.frame_count_per_second += 1;
+
+        let elapsed = self.timer.elapsed().as_secs_f64();
+        if elapsed >= 1.0 {
+            self.per_second = self.frame_count_per_second as f64 / elapsed;
+            self.frame_count_per_second = 0;
+            self.timer = Instant::now();
+        }
+    }
+}
