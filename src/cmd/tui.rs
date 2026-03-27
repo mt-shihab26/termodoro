@@ -1,15 +1,19 @@
 use std::io::Result;
 
-use crate::tui::app::App;
+use crate::{cmd::Cmd, tui::app::App};
 
-fn run() -> Result<()> {
-    let mut terminal = ratatui::init();
+pub struct Tui;
 
-    let mut app = App::new(&mut terminal);
+impl Cmd for Tui {
+    fn run() -> Result<()> {
+        let mut terminal = ratatui::init();
 
-    let result = app.run();
+        let mut app = App::new(&mut terminal);
 
-    ratatui::restore();
+        let result = app.run();
 
-    result
+        ratatui::restore();
+
+        result
+    }
 }
