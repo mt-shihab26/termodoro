@@ -36,6 +36,8 @@ impl<'a> App<'a> {
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => match key.code {
                 KeyCode::Char('q') => self.alive = false,
+                KeyCode::Char('1') => self.selected_tab = 1,
+                KeyCode::Char('2') => self.selected_tab = 2,
                 _ => {}
             },
             _ => {}
@@ -56,7 +58,7 @@ fn render_frame(frame: &mut Frame, selected_tab: usize) {
     let [top, main] = frame.area().layout(&layout);
 
     let title = Line::from_iter([
-        Span::from("Tabs Widget").bold(),
+        Span::from("Orivo").bold(),
         Span::from(" (Press 'q' to quit, arrow keys to navigate tabs)"),
     ]);
 
@@ -67,7 +69,7 @@ fn render_frame(frame: &mut Frame, selected_tab: usize) {
 }
 
 fn render_tabs(frame: &mut Frame, area: Rect, selected_tab: usize) {
-    let tabs = Tabs::new(vec!["Tab1", "Tab2", "Tab3"])
+    let tabs = Tabs::new(vec!["Todos", "Timer"])
         .style(Color::White)
         .highlight_style(Style::default().magenta().on_black().bold())
         .select(selected_tab)
@@ -81,7 +83,6 @@ fn render_content(frame: &mut Frame, area: Rect, selected_tab: usize) {
     let text = match selected_tab {
         0 => "Great terminal interfaces start with a single widget.".into(),
         1 => "In the terminal, we don't just render widgets; we create dreams.".into(),
-        2 => "Render boldly, style with purpose.".bold(),
         _ => unreachable!(),
     };
 
