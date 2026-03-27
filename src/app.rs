@@ -1,10 +1,12 @@
 use std::io::Result;
 
-use ratatui::Frame;
+use ratatui::DefaultTerminal;
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
-use ratatui::style::Style;
-use ratatui::widgets::{Block, Tabs};
-use ratatui::{DefaultTerminal, symbols};
+use ratatui::layout::{Alignment, Constraint, Layout, Offset, Rect};
+use ratatui::style::{Color, Style, Stylize};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Block, Paragraph, Tabs};
+use ratatui::{Frame, symbols};
 
 pub struct App<'a> {
     alive: bool,
@@ -18,8 +20,8 @@ impl<'a> App<'a> {
 
     pub fn run(&mut self) -> Result<()> {
         while self.alive {
-            self.handle_events()?;
             self.render_pixels()?;
+            self.handle_events()?;
         }
 
         Ok(())
@@ -43,14 +45,43 @@ impl<'a> App<'a> {
     }
 
     fn render_frame(frame: &mut Frame) {
-        let tabs = Tabs::new(vec!["Tab1", "Tab2", "Tab3", "Tab4"])
-            .block(Block::bordered().title("Tabs"))
-            .style(Style::default().white())
-            .highlight_style(Style::default().yellow())
-            .select(2)
-            .divider(symbols::DOT)
-            .padding("->", "<-");
+        let layout = Layout::vertical([Constraint::Length(1), Constraint::Fill(1)]).spacing(1);
 
-        frame.render_widget(tabs, frame.area());
+        let [top, main] = frame.area().layout(&layout);
+
+        let title = Line::from_iter([
+            Span::from("Tabs Widget").bold(),
+            Span::from(" (Press 'q' to quit, arrow keys to navigate tabs)"),
+        ]);
+
+        frame.render_widget(title.centered(), top);
+
+        let selected_tab = 0;
+
+        render_content(frame, main, selected_tab);
+        render_tabs(frame, main + Offset::new(1, 0), selected_tab);
     }
+}
+
+fn render_tabs(frame: &mut Frame, area: Rect, selected_tab: usize) {
+    let tabs = Tabs::new(vec!["Tab1", "Tab2", "Tab3"])
+        .style(Color::White)
+        .highlight_style(Style::default().magenta().on_black().bold())
+        .select(selected_tab)
+        .divider(symbols::DOT)
+        .padding(" ", " ");
+    frame.render_widget(tabs, area);
+}
+
+fn render_content(frame: &mut Frame, area: Rect, selected_tab: usize) {
+    let text = match selected_tab {
+        0 => "Great terminal interfaces start with a single widget.".into(),
+        1 => "In the terminal, we don't just render widgets; we create dreams.".into(),
+        2 => "Render boldly, style with purpose.".bold(),
+        _ => unreachable!(),
+    };
+    let block = Paragraph::new(text)
+        .alignment(Alignment::Center)
+        .block(Block::bordered());
+    frame.render_widget(block, area);
 }
