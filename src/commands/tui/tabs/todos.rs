@@ -14,7 +14,7 @@ pub struct Todos;
 
 impl Tab for Todos {
     fn name(&self) -> &str {
-        "Todos"
+        "Todos [1]"
     }
     fn color(&self) -> Color {
         COLOR

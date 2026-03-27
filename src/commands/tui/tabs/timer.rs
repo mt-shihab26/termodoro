@@ -41,7 +41,7 @@ impl Timer {
 
 impl Tab for Timer {
     fn name(&self) -> &str {
-        "Timer"
+        "Timer [2]"
     }
 
     fn color(&self) -> Color {
