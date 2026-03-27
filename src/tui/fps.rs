@@ -3,6 +3,7 @@ use std::time::Instant;
 pub struct Fps {
     pub per_second: f64,
     pub per_lifetime: u64,
+    pub visible: bool,
     frame_count_per_second: u32,
     interval_start: Instant,
 }
@@ -12,6 +13,7 @@ impl Fps {
         Self {
             per_second: 0.0,
             per_lifetime: 0,
+            visible: true,
             frame_count_per_second: 0,
             interval_start: Instant::now(),
         }

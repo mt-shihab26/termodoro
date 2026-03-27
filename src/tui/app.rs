@@ -54,6 +54,7 @@ impl App {
                 Err(_) => self.alive = false,
                 Ok(AppEvent::Term(Event::Key(key))) if key.kind == KeyEventKind::Press => match key.code {
                     KeyCode::Char('q') => self.alive = false,
+                    KeyCode::Char('f') => self.fps.visible = !self.fps.visible,
                     KeyCode::Tab => self.selected = (self.selected + 1) % self.tabs.len(),
                     _ => self.tabs[self.selected].handle(key)?,
                 },
@@ -72,11 +73,15 @@ impl App {
 
         Line::from_iter([
             Span::from("Orivo").bold().fg(Color::Green),
-            Span::from(format!(
-                "  {:.0} fps  {} frames",
-                self.fps.per_second, self.fps.per_lifetime
-            ))
-            .fg(Color::DarkGray),
+            if self.fps.visible {
+                Span::from(format!(
+                    "  {:.0} fps  {} frames",
+                    self.fps.per_second, self.fps.per_lifetime
+                ))
+                .fg(Color::DarkGray)
+            } else {
+                Span::raw("")
+            },
         ])
         .centered()
         .render(top, frame.buffer_mut());
