@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::io::Result;
 
 use super::Cmd;
@@ -8,10 +7,10 @@ pub struct Help {
 }
 
 impl Help {
-    pub fn new(cmds: &HashMap<&str, Box<dyn Cmd>>) -> Self {
-        let lines: Vec<Vec<String>> = cmds
-            .values()
-            .map(|c| c.help().iter().map(|s| s.to_string()).collect())
+    pub fn new(cmds: &Vec<(&str, Box<dyn Cmd>)>) -> Self {
+        let lines = cmds
+            .iter()
+            .map(|(_, c)| c.help().iter().map(|s| s.to_string()).collect())
             .collect();
 
         Self { lines }
