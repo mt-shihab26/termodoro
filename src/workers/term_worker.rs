@@ -1,10 +1,8 @@
-use std::sync::mpsc::Sender;
-use std::thread;
+use std::{sync::mpsc::Sender, thread};
 
 use ratatui::crossterm::event::{self, Event as TerminalEvent, KeyEventKind};
 
-use crate::event::Event;
-use crate::{log_error, log_warn};
+use crate::{event::Event, log_error, log_warn};
 
 pub fn spawn(sender: Sender<Event>) {
     thread::spawn(move || {

@@ -1,28 +1,23 @@
 use std::io::{Error, ErrorKind, Result};
-use std::sync::mpsc;
+use std::sync::mpsc::{self, Receiver};
 
 use ratatui::crossterm::event::KeyCode;
 use ratatui::layout::{Alignment, Constraint, Layout};
-use ratatui::style::Color;
-use ratatui::style::{Style, Stylize};
+use ratatui::style::{Color, Style, Stylize};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Paragraph, Widget};
 use ratatui::{DefaultTerminal, Frame, init, restore};
 
-use crate::event::Event;
-use crate::log_error;
-use crate::workers::term_worker;
+use crate::{event::Event, log_error, workers::term_worker};
 
-use super::fps::Fps;
-use super::tabs::Tab;
-use super::tabs::timer::Timer;
-use super::tabs::todos::Todos;
+use super::tabs::{timer::Timer, todos::Todos};
+use super::{fps::Fps, tabs::Tab};
 
 pub struct App {
     alive: bool,
     selected: usize,
     tabs: Vec<Box<dyn Tab>>,
-    events: mpsc::Receiver<Event>,
+    events: Receiver<Event>,
     fps: Fps,
 }
 

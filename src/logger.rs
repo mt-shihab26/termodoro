@@ -1,8 +1,5 @@
-use std::env;
 use std::fs::{self, OpenOptions};
-use std::io::Write;
-use std::path::PathBuf;
-use std::time::SystemTime;
+use std::{env, io::Write, path::PathBuf, time::SystemTime};
 
 fn log_path() -> PathBuf {
     let home = env::var("HOME").unwrap_or_else(|_| ".".to_string());

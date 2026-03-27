@@ -3,9 +3,7 @@ pub mod todos;
 
 use std::io::Result;
 
-use ratatui::crossterm::event::KeyEvent;
-use ratatui::style::Color;
-use ratatui::{Frame, layout::Rect};
+use ratatui::{Frame, crossterm::event::KeyEvent, layout::Rect, style::Color};
 
 pub trait Tab {
     fn name(&self) -> &str;
