@@ -11,11 +11,16 @@ use ratatui::{Frame, symbols};
 pub struct App<'a> {
     alive: bool,
     terminal: &'a mut DefaultTerminal,
+    selected_tab: usize,
 }
 
 impl<'a> App<'a> {
     pub fn new(terminal: &'a mut DefaultTerminal) -> Self {
-        Self { alive: true, terminal }
+        Self {
+            alive: true,
+            terminal,
+            selected_tab: 0,
+        }
     }
 
     pub fn run(&mut self) -> Result<()> {
@@ -39,28 +44,26 @@ impl<'a> App<'a> {
     }
 
     fn render_pixels(&mut self) -> Result<()> {
-        self.terminal.draw(|frame| Self::render_frame(frame))?;
+        self.terminal.draw(|frame| render_frame(frame, self.selected_tab))?;
 
         Ok(())
     }
+}
 
-    fn render_frame(frame: &mut Frame) {
-        let layout = Layout::vertical([Constraint::Length(1), Constraint::Fill(1)]).spacing(1);
+fn render_frame(frame: &mut Frame, selected_tab: usize) {
+    let layout = Layout::vertical([Constraint::Length(1), Constraint::Fill(1)]).spacing(1);
 
-        let [top, main] = frame.area().layout(&layout);
+    let [top, main] = frame.area().layout(&layout);
 
-        let title = Line::from_iter([
-            Span::from("Tabs Widget").bold(),
-            Span::from(" (Press 'q' to quit, arrow keys to navigate tabs)"),
-        ]);
+    let title = Line::from_iter([
+        Span::from("Tabs Widget").bold(),
+        Span::from(" (Press 'q' to quit, arrow keys to navigate tabs)"),
+    ]);
 
-        frame.render_widget(title.centered(), top);
+    frame.render_widget(title.centered(), top);
 
-        let selected_tab = 0;
-
-        render_tabs(frame, main + Offset::new(1, 0), selected_tab);
-        render_content(frame, main, selected_tab);
-    }
+    render_content(frame, main, selected_tab);
+    render_tabs(frame, main + Offset::new(1, 0), selected_tab);
 }
 
 fn render_tabs(frame: &mut Frame, area: Rect, selected_tab: usize) {
