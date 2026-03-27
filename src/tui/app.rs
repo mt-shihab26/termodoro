@@ -24,6 +24,7 @@ pub struct App {
     events: mpsc::Receiver<AppEvent>,
     fps: f64,
     frame_count: u32,
+    total_frames: u64,
     fps_timer: Instant,
 }
 
@@ -42,6 +43,7 @@ impl App {
             events,
             fps: 0.0,
             frame_count: 0,
+            total_frames: 0,
             fps_timer: Instant::now(),
         }
     }
@@ -72,6 +74,7 @@ impl App {
 
     fn update_fps(&mut self) {
         self.frame_count += 1;
+        self.total_frames += 1;
         let elapsed = self.fps_timer.elapsed().as_secs_f64();
         if elapsed >= 1.0 {
             self.fps = self.frame_count as f64 / elapsed;
@@ -86,7 +89,7 @@ impl App {
 
         Line::from_iter([
             Span::from("Orivo").bold().fg(Color::Green),
-            Span::from(format!("  {:.0} fps", self.fps)).fg(Color::DarkGray),
+            Span::from(format!("  {:.0} fps  {} frames", self.fps, self.total_frames)).fg(Color::DarkGray),
         ])
         .centered()
         .render(top, frame.buffer_mut());
