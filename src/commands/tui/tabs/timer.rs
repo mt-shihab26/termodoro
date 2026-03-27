@@ -47,22 +47,15 @@ impl Tab for Timer {
 
         block.render(area, buf);
 
-        let [_, content, _, hint_row] = Layout::vertical([
-            Constraint::Fill(1),
-            Constraint::Length(7),
+        let [phase_row, session_row, time_row, status_row, hint_row] = Layout::vertical([
             Constraint::Fill(1),
             Constraint::Length(1),
+            Constraint::Length(1),
+            Constraint::Length(1),
+            Constraint::Length(1),
+            Constraint::Fill(1),
         ])
         .areas(inner);
-
-        let [phase_row, session_row, time_row, status_row, _] = Layout::vertical([
-            Constraint::Length(1),
-            Constraint::Length(1),
-            Constraint::Length(3),
-            Constraint::Length(1),
-            Constraint::Fill(1),
-        ])
-        .areas(content);
 
         Paragraph::new(s.phase.label().to_string())
             .alignment(Alignment::Center)
