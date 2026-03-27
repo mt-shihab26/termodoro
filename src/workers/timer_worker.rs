@@ -9,6 +9,7 @@ pub const WORK_DURATION: u64 = 25 * 60 * 100;
 pub const BREAK_DURATION: u64 = 5 * 60 * 100;
 pub const LONG_BREAK_DURATION: u64 = 15 * 60 * 100;
 pub const LONG_BREAK_INTERVAL: u32 = 4;
+pub const SHOW_MILLIS: bool = false;
 
 #[derive(Clone, PartialEq)]
 pub enum Phase {
@@ -47,8 +48,11 @@ impl TimerState {
         if !self.running {
             return;
         }
-        if self.millis > 0 {
-            self.millis -= 1;
+
+        let step: u64 = if SHOW_MILLIS { 1 } else { 100 };
+
+        if self.millis >= step {
+            self.millis -= step;
         } else {
             self.advance();
         }
@@ -85,7 +89,8 @@ pub fn spawn(sender: Sender<Event>) -> Arc<Mutex<TimerState>> {
 
     thread::spawn(move || {
         loop {
-            thread::sleep(Duration::from_millis(10));
+            let interval = if SHOW_MILLIS { 10 } else { 1000 };
+            thread::sleep(Duration::from_millis(interval));
             let mut state = thread_state.lock().unwrap();
             state.tick();
             let running = state.running;

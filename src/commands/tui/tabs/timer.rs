@@ -10,7 +10,7 @@ use ratatui::widgets::{Block, Paragraph, Widget};
 
 use crate::commands::tui::tabs::Tab;
 use crate::event::Event;
-use crate::workers::timer_worker::{self, LONG_BREAK_INTERVAL, TimerState};
+use crate::workers::timer_worker::{self, LONG_BREAK_INTERVAL, SHOW_MILLIS, TimerState};
 
 pub const COLOR: Color = Color::Yellow;
 
@@ -44,7 +44,11 @@ impl Tab for Timer {
 
         let status = if s.running { "Running" } else { "Paused" };
         let phase = s.phase.label().to_string();
-        let time = format!("{:02}:{:02}.{:02}", mins, secs, ms);
+        let time = if SHOW_MILLIS {
+            format!("{:02}:{:02}.{:02}", mins, secs, ms)
+        } else {
+            format!("{:02}:{:02}", mins, secs)
+        };
         let session = format!("Session {} / {}", s.sessions + 1, LONG_BREAK_INTERVAL);
         let running = s.running;
 
