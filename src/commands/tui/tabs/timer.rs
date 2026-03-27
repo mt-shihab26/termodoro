@@ -11,12 +11,10 @@ use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_big_text::{BigText, PixelSize};
 
 use crate::commands::tui::tabs::Tab;
-use crate::domains::timer::{LONG_BREAK_INTERVAL, SHOW_MILLIS, TimerState};
+use crate::domains::timer::{LONG_BREAK_INTERVAL, Phase, SHOW_MILLIS, TimerState};
 use crate::event::Event;
 use crate::workers::timer_worker;
 use crate::{log_error, log_warn};
-
-pub const COLOR: Color = Color::Yellow;
 
 pub struct Timer {
     state: Arc<Mutex<TimerState>>,
@@ -45,7 +43,7 @@ impl Tab for Timer {
     }
 
     fn color(&self) -> Color {
-        COLOR
+        Phase::Work.color()
     }
 
     fn render(&self, frame: &mut Frame, area: Rect) {
@@ -59,9 +57,10 @@ impl Tab for Timer {
             }
         };
 
+        let color = s.phase.color();
         let buf = frame.buffer_mut();
 
-        let block = Block::bordered().fg(COLOR);
+        let block = Block::bordered().fg(self.color());
         let inner = block.inner(area);
         block.render(area, buf);
 
@@ -86,7 +85,7 @@ impl Tab for Timer {
         Paragraph::new(s.phase.label().to_string())
             .centered()
             .bold()
-            .fg(COLOR)
+            .fg(color)
             .render(phase_row, buf);
 
         let (mins, secs, ms) = s.time_parts();
@@ -99,7 +98,7 @@ impl Tab for Timer {
 
         BigText::builder()
             .pixel_size(PixelSize::Full)
-            .style(Style::new().fg(COLOR).bold())
+            .style(Style::new().fg(color).bold())
             .lines(vec![time.as_str().into()])
             .centered()
             .build()

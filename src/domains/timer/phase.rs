@@ -1,3 +1,5 @@
+use ratatui::style::Color;
+
 use super::config::{BREAK_DURATION, LONG_BREAK_DURATION, WORK_DURATION};
 
 #[derive(Clone, PartialEq)]
@@ -13,6 +15,14 @@ impl Phase {
             Phase::Work => "Work Session",
             Phase::Break => "Short Break",
             Phase::LongBreak => "Long Break",
+        }
+    }
+
+    pub fn color(&self) -> Color {
+        match self {
+            Phase::Work => Color::Red,
+            Phase::Break => Color::Green,
+            Phase::LongBreak => Color::Cyan,
         }
     }
 
