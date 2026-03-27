@@ -87,7 +87,7 @@ impl Timer {
     }
 }
 
-impl Event for &mut Timer {
+impl Event for Timer {
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
         match key.code {
             KeyCode::Char(' ') => {

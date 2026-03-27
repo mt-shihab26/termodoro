@@ -52,9 +52,7 @@ impl App {
                     KeyCode::Char('2') => self.selected = 1,
                     _ => {
                         if self.selected == 1 {
-                            self.timer.handle(key);
-
-                            let _ = TabEvent::handle(&mut (&mut self.timer), key);
+                            self.timer.handle(key)?;
                         }
                     }
                 },
