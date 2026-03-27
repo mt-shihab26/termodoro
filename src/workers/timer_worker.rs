@@ -5,11 +5,15 @@ use std::time::Duration;
 
 use crate::event::Event;
 
-pub const WORK_DURATION: u64 = 25 * 60 * 100;
-pub const BREAK_DURATION: u64 = 5 * 60 * 100;
-pub const LONG_BREAK_DURATION: u64 = 15 * 60 * 100;
+pub const WORK_DURATION: u64 = 25 * 60 * 1000;
+pub const BREAK_DURATION: u64 = 5 * 60 * 1000;
+pub const LONG_BREAK_DURATION: u64 = 15 * 60 * 1000;
 pub const LONG_BREAK_INTERVAL: u32 = 4;
 pub const SHOW_MILLIS: bool = false;
+
+fn tick_interval() -> u64 {
+    if SHOW_MILLIS { 10 } else { 1000 }
+}
 
 #[derive(Clone, PartialEq)]
 pub enum Phase {
@@ -49,7 +53,7 @@ impl TimerState {
             return;
         }
 
-        let step: u64 = if SHOW_MILLIS { 1 } else { 100 };
+        let step = tick_interval();
 
         if self.millis >= step {
             self.millis -= step;
@@ -89,8 +93,7 @@ pub fn spawn(sender: Sender<Event>) -> Arc<Mutex<TimerState>> {
 
     thread::spawn(move || {
         loop {
-            let interval = if SHOW_MILLIS { 10 } else { 1000 };
-            thread::sleep(Duration::from_millis(interval));
+            thread::sleep(Duration::from_millis(tick_interval()));
             let mut state = thread_state.lock().unwrap();
             state.tick();
             let running = state.running;

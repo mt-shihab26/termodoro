@@ -38,9 +38,9 @@ impl Tab for Timer {
     fn render(&self, frame: &mut Frame, area: Rect) {
         let s = self.state.lock().unwrap();
 
-        let mins = s.millis / 6000;
-        let secs = (s.millis / 100) % 60;
-        let ms = s.millis % 100;
+        let mins = s.millis / 60000;
+        let secs = (s.millis / 1000) % 60;
+        let ms = (s.millis % 1000) / 10;
 
         let status = if s.running { "Running" } else { "Paused" };
         let phase = s.phase.label().to_string();
