@@ -10,11 +10,12 @@ use ratatui::style::{Color, Style, Stylize};
 use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_big_text::{BigText, PixelSize};
 
-use crate::commands::tui::tabs::Tab;
 use crate::domains::timer::{Phase, TimerState};
 use crate::event::Event;
 use crate::workers::timer_worker;
 use crate::{log_error, log_warn};
+
+use super::Tab;
 
 pub struct Timer {
     state: Arc<Mutex<TimerState>>,

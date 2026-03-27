@@ -7,8 +7,9 @@ use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Widget};
 
-use crate::commands::tui::tabs::Tab;
 use crate::domains::todos::{Mode, TodosState};
+
+use super::Tab;
 
 pub struct Todos {
     state: TodosState,
