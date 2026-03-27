@@ -1,4 +1,4 @@
-use std::io::Result;
+use std::io::{Error, ErrorKind, Result};
 use std::sync::mpsc;
 
 use ratatui::Frame;
@@ -46,24 +46,41 @@ impl App {
     pub fn run(&mut self) -> Result<()> {
         let mut terminal = ratatui::init();
 
+        let result = self.event_loop(&mut terminal);
+
+        ratatui::restore();
+
+        result
+    }
+
+    fn event_loop(&mut self, terminal: &mut ratatui::DefaultTerminal) -> Result<()> {
         while self.alive {
             self.fps.tick();
 
             terminal.draw(|frame| self.render_frame(frame))?;
 
             match self.events.recv() {
-                Err(_) => self.alive = false,
+                Err(e) => {
+                    return Err(Error::new(ErrorKind::BrokenPipe, e));
+                }
                 Ok(Event::Key(key)) => match key.code {
-                    KeyCode::Char('q') => self.alive = false,
-                    KeyCode::Char('f') => self.fps.visible = !self.fps.visible,
-                    KeyCode::Tab => self.selected = (self.selected + 1) % self.tabs.len(),
-                    _ => self.tabs[self.selected].handle(key)?,
+                    KeyCode::Char('q') => {
+                        self.alive = false;
+                    }
+                    KeyCode::Char('f') => {
+                        self.fps.visible = !self.fps.visible;
+                    }
+                    KeyCode::Tab => {
+                        self.selected = (self.selected + 1) % self.tabs.len();
+                    }
+                    _ => {
+                        self.tabs[self.selected].handle(key)?;
+                    }
                 },
                 Ok(Event::Tick) => {}
             }
         }
 
-        ratatui::restore();
         Ok(())
     }
 
