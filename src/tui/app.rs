@@ -50,11 +50,11 @@ impl App {
                     KeyCode::Char('q') => self.alive = false,
                     KeyCode::Char('1') => self.selected = 0,
                     KeyCode::Char('2') => self.selected = 1,
-                    _ => {
-                        if self.selected == 1 {
-                            self.timer.handle(key)?;
-                        }
-                    }
+                    _ => match self.selected {
+                        0 => self.todos.handle(key)?,
+                        1 => self.timer.handle(key)?,
+                        _ => {}
+                    },
                 },
                 _ => {}
             }
@@ -93,7 +93,7 @@ impl App {
         match self.selected {
             0 => frame.render_widget(&self.todos, main),
             1 => frame.render_widget(&self.timer, main),
-            _ => unreachable!(),
+            _ => (),
         }
     }
 }

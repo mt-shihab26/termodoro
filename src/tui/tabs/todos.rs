@@ -1,11 +1,22 @@
+use std::io::Result;
+
 use ratatui::buffer::Buffer;
+use ratatui::crossterm::event::KeyEvent;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Block, Paragraph, Widget};
 
+use crate::tui::tabs::Event;
+
 pub const COLOR: Color = Color::Cyan;
 
 pub struct Todos;
+
+impl Event for Todos {
+    fn handle(&mut self, _key: KeyEvent) -> Result<()> {
+        Ok(())
+    }
+}
 
 impl Widget for &Todos {
     fn render(self, area: Rect, buf: &mut Buffer) {
