@@ -50,7 +50,10 @@ impl Tab for Timer {
     fn render(&self, frame: &mut Frame, area: Rect) {
         self.tick_render_count();
 
-        let s = self.state.lock().unwrap();
+        let s = match self.state.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
 
         let buf = frame.buffer_mut();
 
@@ -114,7 +117,10 @@ impl Tab for Timer {
     }
 
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
-        let mut s = self.state.lock().unwrap();
+        let mut s = self
+            .state
+            .lock()
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
 
         match key.code {
             KeyCode::Char(' ') => {

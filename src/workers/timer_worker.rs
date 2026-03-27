@@ -18,7 +18,10 @@ pub fn spawn(render_count: Arc<AtomicU8>, sender: Sender<Event>) -> Arc<Mutex<Ti
         loop {
             thread::sleep(Duration::from_millis(tick_interval()));
 
-            let mut state = thread_state.lock().unwrap();
+            let mut state = match thread_state.lock() {
+                Ok(guard) => guard,
+                Err(poisoned) => poisoned.into_inner(),
+            };
 
             state.tick();
 
@@ -30,7 +33,9 @@ pub fn spawn(render_count: Arc<AtomicU8>, sender: Sender<Event>) -> Arc<Mutex<Ti
 
             if running && current_render_count != last_render_count {
                 last_render_count = current_render_count;
-                let _ = sender.send(Event::Tick);
+                if sender.send(Event::Tick).is_err() {
+                    break;
+                }
             }
         }
     });
