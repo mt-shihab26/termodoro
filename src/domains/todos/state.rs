@@ -1,9 +1,4 @@
-use super::todo::Todo;
-
-pub enum Mode {
-    Normal,
-    Adding,
-}
+use super::{mode::Mode, todo::Todo};
 
 pub struct TodosState {
     pub items: Vec<Todo>,
