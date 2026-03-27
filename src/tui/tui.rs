@@ -5,7 +5,8 @@ use ratatui::symbols;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Tabs, Widget};
 
-use crate::tabs::{timer::TimerTab, todos::TodosTab};
+use crate::tui::tabs::timer::TimerTab;
+use crate::tui::tabs::todos::TodosTab;
 
 pub struct Tui {
     pub selected_tab: usize,

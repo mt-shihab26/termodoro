@@ -3,7 +3,7 @@ use std::io::Result;
 use ratatui::DefaultTerminal;
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
 
-use crate::tui::Tui;
+use crate::tui::tui::Tui;
 
 pub struct App<'a> {
     alive: bool,

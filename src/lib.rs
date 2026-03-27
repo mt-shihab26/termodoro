@@ -1,3 +1,2 @@
-pub mod app;
-pub mod tabs;
+pub mod cmd;
 pub mod tui;
