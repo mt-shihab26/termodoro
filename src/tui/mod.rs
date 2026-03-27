@@ -11,10 +11,10 @@ use self::tabs::timer::TimerState;
 use self::ui::Ui;
 
 pub struct App<'a> {
-    alive:        bool,
-    terminal:     &'a mut DefaultTerminal,
+    alive: bool,
+    terminal: &'a mut DefaultTerminal,
     selected_tab: usize,
-    timer:        TimerState,
+    timer: TimerState,
 }
 
 impl<'a> App<'a> {
@@ -38,18 +38,16 @@ impl<'a> App<'a> {
     fn handle_events(&mut self) -> Result<()> {
         if event::poll(Duration::from_secs(1))? {
             match event::read()? {
-                Event::Key(key) if key.kind == KeyEventKind::Press => {
-                    match key.code {
-                        KeyCode::Char('q') => self.alive = false,
-                        KeyCode::Char('1') => self.selected_tab = 0,
-                        KeyCode::Char('2') => self.selected_tab = 1,
-                        _ => {
-                            if self.selected_tab == 1 {
-                                self.timer.handle_event(key);
-                            }
+                Event::Key(key) if key.kind == KeyEventKind::Press => match key.code {
+                    KeyCode::Char('q') => self.alive = false,
+                    KeyCode::Char('1') => self.selected_tab = 0,
+                    KeyCode::Char('2') => self.selected_tab = 1,
+                    _ => {
+                        if self.selected_tab == 1 {
+                            self.timer.handle_event(key);
                         }
                     }
-                }
+                },
                 _ => {}
             }
         } else {
