@@ -1,3 +1,4 @@
+use ratatui::Frame;
 use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Alignment, Constraint, Layout, Rect};
@@ -12,7 +13,7 @@ const LONG_BREAK_DURATION: u64 = 15 * 60;
 const LONG_BREAK_INTERVAL: u32 = 4;
 
 #[derive(Clone, PartialEq)]
-pub enum Phase {
+enum Phase {
     Work,
     Break,
     LongBreak,
@@ -36,14 +37,14 @@ impl Phase {
     }
 }
 
-pub struct TimerState {
-    pub phase: Phase,
-    pub seconds: u64,
-    pub sessions: u32,
-    pub running: bool,
+pub struct Timer {
+    phase: Phase,
+    seconds: u64,
+    sessions: u32,
+    running: bool,
 }
 
-impl TimerState {
+impl Timer {
     pub fn new() -> Self {
         Self {
             phase: Phase::Work,
@@ -79,22 +80,35 @@ impl TimerState {
 
     pub fn handle_event(&mut self, key: KeyEvent) -> bool {
         match key.code {
-            KeyCode::Char(' ') => { self.toggle(); true }
-            KeyCode::Char('r') => { self.reset();  true }
-            KeyCode::Char('n') => { self.skip();   true }
+            KeyCode::Char(' ') => {
+                self.toggle();
+                true
+            }
+            KeyCode::Char('r') => {
+                self.reset();
+                true
+            }
+            KeyCode::Char('n') => {
+                self.skip();
+                true
+            }
             _ => false,
         }
+    }
+
+    pub fn draw(&self, frame: &mut Frame, area: Rect) {
+        self.render_widget(area, frame.buffer_mut());
     }
 
     fn advance(&mut self) {
         match self.phase {
             Phase::Work => {
                 self.sessions += 1;
-                if self.sessions % LONG_BREAK_INTERVAL == 0 {
-                    self.phase = Phase::LongBreak;
+                self.phase = if self.sessions % LONG_BREAK_INTERVAL == 0 {
+                    Phase::LongBreak
                 } else {
-                    self.phase = Phase::Break;
-                }
+                    Phase::Break
+                };
             }
             Phase::Break | Phase::LongBreak => {
                 self.phase = Phase::Work;
@@ -103,27 +117,15 @@ impl TimerState {
         self.seconds = self.phase.duration();
         self.running = false;
     }
-}
 
-pub struct Timer<'a> {
-    pub state: &'a TimerState,
-}
+    fn render_widget(&self, area: Rect, buf: &mut Buffer) {
+        let mins = self.seconds / 60;
+        let secs = self.seconds % 60;
 
-impl<'a> Timer<'a> {
-    pub fn new(state: &'a TimerState) -> Self {
-        Self { state }
-    }
-}
-
-impl<'a> Widget for Timer<'a> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
-        let mins = self.state.seconds / 60;
-        let secs = self.state.seconds % 60;
-
-        let status = if self.state.running { "Running" } else { "Paused" };
-        let phase = self.state.phase.label();
+        let status = if self.running { "Running" } else { "Paused" };
+        let phase = self.phase.label();
         let time = format!("{:02}:{:02}", mins, secs);
-        let session = format!("Session {} / {}", self.state.sessions + 1, LONG_BREAK_INTERVAL);
+        let session = format!("Session {} / {}", self.sessions + 1, LONG_BREAK_INTERVAL);
         let hint = "[Space] Toggle   [R] Reset   [N] Skip";
 
         let [_, center, _] =
@@ -148,27 +150,19 @@ impl<'a> Widget for Timer<'a> {
             .bold()
             .fg(COLOR)
             .render(phase_row, buf);
-
         Paragraph::new(session)
             .alignment(Alignment::Center)
             .fg(Color::DarkGray)
             .render(session_row, buf);
-
         Paragraph::new(time)
             .alignment(Alignment::Center)
             .bold()
             .fg(COLOR)
             .render(time_row, buf);
-
         Paragraph::new(status)
             .alignment(Alignment::Center)
-            .fg(if self.state.running {
-                Color::Green
-            } else {
-                Color::DarkGray
-            })
+            .fg(if self.running { Color::Green } else { Color::DarkGray })
             .render(status_row, buf);
-
         Paragraph::new(hint)
             .alignment(Alignment::Center)
             .fg(Color::DarkGray)

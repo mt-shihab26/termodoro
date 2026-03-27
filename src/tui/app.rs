@@ -9,13 +9,13 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Tabs, Widget};
 use ratatui::{DefaultTerminal, Frame};
 
-use super::tabs::timer::{self, Timer, TimerState};
+use super::tabs::timer::{self, Timer};
 use super::tabs::todos::{self, Todos};
 
 pub struct App {
     alive: bool,
     selected: usize,
-    timer: TimerState,
+    timer: Timer,
 }
 
 impl App {
@@ -23,7 +23,7 @@ impl App {
         Self {
             alive: true,
             selected: 0,
-            timer: TimerState::new(),
+            timer: Timer::new(),
         }
     }
 
@@ -89,7 +89,7 @@ impl App {
 
         match self.selected {
             0 => Todos.render(main, frame.buffer_mut()),
-            1 => Timer::new(&self.timer).render(main, frame.buffer_mut()),
+            1 => self.timer.draw(frame, main),
             _ => unreachable!(),
         }
     }
