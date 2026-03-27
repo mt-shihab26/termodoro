@@ -5,8 +5,8 @@ use ratatui::symbols;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Tabs, Widget};
 
-use super::tabs::timer::Timer;
-use super::tabs::todos::Todos;
+use super::tabs::timer::{self, Timer};
+use super::tabs::todos::{self, Todos};
 
 pub struct Ui {
     pub selected_tab: usize,
@@ -18,13 +18,18 @@ impl Widget for Ui {
 
         let [top, tabs_area, main] = area.layout(&layout);
 
-        Line::from_iter([Span::from("Orivo").bold()])
+        Line::from_iter([Span::from("Orivo").bold().fg(Color::Green)])
             .centered()
             .render(top, buf);
 
+        let highlight_color = match self.selected_tab {
+            0 => todos::COLOR,
+            _ => timer::COLOR,
+        };
+
         Tabs::new(vec!["Todos", "Timer"])
             .style(Color::White)
-            .highlight_style(Style::default().magenta().on_black().bold())
+            .highlight_style(Style::default().fg(highlight_color).on_black().bold())
             .select(self.selected_tab)
             .divider(symbols::DOT)
             .padding(" ", " ")
