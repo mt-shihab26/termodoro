@@ -8,8 +8,8 @@ use ratatui::layout::{Alignment, Constraint, Layout, Rect};
 use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Block, Paragraph, Widget};
 
-use crate::commands::tui::event::AppEvent;
 use crate::commands::tui::tabs::Tab;
+use crate::event::AppEvent;
 use crate::workers::timer_worker::{self, LONG_BREAK_INTERVAL, TimerState};
 
 pub const COLOR: Color = Color::Yellow;

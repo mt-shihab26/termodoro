@@ -1,16 +1,18 @@
 use std::sync::mpsc::Sender;
 use std::thread;
 
-use ratatui::crossterm::event::{self};
+use ratatui::crossterm::event::{self, Event, KeyEventKind};
 
-use crate::commands::tui::event::AppEvent;
+use crate::event::AppEvent;
 
 pub fn spawn(sender: Sender<AppEvent>) {
     thread::spawn(move || {
         loop {
-            if let Ok(event) = event::read() {
-                if sender.send(AppEvent::Term(event)).is_err() {
-                    break;
+            if let Ok(Event::Key(key)) = event::read() {
+                if key.kind == KeyEventKind::Press {
+                    if sender.send(AppEvent::Key(key)).is_err() {
+                        break;
+                    }
                 }
             }
         }

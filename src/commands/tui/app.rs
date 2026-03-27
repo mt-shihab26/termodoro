@@ -2,7 +2,7 @@ use std::io::Result;
 use std::sync::mpsc;
 
 use ratatui::Frame;
-use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind};
+use ratatui::crossterm::event::KeyCode;
 use ratatui::layout::{Constraint, Layout};
 use ratatui::style::Color;
 use ratatui::style::{Style, Stylize};
@@ -10,9 +10,9 @@ use ratatui::symbols;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Tabs, Widget};
 
+use crate::event::AppEvent;
 use crate::workers::term_worker;
 
-use super::event::AppEvent;
 use super::fps::Fps;
 use super::tabs::Tab;
 use super::tabs::timer::Timer;
@@ -48,19 +48,17 @@ impl App {
 
         while self.alive {
             terminal.draw(|frame| self.render_frame(frame))?;
-
             self.fps.tick();
 
             match self.events.recv() {
                 Err(_) => self.alive = false,
-                Ok(AppEvent::Term(Event::Key(key))) if key.kind == KeyEventKind::Press => match key.code {
+                Ok(AppEvent::Key(key)) => match key.code {
                     KeyCode::Char('q') => self.alive = false,
                     KeyCode::Char('f') => self.fps.visible = !self.fps.visible,
                     KeyCode::Tab => self.selected = (self.selected + 1) % self.tabs.len(),
                     _ => self.tabs[self.selected].handle(key)?,
                 },
                 Ok(AppEvent::Tick) => {}
-                Ok(_) => {}
             }
         }
 
