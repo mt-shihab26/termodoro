@@ -81,8 +81,8 @@ fn render_tabs(frame: &mut Frame, area: Rect, selected_tab: usize) {
 
 fn render_content(frame: &mut Frame, area: Rect, selected_tab: usize) {
     let text = match selected_tab {
-        0 => "Great terminal interfaces start with a single widget.".into(),
-        1 => "In the terminal, we don't just render widgets; we create dreams.".into(),
+        0 => "Great terminal interfaces start with a single widget.",
+        1 => "In the terminal, we don't just render widgets; we create dreams.",
         _ => unreachable!(),
     };
 
