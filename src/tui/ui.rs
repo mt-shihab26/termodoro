@@ -5,17 +5,17 @@ use ratatui::symbols;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Tabs, Widget};
 
-use super::tabs::timer::{self, Timer};
+use super::tabs::timer::{self, Timer, TimerState};
 use super::tabs::todos::{self, Todos};
 
-pub struct Ui {
+pub struct Ui<'a> {
     pub selected_tab: usize,
+    pub timer: &'a TimerState,
 }
 
-impl Widget for Ui {
+impl<'a> Widget for Ui<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let layout = Layout::vertical([Constraint::Length(1), Constraint::Length(1), Constraint::Fill(1)]);
-
         let [top, tabs_area, main] = area.layout(&layout);
 
         Line::from_iter([Span::from("Orivo").bold().fg(Color::Green)])
@@ -37,7 +37,7 @@ impl Widget for Ui {
 
         match self.selected_tab {
             0 => Todos.render(main, buf),
-            1 => Timer.render(main, buf),
+            1 => Timer::new(self.timer).render(main, buf),
             _ => unreachable!(),
         }
     }

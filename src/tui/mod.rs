@@ -2,16 +2,19 @@ mod tabs;
 mod ui;
 
 use std::io::Result;
+use std::time::Duration;
 
 use ratatui::DefaultTerminal;
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
 
+use self::tabs::timer::TimerState;
 use self::ui::Ui;
 
 pub struct App<'a> {
-    alive: bool,
-    terminal: &'a mut DefaultTerminal,
+    alive:        bool,
+    terminal:     &'a mut DefaultTerminal,
     selected_tab: usize,
+    timer:        TimerState,
 }
 
 impl<'a> App<'a> {
@@ -20,6 +23,7 @@ impl<'a> App<'a> {
             alive: true,
             terminal,
             selected_tab: 0,
+            timer: TimerState::new(),
         }
     }
 
@@ -28,27 +32,34 @@ impl<'a> App<'a> {
             self.render_pixels()?;
             self.handle_events()?;
         }
-
         Ok(())
     }
 
     fn handle_events(&mut self) -> Result<()> {
-        match event::read()? {
-            Event::Key(key) if key.kind == KeyEventKind::Press => match key.code {
-                KeyCode::Char('q') => self.alive = false,
-                KeyCode::Char('1') => self.selected_tab = 0,
-                KeyCode::Char('2') => self.selected_tab = 1,
+        if event::poll(Duration::from_secs(1))? {
+            match event::read()? {
+                Event::Key(key) if key.kind == KeyEventKind::Press => match key.code {
+                    KeyCode::Char('q')     => self.alive = false,
+                    KeyCode::Char('1')     => self.selected_tab = 0,
+                    KeyCode::Char('2')     => self.selected_tab = 1,
+                    KeyCode::Char(' ')     => self.timer.toggle(),
+                    KeyCode::Char('r')     => self.timer.reset(),
+                    KeyCode::Char('n')     => self.timer.skip(),
+                    _ => {}
+                },
                 _ => {}
-            },
-            _ => {}
+            }
+        } else {
+            self.timer.tick();
         }
         Ok(())
     }
 
     fn render_pixels(&mut self) -> Result<()> {
         let selected_tab = self.selected_tab;
+        let timer = &self.timer;
         self.terminal.draw(|frame| {
-            frame.render_widget(Ui { selected_tab }, frame.area());
+            frame.render_widget(Ui { selected_tab, timer }, frame.area());
         })?;
         Ok(())
     }
