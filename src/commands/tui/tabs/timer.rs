@@ -9,7 +9,7 @@ use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Block, Paragraph, Widget};
 
 use crate::commands::tui::tabs::Tab;
-use crate::event::AppEvent;
+use crate::event::Event;
 use crate::workers::timer_worker::{self, LONG_BREAK_INTERVAL, TimerState};
 
 pub const COLOR: Color = Color::Yellow;
@@ -19,7 +19,7 @@ pub struct Timer {
 }
 
 impl Timer {
-    pub fn new(sender: Sender<AppEvent>) -> Self {
+    pub fn new(sender: Sender<Event>) -> Self {
         Self {
             state: timer_worker::spawn(sender),
         }

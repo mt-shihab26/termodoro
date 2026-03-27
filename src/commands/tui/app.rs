@@ -10,7 +10,7 @@ use ratatui::symbols;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Tabs, Widget};
 
-use crate::event::AppEvent;
+use crate::event::Event;
 use crate::workers::term_worker;
 
 use super::fps::Fps;
@@ -22,13 +22,13 @@ pub struct App {
     alive: bool,
     selected: usize,
     tabs: Vec<Box<dyn Tab>>,
-    events: mpsc::Receiver<AppEvent>,
+    events: mpsc::Receiver<Event>,
     fps: Fps,
 }
 
 impl App {
     pub fn new() -> Self {
-        let (sender, events) = mpsc::channel::<AppEvent>();
+        let (sender, events) = mpsc::channel::<Event>();
 
         term_worker::spawn(sender.clone());
 
@@ -52,13 +52,13 @@ impl App {
 
             match self.events.recv() {
                 Err(_) => self.alive = false,
-                Ok(AppEvent::Key(key)) => match key.code {
+                Ok(Event::Key(key)) => match key.code {
                     KeyCode::Char('q') => self.alive = false,
                     KeyCode::Char('f') => self.fps.visible = !self.fps.visible,
                     KeyCode::Tab => self.selected = (self.selected + 1) % self.tabs.len(),
                     _ => self.tabs[self.selected].handle(key)?,
                 },
-                Ok(AppEvent::Tick) => {}
+                Ok(Event::Tick) => {}
             }
         }
 

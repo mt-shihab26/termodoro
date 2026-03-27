@@ -1,6 +1,6 @@
 use ratatui::crossterm::event::KeyEvent;
 
-pub enum AppEvent {
+pub enum Event {
     Key(KeyEvent),
     Tick,
 }

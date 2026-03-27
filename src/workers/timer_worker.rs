@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-use crate::event::AppEvent;
+use crate::event::Event;
 
 pub const WORK_DURATION: u64 = 25 * 60;
 pub const BREAK_DURATION: u64 = 5 * 60;
@@ -73,7 +73,7 @@ impl TimerState {
     }
 }
 
-pub fn spawn(sender: Sender<AppEvent>) -> Arc<Mutex<TimerState>> {
+pub fn spawn(sender: Sender<Event>) -> Arc<Mutex<TimerState>> {
     let state = Arc::new(Mutex::new(TimerState {
         phase: Phase::Work,
         seconds: WORK_DURATION,
@@ -91,7 +91,7 @@ pub fn spawn(sender: Sender<AppEvent>) -> Arc<Mutex<TimerState>> {
             let running = state.running;
             drop(state);
             if running {
-                let _ = sender.send(AppEvent::Tick);
+                let _ = sender.send(Event::Tick);
             }
         }
     });
