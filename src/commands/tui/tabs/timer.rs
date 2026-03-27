@@ -64,6 +64,8 @@ impl Tab for Timer {
         let inner = block.inner(area);
         block.render(area, buf);
 
+        let area = inner;
+
         let [session_row, _, phase_row, _, time_row, _, status_row, _, hint_row] = Layout::vertical([
             Constraint::Length(1),
             Constraint::Fill(1),
@@ -75,7 +77,7 @@ impl Tab for Timer {
             Constraint::Fill(1),
             Constraint::Length(1),
         ])
-        .areas(inner);
+        .areas(area);
 
         Paragraph::new(format!("Session {} / {}", s.sessions + 1, LONG_BREAK_INTERVAL))
             .centered()

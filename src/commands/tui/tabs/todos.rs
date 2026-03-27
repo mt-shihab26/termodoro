@@ -5,7 +5,7 @@ use ratatui::Frame;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
-use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph};
+use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Widget};
 
 use crate::commands::tui::tabs::Tab;
 use crate::domains::todos::{Mode, TodosState};
@@ -49,6 +49,15 @@ impl Tab for Todos {
     }
 
     fn render(&self, frame: &mut Frame, area: Rect) {
+        let buf = frame.buffer_mut();
+
+        let block = Block::bordered().fg(self.color());
+        let inner = block.inner(area);
+
+        block.render(area, buf);
+
+        let area = inner;
+
         let (list_area, hint_area, input_area) = match self.state.mode {
             Mode::Normal => {
                 let [list, hint] = Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).areas(area);
