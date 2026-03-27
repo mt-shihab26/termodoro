@@ -17,20 +17,7 @@ pub struct TodosState {
 impl TodosState {
     pub fn new() -> Self {
         Self {
-            items: vec![
-                Todo {
-                    text: "Buy groceries".into(),
-                    done: false,
-                },
-                Todo {
-                    text: "Read a book".into(),
-                    done: true,
-                },
-                Todo {
-                    text: "Build a TUI app".into(),
-                    done: false,
-                },
-            ],
+            items: Todo::fakes(),
             selected: 0,
             mode: Mode::Normal,
             input: String::new(),
