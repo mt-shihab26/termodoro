@@ -7,8 +7,8 @@ use ratatui::layout::{Alignment, Constraint, Layout, Rect};
 use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Block, Paragraph, Widget};
 
-use crate::ees::timer_worker::{LONG_BREAK_INTERVAL, TimerWorker};
 use crate::tui::tabs::Tab;
+use crate::tui::workers::timer_worker::{self, LONG_BREAK_INTERVAL, TimerWorker};
 
 pub const COLOR: Color = Color::Yellow;
 
@@ -19,7 +19,7 @@ pub struct Timer {
 impl Timer {
     pub fn new() -> Self {
         Self {
-            inner: crate::ees::timer_worker::spawn(),
+            inner: timer_worker::spawn(),
         }
     }
 }
