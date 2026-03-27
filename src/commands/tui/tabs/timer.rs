@@ -6,6 +6,7 @@ use ratatui::Frame;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Alignment, Constraint, Layout, Rect};
 use ratatui::style::{Color, Stylize};
+use ratatui::text::{Line, Text};
 use ratatui::widgets::{Block, Paragraph, Widget};
 
 use crate::commands::tui::tabs::Tab;
@@ -51,7 +52,7 @@ impl Tab for Timer {
             Constraint::Length(1),
             Constraint::Fill(1),
             Constraint::Length(1),
-            Constraint::Length(1),
+            Constraint::Length(3),
             Constraint::Length(1),
             Constraint::Fill(1),
             Constraint::Length(1),
@@ -77,7 +78,9 @@ impl Tab for Timer {
             format!("{:02}:{:02}", mins, secs)
         };
 
-        Paragraph::new(time)
+        let [r0, r1, r2] = big_digits(&time);
+
+        Paragraph::new(Text::from(vec![Line::from(r0), Line::from(r1), Line::from(r2)]))
             .alignment(Alignment::Center)
             .bold()
             .fg(COLOR)
@@ -111,4 +114,35 @@ impl Tab for Timer {
         }
         Ok(())
     }
+}
+
+fn big_digits(text: &str) -> [String; 3] {
+    const DIGITS: [(&str, &str, &str); 10] = [
+        (" _ ", "| |", "|_|"),
+        ("   ", " | ", " | "),
+        (" _ ", " _|", "|_ "),
+        (" _ ", " _|", " _|"),
+        ("   ", "|_|", "  |"),
+        (" _ ", "|_ ", " _|"),
+        (" _ ", "|_ ", "|_|"),
+        (" _ ", "  |", "  |"),
+        (" _ ", "|_|", "|_|"),
+        (" _ ", "|_|", " _|"),
+    ];
+
+    let mut rows = [String::new(), String::new(), String::new()];
+
+    for ch in text.chars() {
+        let (r0, r1, r2) = match ch {
+            '0'..='9' => DIGITS[(ch as u8 - b'0') as usize],
+            ':' => (" ", ":", ":"),
+            '.' => (" ", " ", "."),
+            _ => ("   ", "   ", "   "),
+        };
+        rows[0].push_str(r0);
+        rows[1].push_str(r1);
+        rows[2].push_str(r2);
+    }
+
+    rows
 }
