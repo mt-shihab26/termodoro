@@ -2,11 +2,13 @@ use std::io::Result;
 
 use ratatui::DefaultTerminal;
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
-use ratatui::layout::{Alignment, Constraint, Layout, Offset, Rect};
+use ratatui::layout::{Constraint, Layout, Offset, Rect};
 use ratatui::style::{Color, Style, Stylize};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, Paragraph, Tabs};
+use ratatui::widgets::Tabs;
 use ratatui::{Frame, symbols};
+
+use crate::tabs::{timer::TimerTab, todos::TodosTab};
 
 pub struct App<'a> {
     alive: bool,
@@ -57,10 +59,7 @@ fn render_frame(frame: &mut Frame, selected_tab: usize) {
 
     let [top, main] = frame.area().layout(&layout);
 
-    let title = Line::from_iter([
-        Span::from("Orivo").bold(),
-        Span::from(" (Press 'q' to quit, arrow keys to navigate tabs)"),
-    ]);
+    let title = Line::from_iter([Span::from("Orivo").bold()]);
 
     frame.render_widget(title.centered(), top);
 
@@ -80,15 +79,9 @@ fn render_tabs(frame: &mut Frame, area: Rect, selected_tab: usize) {
 }
 
 fn render_content(frame: &mut Frame, area: Rect, selected_tab: usize) {
-    let text = match selected_tab {
-        0 => "Great terminal interfaces start with a single widget.",
-        1 => "In the terminal, we don't just render widgets; we create dreams.",
+    match selected_tab {
+        0 => frame.render_widget(TodosTab, area),
+        1 => frame.render_widget(TimerTab, area),
         _ => unreachable!(),
-    };
-
-    let block = Paragraph::new(text)
-        .alignment(Alignment::Center)
-        .block(Block::bordered());
-
-    frame.render_widget(block, area);
+    }
 }
