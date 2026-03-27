@@ -1,7 +1,6 @@
-pub struct Todo {
-    pub text: String,
-    pub done: bool,
-}
+mod todo;
+
+use self::todo::Todo;
 
 pub enum Mode {
     Normal,
