@@ -22,9 +22,11 @@ fn main() -> Result<()> {
         }
     };
 
-    cmds.iter()
-        .find(|(name, _)| *name == key)
-        .ok_or_else(|| Error::from(ErrorKind::InvalidInput))?
-        .1
-        .run()
+    for (name, cmd) in &cmds {
+        if *name == key {
+            return cmd.run();
+        }
+    }
+
+    Err(Error::from(ErrorKind::InvalidInput))
 }
