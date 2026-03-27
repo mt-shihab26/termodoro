@@ -57,9 +57,9 @@ impl TodosState {
     }
 
     pub fn confirm_add(&mut self) {
-        let text = self.input.trim().to_string();
+        let text = self.input.trim();
         if !text.is_empty() {
-            self.items.push(Todo { text, done: false });
+            self.items.push(Todo::new(text));
             self.selected = self.items.len() - 1;
         }
         self.mode = Mode::Normal;
