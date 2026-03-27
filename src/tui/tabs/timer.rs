@@ -3,7 +3,6 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Alignment, Constraint, Layout, Rect};
 use ratatui::style::{Color, Stylize};
@@ -116,26 +115,6 @@ impl Tab for Timer {
     }
 
     fn render(&self, frame: &mut Frame, area: Rect) {
-        frame.render_widget(self, area);
-    }
-
-    fn handle(&mut self, key: KeyEvent) -> Result<()> {
-        let mut s = self.inner.lock().unwrap();
-        match key.code {
-            KeyCode::Char(' ') => s.running = !s.running,
-            KeyCode::Char('r') => {
-                s.seconds = s.phase.duration();
-                s.running = false;
-            }
-            KeyCode::Char('n') => s.advance(),
-            _ => {}
-        }
-        Ok(())
-    }
-}
-
-impl Widget for &Timer {
-    fn render(self, area: Rect, buf: &mut Buffer) {
         let s = self.inner.lock().unwrap();
 
         let mins = s.seconds / 60;
@@ -145,9 +124,12 @@ impl Widget for &Timer {
         let phase = s.phase.label().to_string();
         let time = format!("{:02}:{:02}", mins, secs);
         let session = format!("Session {} / {}", s.sessions + 1, LONG_BREAK_INTERVAL);
-        let hint = "[Space] Toggle   [R] Reset   [N] Skip";
+        let running = s.running;
 
         drop(s);
+
+        let buf = frame.buffer_mut();
+        let hint = "[Space] Toggle   [R] Reset   [N] Skip";
 
         let [_, center, _] =
             Layout::vertical([Constraint::Fill(1), Constraint::Length(10), Constraint::Fill(1)])
@@ -183,15 +165,25 @@ impl Widget for &Timer {
             .render(time_row, buf);
         Paragraph::new(status)
             .alignment(Alignment::Center)
-            .fg(if status == "Running" {
-                Color::Green
-            } else {
-                Color::DarkGray
-            })
+            .fg(if running { Color::Green } else { Color::DarkGray })
             .render(status_row, buf);
         Paragraph::new(hint)
             .alignment(Alignment::Center)
             .fg(Color::DarkGray)
             .render(hint_row, buf);
+    }
+
+    fn handle(&mut self, key: KeyEvent) -> Result<()> {
+        let mut s = self.inner.lock().unwrap();
+        match key.code {
+            KeyCode::Char(' ') => s.running = !s.running,
+            KeyCode::Char('r') => {
+                s.seconds = s.phase.duration();
+                s.running = false;
+            }
+            KeyCode::Char('n') => s.advance(),
+            _ => {}
+        }
+        Ok(())
     }
 }
