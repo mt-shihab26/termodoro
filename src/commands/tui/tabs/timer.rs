@@ -1,5 +1,5 @@
 use std::io::Result;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 
@@ -19,17 +19,23 @@ pub const COLOR: Color = Color::Yellow;
 
 pub struct Timer {
     state: Arc<Mutex<TimerState>>,
-    render_count: Arc<AtomicU64>,
+    render_count: Arc<AtomicU8>,
 }
 
 impl Timer {
     pub fn new(sender: Sender<Event>) -> Self {
-        let render_count = Arc::new(AtomicU64::new(0));
+        let render_count = Arc::new(AtomicU8::new(0));
 
         Self {
             state: timer_worker::spawn(sender, Arc::clone(&render_count)),
             render_count,
         }
+    }
+
+    fn tick_render_count(&self) {
+        self.render_count
+            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |n| Some((n) % u8::MAX))
+            .ok();
     }
 }
 
@@ -43,7 +49,7 @@ impl Tab for Timer {
     }
 
     fn render(&self, frame: &mut Frame, area: Rect) {
-        self.render_count.fetch_add(1, Ordering::Relaxed);
+        self.tick_render_count();
 
         let s = self.state.lock().unwrap();
 
