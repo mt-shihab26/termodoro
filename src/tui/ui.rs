@@ -5,14 +5,14 @@ use ratatui::symbols;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Tabs, Widget};
 
-use crate::tui::tabs::timer::TimerTab;
-use crate::tui::tabs::todos::TodosTab;
+use super::tabs::timer::Timer;
+use super::tabs::todos::Todos;
 
-pub struct Tui {
+pub struct Ui {
     pub selected_tab: usize,
 }
 
-impl Widget for Tui {
+impl Widget for Ui {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let layout = Layout::vertical([Constraint::Length(1), Constraint::Fill(1)]).spacing(1);
         let [top, main] = area.layout(&layout);
@@ -30,8 +30,8 @@ impl Widget for Tui {
             .render(main + Offset::new(1, 0), buf);
 
         match self.selected_tab {
-            0 => TodosTab.render(main, buf),
-            1 => TimerTab.render(main, buf),
+            0 => Todos.render(main, buf),
+            1 => Timer.render(main, buf),
             _ => unreachable!(),
         }
     }

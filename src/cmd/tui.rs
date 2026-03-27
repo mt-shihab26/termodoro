@@ -1,6 +1,6 @@
 use std::io::Result;
 
-use crate::{cmd::Cmd, tui::app::App};
+use crate::{cmd::Cmd, tui::App};
 
 pub struct Tui;
 
