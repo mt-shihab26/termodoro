@@ -6,9 +6,8 @@ use ratatui::layout::{Alignment, Constraint, Layout};
 use ratatui::style::Color;
 use ratatui::style::{Style, Stylize};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Paragraph, Tabs, Widget};
-use ratatui::{DefaultTerminal, symbols};
-use ratatui::{Frame, init, restore};
+use ratatui::widgets::{Block, Paragraph, Widget};
+use ratatui::{DefaultTerminal, Frame, init, restore};
 
 use crate::event::Event;
 use crate::log_error;
@@ -94,7 +93,7 @@ impl App {
 
     fn render_frame(&mut self, frame: &mut Frame) {
         let [top, tabs_area, main] =
-            Layout::vertical([Constraint::Length(1), Constraint::Length(1), Constraint::Fill(1)]).areas(frame.area());
+            Layout::vertical([Constraint::Length(1), Constraint::Length(3), Constraint::Fill(1)]).areas(frame.area());
 
         let [_, right] = Layout::horizontal([Constraint::Fill(1), Constraint::Fill(1)]).areas(top);
 
@@ -114,16 +113,20 @@ impl App {
             .render(right, frame.buffer_mut());
         }
 
-        let highlight_color = self.tabs[self.selected].color();
-        let names: Vec<&str> = self.tabs.iter().map(|t| t.name()).collect();
+        let constraints = vec![Constraint::Fill(1); self.tabs.len()];
+        let tab_areas = Layout::horizontal(constraints).split(tabs_area);
 
-        Tabs::new(names)
-            .style(Color::White)
-            .highlight_style(Style::default().fg(highlight_color).on_black().bold())
-            .select(self.selected)
-            .divider(symbols::DOT)
-            .padding(" ", " ")
-            .render(tabs_area, frame.buffer_mut());
+        for i in 0..self.tabs.len() {
+            let is_selected = i == self.selected;
+            let color = if is_selected { self.tabs[i].color() } else { Color::DarkGray };
+            let block = Block::bordered().border_style(Style::default().fg(color).bold());
+            let inner = block.inner(tab_areas[i]);
+            block.render(tab_areas[i], frame.buffer_mut());
+            Paragraph::new(self.tabs[i].name())
+                .centered()
+                .style(Style::default().fg(color).bold())
+                .render(inner, frame.buffer_mut());
+        }
 
         self.tabs[self.selected].render(frame, main);
     }
