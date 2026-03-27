@@ -1,8 +1,10 @@
 use std::io::Result;
 
-use ratatui::DefaultTerminal;
+use ratatui::Frame;
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
-use ratatui::{Frame, widgets::Paragraph};
+use ratatui::style::Style;
+use ratatui::widgets::{Block, Tabs};
+use ratatui::{DefaultTerminal, symbols};
 
 pub struct App<'a> {
     alive: bool,
@@ -41,7 +43,14 @@ impl<'a> App<'a> {
     }
 
     fn render_frame(frame: &mut Frame) {
-        let text = Paragraph::new("Hello World!");
-        frame.render_widget(text, frame.area());
+        let tabs = Tabs::new(vec!["Tab1", "Tab2", "Tab3", "Tab4"])
+            .block(Block::bordered().title("Tabs"))
+            .style(Style::default().white())
+            .highlight_style(Style::default().yellow())
+            .select(2)
+            .divider(symbols::DOT)
+            .padding("->", "<-");
+
+        frame.render_widget(tabs, frame.area());
     }
 }
