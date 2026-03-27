@@ -28,7 +28,7 @@ impl Cmd for Help {
     }
 
     fn run(&self) -> Result<()> {
-        println!("Usage: termodoro <command>\n");
+        println!("Usage: {} <command>\n", env!("CARGO_PKG_NAME"));
         println!("Commands:");
         for entries in &self.lines {
             let strs: Vec<&str> = entries.iter().map(|s| s.as_str()).collect();

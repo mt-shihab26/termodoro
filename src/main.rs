@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind, Result};
 
-use termodoro::commands::{Cmd, help::Help, tui::Tui, version::Version};
+use orivo::commands::{Cmd, help::Help, tui::Tui, version::Version};
 
 fn main() -> Result<()> {
     let cmds: Vec<(&str, Box<dyn Cmd>)> = vec![
@@ -17,7 +17,7 @@ fn main() -> Result<()> {
         Some("help") | Some("--help") | Some("-h") => return Help::new(&cmds).run(),
         Some(unknown) => {
             eprintln!("unknown command: {unknown}");
-            eprintln!("run `termodoro help` for usage");
+            eprintln!("run `orivo help` for usage");
             return Err(Error::from(ErrorKind::InvalidInput));
         }
     };
