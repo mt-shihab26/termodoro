@@ -38,15 +38,18 @@ impl<'a> App<'a> {
     fn handle_events(&mut self) -> Result<()> {
         if event::poll(Duration::from_secs(1))? {
             match event::read()? {
-                Event::Key(key) if key.kind == KeyEventKind::Press => match key.code {
-                    KeyCode::Char('q')     => self.alive = false,
-                    KeyCode::Char('1')     => self.selected_tab = 0,
-                    KeyCode::Char('2')     => self.selected_tab = 1,
-                    KeyCode::Char(' ')     => self.timer.toggle(),
-                    KeyCode::Char('r')     => self.timer.reset(),
-                    KeyCode::Char('n')     => self.timer.skip(),
-                    _ => {}
-                },
+                Event::Key(key) if key.kind == KeyEventKind::Press => {
+                    match key.code {
+                        KeyCode::Char('q') => self.alive = false,
+                        KeyCode::Char('1') => self.selected_tab = 0,
+                        KeyCode::Char('2') => self.selected_tab = 1,
+                        _ => {
+                            if self.selected_tab == 1 {
+                                self.timer.handle_event(key);
+                            }
+                        }
+                    }
+                }
                 _ => {}
             }
         } else {

@@ -1,4 +1,5 @@
 use ratatui::buffer::Buffer;
+use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Alignment, Constraint, Layout, Rect};
 use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Block, Paragraph, Widget};
@@ -74,6 +75,15 @@ impl TimerState {
 
     pub fn skip(&mut self) {
         self.advance();
+    }
+
+    pub fn handle_event(&mut self, key: KeyEvent) -> bool {
+        match key.code {
+            KeyCode::Char(' ') => { self.toggle(); true }
+            KeyCode::Char('r') => { self.reset();  true }
+            KeyCode::Char('n') => { self.skip();   true }
+            _ => false,
+        }
     }
 
     fn advance(&mut self) {
