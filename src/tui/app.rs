@@ -2,7 +2,7 @@ use std::io::Result;
 use std::sync::mpsc;
 
 use ratatui::Frame;
-use ratatui::crossterm::event::{KeyCode, KeyEventKind};
+use ratatui::crossterm::event::{Event, KeyCode, KeyEventKind};
 use ratatui::layout::{Constraint, Layout};
 use ratatui::style::Color;
 use ratatui::style::{Style, Stylize};
@@ -46,11 +46,12 @@ impl App {
             terminal.draw(|frame| self.render_frame(frame))?;
 
             match self.events.recv() {
-                Ok(AppEvent::Term(event)) if key.kind == KeyEventKind::Press => match key.code {
+                Ok(AppEvent::Term(Event::Key(key))) if key.kind == KeyEventKind::Press => match key.code {
                     KeyCode::Char('q') => self.alive = false,
                     KeyCode::Tab => self.selected = (self.selected + 1) % self.tabs.len(),
                     _ => self.tabs[self.selected].handle(key)?,
                 },
+                Ok(AppEvent::Tick) => {}
                 Ok(_) => {}
                 Err(_) => self.alive = false,
             }
