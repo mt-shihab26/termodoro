@@ -705,6 +705,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "orivo"
+version = "0.1.0"
+dependencies = [
+ "ratatui",
+]
+
+[[package]]
 name = "parking_lot"
 version = "0.12.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1229,13 +1236,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "411c5bf740737c7918b8b1fe232dca4dc9f8e754b8ad5e20966814001ed0ac6b"
 dependencies = [
  "libc",
-]
-
-[[package]]
-name = "termodoro"
-version = "0.1.0"
-dependencies = [
- "ratatui",
 ]
 
 [[package]]
