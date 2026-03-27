@@ -10,8 +10,6 @@ use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph};
 use crate::commands::tui::tabs::Tab;
 use crate::domains::todos::{Mode, TodosState};
 
-const COLOR: Color = Color::Cyan;
-
 pub struct Todos {
     state: TodosState,
     list: RefCell<ListState>,
@@ -21,7 +19,9 @@ impl Todos {
     pub fn new() -> Self {
         let state = TodosState::new();
         let mut list_state = ListState::default();
+
         list_state.select(Some(state.selected));
+
         Self {
             state,
             list: RefCell::new(list_state),
@@ -34,6 +34,7 @@ impl Todos {
         } else {
             Some(self.state.selected)
         };
+
         self.list.borrow_mut().select(selected);
     }
 }
@@ -44,7 +45,7 @@ impl Tab for Todos {
     }
 
     fn color(&self) -> Color {
-        COLOR
+        Color::Cyan
     }
 
     fn render(&self, frame: &mut Frame, area: Rect) {
@@ -76,7 +77,7 @@ impl Tab for Todos {
             .collect();
 
         let list = List::new(items)
-            .highlight_style(Style::default().fg(COLOR).bold())
+            .highlight_style(Style::default().fg(self.color()).bold())
             .highlight_symbol(">");
 
         frame.render_stateful_widget(list, list_area, &mut self.list.borrow_mut());
@@ -90,7 +91,7 @@ impl Tab for Todos {
         if let Some(area) = input_area {
             let block = Block::bordered()
                 .title(" New Todo ")
-                .border_style(Style::default().fg(COLOR));
+                .border_style(Style::default().fg(self.color()));
             let inner = block.inner(area);
             frame.render_widget(block, area);
             frame.render_widget(Paragraph::new(format!("{}_", self.state.input)).fg(Color::White), inner);
