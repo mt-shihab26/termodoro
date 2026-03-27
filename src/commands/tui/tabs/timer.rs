@@ -9,8 +9,8 @@ use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Block, Paragraph, Widget};
 
 use crate::commands::tui::tabs::Tab;
-use crate::event::Event;
 use crate::domains::timer::{LONG_BREAK_INTERVAL, SHOW_MILLIS, TimerState};
+use crate::event::Event;
 use crate::workers::timer_worker;
 
 pub const COLOR: Color = Color::Yellow;
