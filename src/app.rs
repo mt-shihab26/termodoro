@@ -36,8 +36,8 @@ impl<'a> App<'a> {
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => match key.code {
                 KeyCode::Char('q') => self.alive = false,
-                KeyCode::Char('1') => self.selected_tab = 1,
-                KeyCode::Char('2') => self.selected_tab = 2,
+                KeyCode::Char('1') => self.selected_tab = 0,
+                KeyCode::Char('2') => self.selected_tab = 1,
                 _ => {}
             },
             _ => {}
