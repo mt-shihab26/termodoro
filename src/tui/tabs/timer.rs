@@ -1,4 +1,5 @@
 use std::io::Result;
+use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 
 use ratatui::Frame;
@@ -7,19 +8,20 @@ use ratatui::layout::{Alignment, Constraint, Layout, Rect};
 use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Block, Paragraph, Widget};
 
+use crate::tui::event::AppEvent;
 use crate::tui::tabs::Tab;
 use crate::tui::workers::timer_worker::{self, LONG_BREAK_INTERVAL, TimerWorker};
 
 pub const COLOR: Color = Color::Yellow;
 
 pub struct Timer {
-    inner: Arc<Mutex<TimerWorker>>,
+    worker: Arc<Mutex<TimerWorker>>,
 }
 
 impl Timer {
-    pub fn new(on_tick: impl Fn() + Send + 'static) -> Self {
+    pub fn new(sender: Sender<AppEvent>) -> Self {
         Self {
-            inner: timer_worker::spawn(on_tick),
+            worker: timer_worker::spawn(sender),
         }
     }
 }
@@ -34,7 +36,7 @@ impl Tab for Timer {
     }
 
     fn render(&self, frame: &mut Frame, area: Rect) {
-        let s = self.inner.lock().unwrap();
+        let s = self.worker.lock().unwrap();
 
         let mins = s.seconds / 60;
         let secs = s.seconds % 60;
@@ -89,7 +91,7 @@ impl Tab for Timer {
     }
 
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
-        let mut s = self.inner.lock().unwrap();
+        let mut s = self.worker.lock().unwrap();
         match key.code {
             KeyCode::Char(' ') => s.running = !s.running,
             KeyCode::Char('r') => {

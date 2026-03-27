@@ -1,6 +1,9 @@
+use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
+
+use crate::tui::event::AppEvent;
 
 pub const WORK_DURATION: u64 = 25 * 60;
 pub const BREAK_DURATION: u64 = 5 * 60;
@@ -70,7 +73,7 @@ impl TimerWorker {
     }
 }
 
-pub fn spawn(on_tick: impl Fn() + Send + 'static) -> Arc<Mutex<TimerWorker>> {
+pub fn spawn(sender: Sender<AppEvent>) -> Arc<Mutex<TimerWorker>> {
     let state = Arc::new(Mutex::new(TimerWorker {
         phase: Phase::Work,
         seconds: WORK_DURATION,
@@ -80,10 +83,12 @@ pub fn spawn(on_tick: impl Fn() + Send + 'static) -> Arc<Mutex<TimerWorker>> {
 
     let thread_state = Arc::clone(&state);
 
-    thread::spawn(move || loop {
-        thread::sleep(Duration::from_secs(1));
-        thread_state.lock().unwrap().tick();
-        on_tick();
+    thread::spawn(move || {
+        loop {
+            thread::sleep(Duration::from_secs(1));
+            thread_state.lock().unwrap().tick();
+            sender.send(AppEvent::Tick).unwrap();
+        }
     });
 
     state

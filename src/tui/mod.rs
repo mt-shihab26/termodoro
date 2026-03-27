@@ -2,6 +2,7 @@ mod tabs;
 mod workers;
 
 pub mod app;
+pub mod event;
 
 use std::io::Result;
 

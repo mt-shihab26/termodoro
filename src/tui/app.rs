@@ -1,10 +1,8 @@
 use std::io::Result;
 use std::sync::mpsc;
-use std::thread;
 
 use ratatui::Frame;
-use ratatui::crossterm::event::KeyEvent;
-use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
+use ratatui::crossterm::event::{KeyCode, KeyEventKind};
 use ratatui::layout::{Constraint, Layout};
 use ratatui::style::Color;
 use ratatui::style::{Style, Stylize};
@@ -12,14 +10,11 @@ use ratatui::symbols;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Tabs, Widget};
 
+use super::event::AppEvent;
 use super::tabs::Tab;
 use super::tabs::timer::Timer;
 use super::tabs::todos::Todos;
-
-enum AppEvent {
-    Key(KeyEvent),
-    Tick,
-}
+use super::workers::key_worker;
 
 pub struct App {
     alive: bool,
@@ -32,31 +27,14 @@ impl App {
     pub fn new() -> Self {
         let (sender, events) = mpsc::channel::<AppEvent>();
 
-        let key_sender = sender.clone();
-        thread::spawn(move || {
-            loop {
-                if let Ok(Event::Key(key)) = event::read() {
-                    if key_sender.send(AppEvent::Key(key)).is_err() {
-                        break;
-                    }
-                }
-            }
-        });
+        key_worker::spawn(sender.clone());
 
-        let tick_sender = sender;
         let tabs: Vec<Box<dyn Tab>> = vec![
             Box::new(Todos),
-            Box::new(Timer::new(move || {
-                let _ = tick_sender.send(AppEvent::Tick);
-            })),
+            Box::new(Timer::new(sender)),
         ];
 
-        Self {
-            alive: true,
-            selected: 0,
-            tabs,
-            events,
-        }
+        Self { alive: true, selected: 0, tabs, events }
     }
 
     pub fn run(&mut self) -> Result<()> {
@@ -82,7 +60,8 @@ impl App {
 
     fn render_frame(&mut self, frame: &mut Frame) {
         let [top, tabs_area, main] =
-            Layout::vertical([Constraint::Length(1), Constraint::Length(1), Constraint::Fill(1)]).areas(frame.area());
+            Layout::vertical([Constraint::Length(1), Constraint::Length(1), Constraint::Fill(1)])
+                .areas(frame.area());
 
         Line::from_iter([Span::from("Orivo").bold().fg(Color::Green)])
             .centered()
