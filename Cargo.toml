@@ -4,14 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-clap = { version = "4.5.20", features = ["derive", "cargo", "string"] }
-crossterm = { version = "0.28.1", features = ["event-stream"] }
-futures = "0.3.31"
 ratatui = "0.30.0"
-serde = { version = "1.0.211", features = ["derive"] }
-signal-hook = "0.3.17"
-strum = { version = "0.26.3", features = ["derive"] }
-tokio = { version = "1.40.0", features = ["rt-multi-thread", "macros", "sync", "time"] }
-tokio-util = "0.7.12"
-tracing = "0.1.40"
 
