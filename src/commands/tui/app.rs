@@ -1,14 +1,14 @@
 use std::io::{Error, ErrorKind, Result};
 use std::sync::mpsc;
 
-use ratatui::Frame;
 use ratatui::crossterm::event::KeyCode;
 use ratatui::layout::{Alignment, Constraint, Layout};
 use ratatui::style::Color;
 use ratatui::style::{Style, Stylize};
-use ratatui::symbols;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Paragraph, Tabs, Widget};
+use ratatui::{DefaultTerminal, symbols};
+use ratatui::{Frame, init, restore};
 
 use crate::event::Event;
 use crate::log_error;
@@ -45,16 +45,16 @@ impl App {
     }
 
     pub fn run(&mut self) -> Result<()> {
-        let mut terminal = ratatui::init();
+        let mut terminal = init();
 
         let result = self.event_loop(&mut terminal);
 
-        ratatui::restore();
+        restore();
 
         result
     }
 
-    fn event_loop(&mut self, terminal: &mut ratatui::DefaultTerminal) -> Result<()> {
+    fn event_loop(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
         while self.alive {
             self.fps.tick();
 

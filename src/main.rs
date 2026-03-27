@@ -1,3 +1,4 @@
+use std::env;
 use std::io::{Error, ErrorKind, Result};
 
 use orivo::commands::{Cmd, help::Help, tui::Tui, version::Version};
@@ -9,7 +10,7 @@ fn main() -> Result<()> {
         ("help", Box::new(Help::new(&vec![])) as Box<dyn Cmd>),
     ];
 
-    let arg = std::env::args().nth(1);
+    let arg = env::args().nth(1);
 
     let key = match arg.as_deref() {
         None | Some("tui") => "tui",
