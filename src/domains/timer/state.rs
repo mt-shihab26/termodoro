@@ -1,20 +1,24 @@
-use super::config::{LONG_BREAK_INTERVAL, WORK_DURATION, tick_interval};
+use super::config::Config;
 use super::phase::Phase;
 
 pub struct TimerState {
     pub phase: Phase,
     pub millis: u64,
-    pub sessions: u32,
+    pub sessions: u64,
     pub running: bool,
+    pub config: Config,
 }
 
 impl TimerState {
     pub fn new() -> Self {
+        let config = Config::new();
+
         Self {
             phase: Phase::Work,
-            millis: WORK_DURATION,
+            millis: config.work_duration(),
             sessions: 0,
             running: false,
+            config: Config::new(),
         }
     }
 
@@ -23,7 +27,7 @@ impl TimerState {
             return;
         }
 
-        let step = tick_interval();
+        let step = self.config.tick_interval();
 
         if self.millis >= step {
             self.millis -= step;
@@ -36,7 +40,7 @@ impl TimerState {
         match self.phase {
             Phase::Work => {
                 self.sessions += 1;
-                self.phase = if self.sessions % LONG_BREAK_INTERVAL == 0 {
+                self.phase = if self.sessions % self.config.long_break_interval() == 0 {
                     Phase::LongBreak
                 } else {
                     Phase::Break
@@ -46,7 +50,7 @@ impl TimerState {
                 self.phase = Phase::Work;
             }
         }
-        self.millis = self.phase.duration();
+        self.millis = self.phase.duration(&self.config);
         self.running = false;
     }
 

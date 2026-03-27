@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::{Arc, Mutex, mpsc::Sender};
 use std::{thread, time::Duration};
 
-use crate::domains::timer::{TimerState, tick_interval};
+use crate::domains::timer::TimerState;
 use crate::{event::Event, log_error, log_warn};
 
 pub fn spawn(render_count: Arc<AtomicU8>, sender: Sender<Event>) -> Arc<Mutex<TimerState>> {
@@ -14,21 +14,21 @@ pub fn spawn(render_count: Arc<AtomicU8>, sender: Sender<Event>) -> Arc<Mutex<Ti
         let mut last_render_count: u8 = u8::MAX;
 
         loop {
-            thread::sleep(Duration::from_millis(tick_interval()));
+            let (interval, running) = {
+                let mut state = match thread_state.lock() {
+                    Ok(guard) => guard,
+                    Err(poisoned) => {
+                        log_warn!("timer state mutex poisoned in worker, recovering");
+                        poisoned.into_inner()
+                    }
+                };
 
-            let mut state = match thread_state.lock() {
-                Ok(guard) => guard,
-                Err(poisoned) => {
-                    log_warn!("timer state mutex poisoned in worker, recovering");
-                    poisoned.into_inner()
-                }
+                state.tick();
+
+                (state.config.tick_interval(), state.running)
             };
 
-            state.tick();
-
-            let running = state.running;
-
-            drop(state);
+            thread::sleep(Duration::from_millis(interval));
 
             let current_render_count = render_count.load(Ordering::Relaxed);
 

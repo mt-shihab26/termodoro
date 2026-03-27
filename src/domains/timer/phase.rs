@@ -1,6 +1,6 @@
 use ratatui::style::Color;
 
-use super::config::{BREAK_DURATION, LONG_BREAK_DURATION, WORK_DURATION};
+use super::config::Config;
 
 #[derive(Clone, PartialEq)]
 pub enum Phase {
@@ -26,11 +26,11 @@ impl Phase {
         }
     }
 
-    pub fn duration(&self) -> u64 {
+    pub fn duration(&self, config: &Config) -> u64 {
         match self {
-            Phase::Work => WORK_DURATION,
-            Phase::Break => BREAK_DURATION,
-            Phase::LongBreak => LONG_BREAK_DURATION,
+            Phase::Work => config.work_duration(),
+            Phase::Break => config.break_duration(),
+            Phase::LongBreak => config.long_break_duration(),
         }
     }
 }

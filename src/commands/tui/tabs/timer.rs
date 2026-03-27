@@ -11,7 +11,7 @@ use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_big_text::{BigText, PixelSize};
 
 use crate::commands::tui::tabs::Tab;
-use crate::domains::timer::{LONG_BREAK_INTERVAL, Phase, SHOW_MILLIS, TimerState};
+use crate::domains::timer::{Phase, TimerState};
 use crate::event::Event;
 use crate::workers::timer_worker;
 use crate::{log_error, log_warn};
@@ -79,10 +79,14 @@ impl Tab for Timer {
         ])
         .areas(area);
 
-        Paragraph::new(format!("Session {} / {}", s.sessions + 1, LONG_BREAK_INTERVAL))
-            .centered()
-            .fg(Color::DarkGray)
-            .render(session_row, buf);
+        Paragraph::new(format!(
+            "Session {} / {}",
+            s.sessions + 1,
+            s.config.long_break_interval()
+        ))
+        .centered()
+        .fg(Color::DarkGray)
+        .render(session_row, buf);
 
         Paragraph::new(s.phase.label().to_string())
             .centered()
@@ -92,7 +96,7 @@ impl Tab for Timer {
 
         let (mins, secs, ms) = s.time_parts();
 
-        let time = if SHOW_MILLIS {
+        let time = if s.config.show_millis() {
             format!("{:02}:{:02}.{:02}", mins, secs, ms)
         } else {
             format!("{:02}:{:02}", mins, secs)
@@ -133,7 +137,7 @@ impl Tab for Timer {
                 s.running = !s.running;
             }
             KeyCode::Char('r') => {
-                s.millis = s.phase.duration();
+                s.millis = s.phase.duration(&s.config);
                 s.running = false;
             }
             KeyCode::Char('n') => {
