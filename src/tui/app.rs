@@ -90,7 +90,7 @@ impl App {
             .render(tabs_area, frame.buffer_mut());
 
         match self.selected {
-            0 => Todos.render(main, frame.buffer_mut()),
+            0 => frame.render_widget(&self.todos, main),
             1 => frame.render_widget(&self.timer, main),
             _ => unreachable!(),
         }
