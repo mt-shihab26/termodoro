@@ -15,7 +15,7 @@ fn main() -> Result<()> {
         None | Some("tui")                                => "tui",
         Some("version") | Some("--version") | Some("-V") => "version",
         Some("help")    | Some("--help")    | Some("-h")  => {
-            return Help { cmds: &cmds }.run();
+            return Help::new(&cmds).run();
         }
         Some(unknown) => {
             eprintln!("unknown command: {unknown}");

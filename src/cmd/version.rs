@@ -4,6 +4,12 @@ use crate::cmd::Cmd;
 
 pub struct Version;
 
+impl Version {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
 impl Cmd for Version {
     fn help(&self) -> &str {
         "version    Print the current version"
