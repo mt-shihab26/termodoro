@@ -38,12 +38,13 @@ impl Tab for Timer {
     fn render(&self, frame: &mut Frame, area: Rect) {
         let s = self.state.lock().unwrap();
 
-        let mins = s.seconds / 60;
-        let secs = s.seconds % 60;
+        let mins = s.millis / 6000;
+        let secs = (s.millis / 100) % 60;
+        let ms = s.millis % 100;
 
         let status = if s.running { "Running" } else { "Paused" };
         let phase = s.phase.label().to_string();
-        let time = format!("{:02}:{:02}", mins, secs);
+        let time = format!("{:02}:{:02}.{:02}", mins, secs, ms);
         let session = format!("Session {} / {}", s.sessions + 1, LONG_BREAK_INTERVAL);
         let running = s.running;
 
@@ -95,7 +96,7 @@ impl Tab for Timer {
         match key.code {
             KeyCode::Char(' ') => s.running = !s.running,
             KeyCode::Char('r') => {
-                s.seconds = s.phase.duration();
+                s.millis = s.phase.duration();
                 s.running = false;
             }
             KeyCode::Char('n') => s.advance(),

@@ -5,9 +5,9 @@ use std::time::Duration;
 
 use crate::event::Event;
 
-pub const WORK_DURATION: u64 = 25 * 60;
-pub const BREAK_DURATION: u64 = 5 * 60;
-pub const LONG_BREAK_DURATION: u64 = 15 * 60;
+pub const WORK_DURATION: u64 = 25 * 60 * 100;
+pub const BREAK_DURATION: u64 = 5 * 60 * 100;
+pub const LONG_BREAK_DURATION: u64 = 15 * 60 * 100;
 pub const LONG_BREAK_INTERVAL: u32 = 4;
 
 #[derive(Clone, PartialEq)]
@@ -37,7 +37,7 @@ impl Phase {
 
 pub struct TimerState {
     pub phase: Phase,
-    pub seconds: u64,
+    pub millis: u64,
     pub sessions: u32,
     pub running: bool,
 }
@@ -47,8 +47,8 @@ impl TimerState {
         if !self.running {
             return;
         }
-        if self.seconds > 0 {
-            self.seconds -= 1;
+        if self.millis > 0 {
+            self.millis -= 1;
         } else {
             self.advance();
         }
@@ -68,7 +68,7 @@ impl TimerState {
                 self.phase = Phase::Work;
             }
         }
-        self.seconds = self.phase.duration();
+        self.millis = self.phase.duration();
         self.running = false;
     }
 }
@@ -76,7 +76,7 @@ impl TimerState {
 pub fn spawn(sender: Sender<Event>) -> Arc<Mutex<TimerState>> {
     let state = Arc::new(Mutex::new(TimerState {
         phase: Phase::Work,
-        seconds: WORK_DURATION,
+        millis: WORK_DURATION,
         sessions: 0,
         running: false,
     }));
@@ -85,7 +85,7 @@ pub fn spawn(sender: Sender<Event>) -> Arc<Mutex<TimerState>> {
 
     thread::spawn(move || {
         loop {
-            thread::sleep(Duration::from_secs(1));
+            thread::sleep(Duration::from_millis(10));
             let mut state = thread_state.lock().unwrap();
             state.tick();
             let running = state.running;
