@@ -7,7 +7,7 @@ use std::time::Duration;
 use crate::domains::timer::{TimerState, tick_interval};
 use crate::event::Event;
 
-pub fn spawn(sender: Sender<Event>, render_count: Arc<AtomicU8>) -> Arc<Mutex<TimerState>> {
+pub fn spawn(render_count: Arc<AtomicU8>, sender: Sender<Event>) -> Arc<Mutex<TimerState>> {
     let state = Arc::new(Mutex::new(TimerState::new()));
 
     let thread_state = Arc::clone(&state);
@@ -19,6 +19,7 @@ pub fn spawn(sender: Sender<Event>, render_count: Arc<AtomicU8>) -> Arc<Mutex<Ti
             thread::sleep(Duration::from_millis(tick_interval()));
 
             let mut state = thread_state.lock().unwrap();
+
             state.tick();
 
             let running = state.running;

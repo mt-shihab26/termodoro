@@ -24,17 +24,16 @@ pub struct Timer {
 
 impl Timer {
     pub fn new(sender: Sender<Event>) -> Self {
-        let render_count = Arc::new(AtomicU8::new(0));
+        let render_count = Arc::new(AtomicU8::new(1));
 
-        Self {
-            state: timer_worker::spawn(sender, Arc::clone(&render_count)),
-            render_count,
-        }
+        let state = timer_worker::spawn(Arc::clone(&render_count), sender);
+
+        Self { state, render_count }
     }
 
     fn tick_render_count(&self) {
         self.render_count
-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |n| Some((n) % u8::MAX))
+            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |n| Some(n.wrapping_add(1)))
             .ok();
     }
 }
