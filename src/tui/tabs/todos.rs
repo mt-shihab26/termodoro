@@ -7,7 +7,7 @@ pub const COLOR: Color = Color::Cyan;
 
 pub struct Todos;
 
-impl Widget for Todos {
+impl Widget for &Todos {
     fn render(self, area: Rect, buf: &mut Buffer) {
         Paragraph::new("Great terminal interfaces start with a single widget.")
             .alignment(Alignment::Center)

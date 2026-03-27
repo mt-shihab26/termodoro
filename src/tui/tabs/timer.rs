@@ -1,3 +1,5 @@
+use std::io::Result;
+
 use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Alignment, Constraint, Layout, Rect};
@@ -64,35 +66,22 @@ impl Timer {
         }
     }
 
-    pub fn toggle(&mut self) {
-        self.running = !self.running;
-    }
-
-    pub fn reset(&mut self) {
-        self.seconds = self.phase.duration();
-        self.running = false;
-    }
-
-    pub fn skip(&mut self) {
-        self.advance();
-    }
-
-    pub fn handle_event(&mut self, key: KeyEvent) -> bool {
+    pub fn handle_event(&mut self, key: KeyEvent) -> Result<()> {
         match key.code {
             KeyCode::Char(' ') => {
-                self.toggle();
-                true
+                self.running = !self.running;
             }
             KeyCode::Char('r') => {
-                self.reset();
-                true
+                self.seconds = self.phase.duration();
+                self.running = false;
             }
             KeyCode::Char('n') => {
-                self.skip();
-                true
+                self.advance();
             }
-            _ => false,
-        }
+            _ => (),
+        };
+
+        Ok(())
     }
 
     fn advance(&mut self) {
@@ -112,7 +101,6 @@ impl Timer {
         self.seconds = self.phase.duration();
         self.running = false;
     }
-
 }
 
 impl Widget for &Timer {

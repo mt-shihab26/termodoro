@@ -13,17 +13,19 @@ use super::tabs::timer::{self, Timer};
 use super::tabs::todos::{self, Todos};
 
 pub struct App {
-    alive: bool,
+    alive:    bool,
     selected: usize,
-    timer: Timer,
+    timer:    Timer,
+    todos:    Todos,
 }
 
 impl App {
     pub fn new() -> Self {
         Self {
-            alive: true,
+            alive:    true,
             selected: 0,
-            timer: Timer::new(),
+            timer:    Timer::new(),
+            todos:    Todos,
         }
     }
 
