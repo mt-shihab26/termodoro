@@ -74,6 +74,12 @@ impl App {
                     KeyCode::Char('f') => {
                         self.fps.visible = !self.fps.visible;
                     }
+                    KeyCode::Char('1') => {
+                        self.selected = 0;
+                    }
+                    KeyCode::Char('2') => {
+                        self.selected = 1;
+                    }
                     KeyCode::Tab => {
                         self.selected = (self.selected + 1) % self.tabs.len();
                     }
@@ -118,7 +124,11 @@ impl App {
 
         for i in 0..self.tabs.len() {
             let is_selected = i == self.selected;
-            let color = if is_selected { self.tabs[i].color() } else { Color::DarkGray };
+            let color = if is_selected {
+                self.tabs[i].color()
+            } else {
+                Color::DarkGray
+            };
             let block = Block::bordered().border_style(Style::default().fg(color).bold());
             let inner = block.inner(tab_areas[i]);
             block.render(tab_areas[i], frame.buffer_mut());
