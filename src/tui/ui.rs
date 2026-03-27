@@ -1,5 +1,5 @@
 use ratatui::buffer::Buffer;
-use ratatui::layout::{Constraint, Layout, Offset, Rect};
+use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Style, Stylize};
 use ratatui::symbols;
 use ratatui::text::{Line, Span};
@@ -14,8 +14,9 @@ pub struct Ui {
 
 impl Widget for Ui {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let layout = Layout::vertical([Constraint::Length(1), Constraint::Fill(1)]).spacing(1);
-        let [top, main] = area.layout(&layout);
+        let layout = Layout::vertical([Constraint::Length(1), Constraint::Length(1), Constraint::Fill(1)]);
+
+        let [top, tabs_area, main] = area.layout(&layout);
 
         Line::from_iter([Span::from("Orivo").bold()])
             .centered()
@@ -27,7 +28,7 @@ impl Widget for Ui {
             .select(self.selected_tab)
             .divider(symbols::DOT)
             .padding(" ", " ")
-            .render(main + Offset::new(1, 0), buf);
+            .render(tabs_area, buf);
 
         match self.selected_tab {
             0 => Todos.render(main, buf),
