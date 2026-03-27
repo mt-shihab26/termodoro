@@ -71,8 +71,7 @@ impl App {
         let [top, tabs_area, main] =
             Layout::vertical([Constraint::Length(1), Constraint::Length(1), Constraint::Fill(1)]).areas(frame.area());
 
-        let [_, right] =
-            Layout::horizontal([Constraint::Fill(1), Constraint::Fill(1)]).areas(top);
+        let [_, right] = Layout::horizontal([Constraint::Fill(1), Constraint::Fill(1)]).areas(top);
 
         Paragraph::new(Span::from("Orivo").bold().fg(Color::Green))
             .centered()
