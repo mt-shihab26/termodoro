@@ -58,8 +58,8 @@ impl<'a> App<'a> {
 
         let selected_tab = 0;
 
-        render_content(frame, main, selected_tab);
         render_tabs(frame, main + Offset::new(1, 0), selected_tab);
+        render_content(frame, main, selected_tab);
     }
 }
 
@@ -70,6 +70,7 @@ fn render_tabs(frame: &mut Frame, area: Rect, selected_tab: usize) {
         .select(selected_tab)
         .divider(symbols::DOT)
         .padding(" ", " ");
+
     frame.render_widget(tabs, area);
 }
 
@@ -80,8 +81,10 @@ fn render_content(frame: &mut Frame, area: Rect, selected_tab: usize) {
         2 => "Render boldly, style with purpose.".bold(),
         _ => unreachable!(),
     };
+
     let block = Paragraph::new(text)
         .alignment(Alignment::Center)
         .block(Block::bordered());
+
     frame.render_widget(block, area);
 }
