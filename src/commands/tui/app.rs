@@ -3,12 +3,12 @@ use std::sync::mpsc;
 
 use ratatui::Frame;
 use ratatui::crossterm::event::KeyCode;
-use ratatui::layout::{Constraint, Layout};
+use ratatui::layout::{Alignment, Constraint, Layout};
 use ratatui::style::Color;
 use ratatui::style::{Style, Stylize};
 use ratatui::symbols;
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Tabs, Widget};
+use ratatui::widgets::{Paragraph, Tabs, Widget};
 
 use crate::event::Event;
 use crate::workers::term_worker;
@@ -71,20 +71,24 @@ impl App {
         let [top, tabs_area, main] =
             Layout::vertical([Constraint::Length(1), Constraint::Length(1), Constraint::Fill(1)]).areas(frame.area());
 
-        Line::from_iter([
-            Span::from("Orivo").bold().fg(Color::Green),
-            if self.fps.visible {
+        let [_, right] =
+            Layout::horizontal([Constraint::Fill(1), Constraint::Fill(1)]).areas(top);
+
+        Paragraph::new(Span::from("Orivo").bold().fg(Color::Green))
+            .centered()
+            .render(top, frame.buffer_mut());
+
+        if self.fps.visible {
+            Line::from(
                 Span::from(format!(
-                    "  {:.0} fps  {} frames",
+                    "{:.0} fps  {} frames",
                     self.fps.per_second, self.fps.per_lifetime
                 ))
-                .fg(Color::DarkGray)
-            } else {
-                Span::raw("")
-            },
-        ])
-        .centered()
-        .render(top, frame.buffer_mut());
+                .fg(Color::DarkGray),
+            )
+            .alignment(Alignment::Right)
+            .render(right, frame.buffer_mut());
+        }
 
         let highlight_color = self.tabs[self.selected].color();
         let names: Vec<&str> = self.tabs.iter().map(|t| t.name()).collect();
