@@ -70,7 +70,7 @@ impl TimerWorker {
     }
 }
 
-pub fn spawn() -> Arc<Mutex<TimerWorker>> {
+pub fn spawn(on_tick: impl Fn() + Send + 'static) -> Arc<Mutex<TimerWorker>> {
     let state = Arc::new(Mutex::new(TimerWorker {
         phase: Phase::Work,
         seconds: WORK_DURATION,
@@ -80,11 +80,10 @@ pub fn spawn() -> Arc<Mutex<TimerWorker>> {
 
     let thread_state = Arc::clone(&state);
 
-    thread::spawn(move || {
-        loop {
-            thread::sleep(Duration::from_secs(1));
-            thread_state.lock().unwrap().tick();
-        }
+    thread::spawn(move || loop {
+        thread::sleep(Duration::from_secs(1));
+        thread_state.lock().unwrap().tick();
+        on_tick();
     });
 
     state

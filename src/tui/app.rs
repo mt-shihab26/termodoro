@@ -1,8 +1,9 @@
 use std::io::Result;
-use std::time::Duration;
+use std::sync::mpsc;
+use std::thread;
 
-use ratatui::DefaultTerminal;
 use ratatui::Frame;
+use ratatui::crossterm::event::KeyEvent;
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::layout::{Constraint, Layout};
 use ratatui::style::Color;
@@ -15,18 +16,46 @@ use super::tabs::Tab;
 use super::tabs::timer::Timer;
 use super::tabs::todos::Todos;
 
+enum AppEvent {
+    Key(KeyEvent),
+    Tick,
+}
+
 pub struct App {
     alive: bool,
     selected: usize,
     tabs: Vec<Box<dyn Tab>>,
+    events: mpsc::Receiver<AppEvent>,
 }
 
 impl App {
     pub fn new() -> Self {
+        let (tx, rx) = mpsc::channel::<AppEvent>();
+
+        let key_tx = tx.clone();
+        thread::spawn(move || {
+            loop {
+                if let Ok(Event::Key(key)) = event::read() {
+                    if key_tx.send(AppEvent::Key(key)).is_err() {
+                        break;
+                    }
+                }
+            }
+        });
+
+        let tick_tx = tx;
+        let tabs: Vec<Box<dyn Tab>> = vec![
+            Box::new(Todos),
+            Box::new(Timer::new(move || {
+                let _ = tick_tx.send(AppEvent::Tick);
+            })),
+        ];
+
         Self {
             alive: true,
             selected: 0,
-            tabs: vec![Box::new(Todos), Box::new(Timer::new())],
+            tabs,
+            rx,
         }
     }
 
@@ -34,31 +63,20 @@ impl App {
         let mut terminal = ratatui::init();
 
         while self.alive {
-            self.render_pixels(&mut terminal)?;
-            self.handle_events()?;
-        }
+            terminal.draw(|frame| self.render_frame(frame))?;
 
-        ratatui::restore();
-
-        Ok(())
-    }
-
-    fn handle_events(&mut self) -> Result<()> {
-        if event::poll(Duration::from_millis(33))? {
-            match event::read()? {
-                Event::Key(key) if key.kind == KeyEventKind::Press => match key.code {
+            match self.rx.recv() {
+                Ok(AppEvent::Key(key)) if key.kind == KeyEventKind::Press => match key.code {
                     KeyCode::Char('q') => self.alive = false,
                     KeyCode::Tab => self.selected = (self.selected + 1) % self.tabs.len(),
                     _ => self.tabs[self.selected].handle(key)?,
                 },
-                _ => {}
+                Ok(_) => {}
+                Err(_) => self.alive = false,
             }
         }
-        Ok(())
-    }
 
-    fn render_pixels(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
-        terminal.draw(|frame| self.render_frame(frame))?;
+        ratatui::restore();
         Ok(())
     }
 

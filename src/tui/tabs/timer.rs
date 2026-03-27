@@ -17,9 +17,9 @@ pub struct Timer {
 }
 
 impl Timer {
-    pub fn new() -> Self {
+    pub fn new(on_tick: impl Fn() + Send + 'static) -> Self {
         Self {
-            inner: timer_worker::spawn(),
+            inner: timer_worker::spawn(on_tick),
         }
     }
 }
