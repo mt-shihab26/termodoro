@@ -32,9 +32,9 @@ impl Timer {
     }
 
     fn tick_render_count(&self) {
-        self.render_count
-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |n| Some((n + 1) % u8::MAX))
-            .ok();
+        let current = self.render_count.load(Ordering::Relaxed);
+        let next = (current + 1) % u8::MAX;
+        self.render_count.store(next, Ordering::Relaxed);
     }
 }
 
@@ -115,13 +115,18 @@ impl Tab for Timer {
 
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
         let mut s = self.state.lock().unwrap();
+
         match key.code {
-            KeyCode::Char(' ') => s.running = !s.running,
+            KeyCode::Char(' ') => {
+                s.running = !s.running;
+            }
             KeyCode::Char('r') => {
                 s.millis = s.phase.duration();
                 s.running = false;
             }
-            KeyCode::Char('n') => s.advance(),
+            KeyCode::Char('n') => {
+                s.advance();
+            }
             _ => {}
         }
         Ok(())
