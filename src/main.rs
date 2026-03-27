@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind, Result};
 
-use termodoro::{Cmd, help::Help, tui::Tui, version::Version};
+use termodoro::commands::{Cmd, help::Help, tui::Tui, version::Version};
 
 fn main() -> Result<()> {
     let cmds: Vec<(&str, Box<dyn Cmd>)> = vec![

@@ -10,12 +10,13 @@ use ratatui::symbols;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Tabs, Widget};
 
+use crate::workers::term_worker;
+
 use super::event::AppEvent;
 use super::fps::Fps;
 use super::tabs::Tab;
 use super::tabs::timer::Timer;
 use super::tabs::todos::Todos;
-use super::workers::term_worker;
 
 pub struct App {
     alive: bool,

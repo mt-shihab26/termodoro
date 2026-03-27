@@ -3,7 +3,7 @@ use std::thread;
 
 use ratatui::crossterm::event::{self};
 
-use crate::tui::event::AppEvent;
+use crate::commands::tui::event::AppEvent;
 
 pub fn spawn(sender: Sender<AppEvent>) {
     thread::spawn(move || {

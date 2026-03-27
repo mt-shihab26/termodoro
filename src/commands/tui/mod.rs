@@ -1,5 +1,4 @@
 mod tabs;
-mod workers;
 
 pub mod app;
 pub mod event;
@@ -7,7 +6,7 @@ pub mod fps;
 
 use std::io::Result;
 
-use crate::{Cmd, tui::app::App};
+use crate::commands::{Cmd, tui::app::App};
 
 pub struct Tui;
 

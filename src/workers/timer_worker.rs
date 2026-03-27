@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-use crate::tui::event::AppEvent;
+use crate::commands::tui::event::AppEvent;
 
 pub const WORK_DURATION: u64 = 25 * 60;
 pub const BREAK_DURATION: u64 = 5 * 60;

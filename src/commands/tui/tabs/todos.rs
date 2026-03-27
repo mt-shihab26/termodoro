@@ -6,7 +6,7 @@ use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Block, Paragraph};
 
-use crate::tui::tabs::Tab;
+use crate::commands::tui::tabs::Tab;
 
 pub const COLOR: Color = Color::Cyan;
 
