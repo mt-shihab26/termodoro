@@ -26,7 +26,7 @@ impl<'a> App<'a> {
     fn handle_events(&mut self) -> Result<()> {
         match event::read()? {
             Event::Key(key) if key.kind == KeyEventKind::Press => match key.code {
-                KeyCode::Char('q') => return Ok(()),
+                KeyCode::Char('q') => self.alive = false,
                 _ => {}
             },
             _ => {}
@@ -35,12 +35,12 @@ impl<'a> App<'a> {
     }
 
     fn render_pixels(&mut self) -> Result<()> {
-        self.terminal.draw(|frame| self.render_frame(frame))?;
+        self.terminal.draw(|frame| Self::render_frame(frame))?;
 
         Ok(())
     }
 
-    fn render_frame(&mut self, frame: &mut Frame) {
+    fn render_frame(frame: &mut Frame) {
         let text = Paragraph::new("Hello World!");
         frame.render_widget(text, frame.area());
     }
