@@ -24,6 +24,7 @@ impl Fps {
         self.frame_count_per_second += 1;
 
         let elapsed = self.interval_start.elapsed().as_secs_f64();
+
         if elapsed >= 1.0 {
             self.per_second = self.frame_count_per_second as f64 / elapsed;
             self.frame_count_per_second = 0;
