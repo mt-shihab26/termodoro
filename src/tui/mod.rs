@@ -6,7 +6,7 @@ use std::io::Result;
 use ratatui::DefaultTerminal;
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
 
-use crate::tui::ui::Ui;
+use self::ui::Ui;
 
 pub struct App<'a> {
     alive: bool,
