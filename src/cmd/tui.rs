@@ -11,8 +11,8 @@ impl Tui {
 }
 
 impl Cmd for Tui {
-    fn help(&self) -> &str {
-        "tui    Launch the terminal UI"
+    fn help(&self) -> &[&str] {
+        &["<root>", "tui", "Launch the terminal UI"]
     }
 
     fn run(&self) -> Result<()> {

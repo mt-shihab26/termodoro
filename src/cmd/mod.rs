@@ -6,5 +6,5 @@ use std::io::Result;
 
 pub trait Cmd {
     fn run(&self) -> Result<()>;
-    fn help(&self) -> &str;
+    fn help(&self) -> &[&str];
 }

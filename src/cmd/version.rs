@@ -11,8 +11,8 @@ impl Version {
 }
 
 impl Cmd for Version {
-    fn help(&self) -> &str {
-        "version    Print the current version"
+    fn help(&self) -> &[&str] {
+        &["version", "--version", "-V", "Print the current version"]
     }
 
     fn run(&self) -> Result<()> {
