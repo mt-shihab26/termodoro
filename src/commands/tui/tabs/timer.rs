@@ -47,15 +47,22 @@ impl Tab for Timer {
 
         block.render(area, buf);
 
-        let [phase_row, session_row, time_row, status_row, _, hint_row] = Layout::vertical([
+        let [_, content, _, hint_row] = Layout::vertical([
+            Constraint::Fill(1),
+            Constraint::Length(7),
+            Constraint::Fill(1),
+            Constraint::Length(1),
+        ])
+        .areas(inner);
+
+        let [phase_row, session_row, time_row, status_row, _] = Layout::vertical([
             Constraint::Length(1),
             Constraint::Length(1),
             Constraint::Length(3),
             Constraint::Length(1),
             Constraint::Fill(1),
-            Constraint::Length(1),
         ])
-        .areas(inner);
+        .areas(content);
 
         Paragraph::new(s.phase.label().to_string())
             .alignment(Alignment::Center)
@@ -70,17 +77,21 @@ impl Tab for Timer {
 
         let (mins, secs, ms) = s.time_parts();
 
-        Paragraph::new(if SHOW_MILLIS {
+        let time = if SHOW_MILLIS {
             format!("{:02}:{:02}.{:02}", mins, secs, ms)
         } else {
             format!("{:02}:{:02}", mins, secs)
-        })
-        .alignment(Alignment::Center)
-        .bold()
-        .fg(COLOR)
-        .render(time_row, buf);
+        };
 
-        Paragraph::new(if s.running { "Running" } else { "Paused" })
+        Paragraph::new(time)
+            .alignment(Alignment::Center)
+            .bold()
+            .fg(COLOR)
+            .render(time_row, buf);
+
+        let status = if s.running { "Running" } else { "Paused" };
+
+        Paragraph::new(status)
             .alignment(Alignment::Center)
             .fg(if s.running { Color::Green } else { Color::DarkGray })
             .render(status_row, buf);
