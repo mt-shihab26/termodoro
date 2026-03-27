@@ -1,18 +1,30 @@
 use std::io::Result;
 
+use ratatui::Frame;
 use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::KeyEvent;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Block, Paragraph, Widget};
 
-use crate::tui::tabs::Event;
+use crate::tui::tabs::Tab;
 
 pub const COLOR: Color = Color::Cyan;
 
 pub struct Todos;
 
-impl Event for Todos {
+impl Tab for Todos {
+    fn name(&self) -> &str {
+        "Todos"
+    }
+    fn color(&self) -> Color {
+        COLOR
+    }
+
+    fn render(&self, frame: &mut Frame, area: Rect) {
+        frame.render_widget(self, area);
+    }
+
     fn handle(&mut self, _key: KeyEvent) -> Result<()> {
         Ok(())
     }

@@ -6,7 +6,9 @@ use ratatui::layout::{Alignment, Constraint, Layout, Rect};
 use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Block, Paragraph, Widget};
 
-use crate::tui::tabs::Event;
+use ratatui::Frame;
+
+use crate::tui::tabs::Tab;
 
 pub const COLOR: Color = Color::Yellow;
 
@@ -87,22 +89,30 @@ impl Timer {
     }
 }
 
-impl Event for Timer {
+impl Tab for Timer {
+    fn name(&self) -> &str {
+        "Timer"
+    }
+    fn color(&self) -> Color {
+        COLOR
+    }
+
+    fn tick(&mut self) { self.tick(); }
+
+    fn render(&self, frame: &mut Frame, area: Rect) {
+        frame.render_widget(self, area);
+    }
+
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
         match key.code {
-            KeyCode::Char(' ') => {
-                self.running = !self.running;
-            }
+            KeyCode::Char(' ') => self.running = !self.running,
             KeyCode::Char('r') => {
                 self.seconds = self.phase.duration();
                 self.running = false;
             }
-            KeyCode::Char('n') => {
-                self.advance();
-            }
-            _ => (),
-        };
-
+            KeyCode::Char('n') => self.advance(),
+            _ => {}
+        }
         Ok(())
     }
 }

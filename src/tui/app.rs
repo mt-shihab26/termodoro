@@ -1,23 +1,24 @@
 use std::io::Result;
 use std::time::Duration;
 
+use ratatui::DefaultTerminal;
+use ratatui::Frame;
 use ratatui::crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::layout::{Constraint, Layout};
-use ratatui::style::{Color, Style, Stylize};
+use ratatui::style::Color;
+use ratatui::style::{Style, Stylize};
 use ratatui::symbols;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Tabs, Widget};
-use ratatui::{DefaultTerminal, Frame};
 
-use super::tabs::Event as TabEvent;
-use super::tabs::timer::{self, Timer};
-use super::tabs::todos::{self, Todos};
+use super::tabs::Tab;
+use super::tabs::timer::Timer;
+use super::tabs::todos::Todos;
 
 pub struct App {
     alive: bool,
     selected: usize,
-    timer: Timer,
-    todos: Todos,
+    tabs: Vec<Box<dyn Tab>>,
 }
 
 impl App {
@@ -25,8 +26,7 @@ impl App {
         Self {
             alive: true,
             selected: 0,
-            timer: Timer::new(),
-            todos: Todos,
+            tabs: vec![Box::new(Todos), Box::new(Timer::new())],
         }
     }
 
@@ -48,18 +48,15 @@ impl App {
             match event::read()? {
                 Event::Key(key) if key.kind == KeyEventKind::Press => match key.code {
                     KeyCode::Char('q') => self.alive = false,
-                    KeyCode::Char('1') => self.selected = 0,
-                    KeyCode::Char('2') => self.selected = 1,
-                    _ => match self.selected {
-                        0 => self.todos.handle(key)?,
-                        1 => self.timer.handle(key)?,
-                        _ => {}
-                    },
+                    KeyCode::Tab => self.selected = (self.selected + 1) % self.tabs.len(),
+                    _ => self.tabs[self.selected].handle(key)?,
                 },
                 _ => {}
             }
         } else {
-            self.timer.tick();
+            for tab in &mut self.tabs {
+                tab.tick();
+            }
         }
         Ok(())
     }
@@ -77,12 +74,10 @@ impl App {
             .centered()
             .render(top, frame.buffer_mut());
 
-        let highlight_color = match self.selected {
-            0 => todos::COLOR,
-            _ => timer::COLOR,
-        };
+        let highlight_color = self.tabs[self.selected].color();
+        let names: Vec<&str> = self.tabs.iter().map(|t| t.name()).collect();
 
-        Tabs::new(vec!["Todos", "Timer"])
+        Tabs::new(names)
             .style(Color::White)
             .highlight_style(Style::default().fg(highlight_color).on_black().bold())
             .select(self.selected)
@@ -90,10 +85,6 @@ impl App {
             .padding(" ", " ")
             .render(tabs_area, frame.buffer_mut());
 
-        match self.selected {
-            0 => frame.render_widget(&self.todos, main),
-            1 => frame.render_widget(&self.timer, main),
-            _ => (),
-        }
+        self.tabs[self.selected].render(frame, main);
     }
 }
