@@ -6,6 +6,8 @@ use ratatui::layout::{Alignment, Constraint, Layout, Rect};
 use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Block, Paragraph, Widget};
 
+use crate::tui::tabs::Event;
+
 pub const COLOR: Color = Color::Yellow;
 
 const WORK_DURATION: u64 = 25 * 60;
@@ -66,24 +68,6 @@ impl Timer {
         }
     }
 
-    pub fn handle_event(&mut self, key: KeyEvent) -> Result<()> {
-        match key.code {
-            KeyCode::Char(' ') => {
-                self.running = !self.running;
-            }
-            KeyCode::Char('r') => {
-                self.seconds = self.phase.duration();
-                self.running = false;
-            }
-            KeyCode::Char('n') => {
-                self.advance();
-            }
-            _ => (),
-        };
-
-        Ok(())
-    }
-
     fn advance(&mut self) {
         match self.phase {
             Phase::Work => {
@@ -100,6 +84,26 @@ impl Timer {
         }
         self.seconds = self.phase.duration();
         self.running = false;
+    }
+}
+
+impl Event for &mut Timer {
+    fn handle(&mut self, key: KeyEvent) -> Result<()> {
+        match key.code {
+            KeyCode::Char(' ') => {
+                self.running = !self.running;
+            }
+            KeyCode::Char('r') => {
+                self.seconds = self.phase.duration();
+                self.running = false;
+            }
+            KeyCode::Char('n') => {
+                self.advance();
+            }
+            _ => (),
+        };
+
+        Ok(())
     }
 }
 

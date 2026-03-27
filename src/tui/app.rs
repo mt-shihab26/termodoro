@@ -13,19 +13,19 @@ use super::tabs::timer::{self, Timer};
 use super::tabs::todos::{self, Todos};
 
 pub struct App {
-    alive:    bool,
+    alive: bool,
     selected: usize,
-    timer:    Timer,
-    todos:    Todos,
+    timer: Timer,
+    todos: Todos,
 }
 
 impl App {
     pub fn new() -> Self {
         Self {
-            alive:    true,
+            alive: true,
             selected: 0,
-            timer:    Timer::new(),
-            todos:    Todos,
+            timer: Timer::new(),
+            todos: Todos,
         }
     }
 
@@ -51,7 +51,7 @@ impl App {
                     KeyCode::Char('2') => self.selected = 1,
                     _ => {
                         if self.selected == 1 {
-                            self.timer.handle_event(key);
+                            self.timer.handle(key);
                         }
                     }
                 },
