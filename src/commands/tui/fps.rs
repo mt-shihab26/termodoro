@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 pub struct Fps {
     pub per_second: f64,
@@ -15,13 +15,12 @@ impl Fps {
             per_lifetime: 0,
             visible: true,
             frame_count_per_second: 0,
-            interval_start: Instant::now(),
+            interval_start: Instant::now() - Duration::from_secs(1),
         }
     }
 
     pub fn tick(&mut self) {
         self.per_lifetime += 1;
-
         self.frame_count_per_second += 1;
 
         let elapsed = self.interval_start.elapsed().as_secs_f64();
