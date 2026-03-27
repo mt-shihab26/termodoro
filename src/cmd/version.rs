@@ -5,7 +5,7 @@ use crate::cmd::Cmd;
 pub struct Version;
 
 impl Cmd for Version {
-    fn run() -> Result<()> {
+    fn run(&self) -> Result<()> {
         println!("{}", env!("CARGO_PKG_VERSION"));
         Ok(())
     }

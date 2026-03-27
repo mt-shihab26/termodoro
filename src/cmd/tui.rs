@@ -5,7 +5,7 @@ use crate::{cmd::Cmd, tui::app::App};
 pub struct Tui;
 
 impl Cmd for Tui {
-    fn run() -> Result<()> {
+    fn run(&self) -> Result<()> {
         let mut terminal = ratatui::init();
 
         let mut app = App::new(&mut terminal);
