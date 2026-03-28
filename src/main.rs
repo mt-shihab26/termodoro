@@ -1,13 +1,13 @@
 use std::env;
 use std::io::{Error, ErrorKind, Result};
 
-use orivo::commands::{Cmd, help::Help, tui::Tui, version::Version};
+use orivo::commands::{Command, help::Help, tui::Tui, version::Version};
 
 fn main() -> Result<()> {
-    let cmds: Vec<(&str, Box<dyn Cmd>)> = vec![
-        ("tui", Box::new(Tui::new()) as Box<dyn Cmd>),
-        ("version", Box::new(Version::new()) as Box<dyn Cmd>),
-        ("help", Box::new(Help::new(&vec![])) as Box<dyn Cmd>),
+    let cmds: Vec<(&str, Box<dyn Command>)> = vec![
+        ("tui", Box::new(Tui::new()) as Box<dyn Command>),
+        ("version", Box::new(Version::new()) as Box<dyn Command>),
+        ("help", Box::new(Help::new(&vec![])) as Box<dyn Command>),
     ];
 
     let arg = env::args().nth(1);

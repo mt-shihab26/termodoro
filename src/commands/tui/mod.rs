@@ -5,7 +5,7 @@ pub mod fps;
 
 use std::io::Result;
 
-use crate::commands::{Cmd, tui::app::App};
+use crate::commands::{Command, tui::app::App};
 
 pub struct Tui;
 
@@ -15,7 +15,7 @@ impl Tui {
     }
 }
 
-impl Cmd for Tui {
+impl Command for Tui {
     fn help(&self) -> &[&str] {
         &["(default)", "tui", "Launch the terminal UI"]
     }
