@@ -8,7 +8,7 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Paragraph, Widget};
 use ratatui::{DefaultTerminal, Frame, init, restore};
 
-use crate::{event::Event, log_error, workers::term_worker};
+use crate::{event::Event, log_error, workers::term};
 
 use super::tabs::{timer::Timer, todos::Todos};
 use super::{fps::Fps, tabs::Tab};
@@ -25,7 +25,7 @@ impl App {
     pub fn new() -> Self {
         let (sender, events) = mpsc::channel::<Event>();
 
-        term_worker::spawn(sender.clone());
+        term::spawn(sender.clone());
 
         let tabs: Vec<Box<dyn Tab>> = vec![Box::new(Todos::new()), Box::new(Timer::new(sender))];
 

@@ -12,7 +12,7 @@ use tui_big_text::{BigText, PixelSize};
 
 use crate::domains::timer::{Phase, TimerState};
 use crate::event::Event;
-use crate::workers::timer_worker;
+use crate::workers::timer;
 use crate::{log_error, log_warn};
 
 use super::Tab;
@@ -26,7 +26,7 @@ impl Timer {
     pub fn new(sender: Sender<Event>) -> Self {
         let render_count = Arc::new(AtomicU8::new(1));
 
-        let state = timer_worker::spawn(Arc::clone(&render_count), sender);
+        let state = timer::spawn(Arc::clone(&render_count), sender);
 
         Self { state, render_count }
     }
