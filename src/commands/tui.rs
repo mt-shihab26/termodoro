@@ -1,11 +1,8 @@
-mod tabs;
-
-pub mod app;
-pub mod fps;
-
 use std::io::Result;
 
-use crate::commands::{Command, tui::app::App};
+use crate::handlers::tui::App;
+
+use super::Command;
 
 pub struct Tui;
 
