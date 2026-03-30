@@ -10,7 +10,16 @@ pub struct Todo {
 }
 
 impl Todo {
-    pub fn new(text: &str) -> Self {
+    pub fn new(text: String, due_date: Option<Date>, repeat: Option<Repeat>) -> Self {
+        Self {
+            text,
+            done: false,
+            due_date,
+            repeat,
+        }
+    }
+
+    fn from_text(text: &str) -> Self {
         Self {
             text: text.to_string(),
             done: false,
@@ -21,9 +30,9 @@ impl Todo {
 
     pub fn fakes() -> Vec<Todo> {
         vec![
-            Todo::new("Buy groceries"),
-            Todo::new("Read a book"),
-            Todo::new("Build a TUI app"),
+            Todo::from_text("Buy groceries"),
+            Todo::from_text("Read a book"),
+            Todo::from_text("Build a TUI app"),
         ]
     }
 }

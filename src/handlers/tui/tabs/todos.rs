@@ -102,14 +102,11 @@ impl Tab for Todos {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
-                            self.items.push(Todo {
-                                text,
-                                done: false,
-                                due_date: date,
-                                repeat,
-                            });
+                            self.items.push(Todo::new(text, date, repeat));
+
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
+                            self.selected = self.items.len() - 1;
                         }
                         InputAction::Escape => {
                             self.input_widget = None;
@@ -123,9 +120,12 @@ impl Tab for Todos {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
-                            self.items[self.selected].text = text;
-                            self.items[self.selected].due_date = date;
-                            self.items[self.selected].repeat = repeat;
+                            let todo = &mut self.items[self.selected];
+
+                            todo.text = text;
+                            todo.due_date = date;
+                            todo.repeat = repeat;
+
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
                         }
