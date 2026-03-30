@@ -781,6 +781,7 @@ name = "orivo"
 version = "0.1.0"
 dependencies = [
  "ratatui",
+ "time",
  "tui-big-text",
 ]
 
