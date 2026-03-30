@@ -90,7 +90,14 @@ impl InputWidget {
 
 impl Widget for &InputWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let [text_area, date_area] = Layout::horizontal([Constraint::Fill(1), Constraint::Length(14)]).areas(area);
+        let date_area_width = self
+            .repeat
+            .as_ref()
+            .map(|r| (r.label().len() as u16 + 4).max(14))
+            .unwrap_or(14);
+
+        let [text_area, date_area] =
+            Layout::horizontal([Constraint::Fill(1), Constraint::Length(date_area_width)]).areas(area);
 
         Widget::render(&self.textarea, text_area, buf);
 
@@ -109,7 +116,7 @@ impl Widget for &InputWidget {
         block.render(date_area, buf);
 
         Paragraph::new(date_str)
-            .fg(Color::DarkGray)
+            .fg(COLOR)
             .centered()
             .render(inner, buf);
     }

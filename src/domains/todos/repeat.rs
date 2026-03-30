@@ -16,6 +16,10 @@ impl Repeat {
         Repeat::YearlyOnDay,
     ];
 
+    pub fn icon() -> &'static str {
+        "⟳"
+    }
+
     pub fn label(&self) -> &str {
         match self {
             Repeat::Daily => "Daily",
