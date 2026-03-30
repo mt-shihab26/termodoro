@@ -99,11 +99,17 @@ impl App {
         let [top, tabs_area, main] =
             Layout::vertical([Constraint::Length(1), Constraint::Length(3), Constraint::Fill(1)]).areas(frame.area());
 
-        let [_, right] = Layout::horizontal([Constraint::Fill(1), Constraint::Fill(1)]).areas(top);
+        let [left, right] = Layout::horizontal([Constraint::Fill(1), Constraint::Fill(1)]).areas(top);
 
         Paragraph::new(Span::from("Orivo").bold().fg(Color::Green))
             .centered()
             .render(top, frame.buffer_mut());
+
+        Line::from(vec![
+            Span::from("^q").fg(Color::DarkGray).bold(),
+            Span::from(" quit").fg(Color::DarkGray),
+        ])
+        .render(left, frame.buffer_mut());
 
         if self.fps.visible {
             Line::from(
