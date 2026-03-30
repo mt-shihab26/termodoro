@@ -3,7 +3,7 @@ use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Style, Stylize};
 use ratatui::widgets::calendar::{CalendarEventStore, Monthly};
-use ratatui::widgets::{Block, Clear, Paragraph, Widget};
+use ratatui::widgets::{Block, Borders, Clear, Paragraph, Widget};
 use time::{Date, Duration};
 
 use crate::domains::todos::Repeat;
@@ -121,7 +121,7 @@ impl CalendarPopup {
 
 impl Widget for CalendarPopup {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let popup = centered_rect(area, 24, 4 + 10 + 6);
+        let popup = centered_rect(area, 24, 4 + 10 + 1 + 5);
 
         Clear.render(popup, buf);
 
@@ -144,18 +144,26 @@ impl Widget for CalendarPopup {
             Constraint::Length(4),
             Constraint::Length(10),
             Constraint::Length(1),
-            Constraint::Length(6),
+            Constraint::Length(5),
         ])
         .areas(inner);
 
-        Paragraph::new("[t]Today\n[y]Yesterday\n[n]Tomorrow").render(action_hint, buf);
+        Paragraph::new(
+            "[t]Today\n\
+            [y]Yesterday\n\
+            [n]Tomorrow",
+        )
+        .block(Block::default().borders(Borders::BOTTOM).fg(Color::Cyan))
+        .render(action_hint, buf);
 
         Monthly::new(self.view_date, events)
             .show_month_header(Style::default().bold())
             .show_weekdays_header(Style::default().fg(Color::DarkGray))
             .render(cal_area, buf);
 
-        Paragraph::new("[r]Repeat\n").render(action_hint2, buf);
+        Paragraph::new("[r]Repeat\n")
+            .block(Block::default().borders(Borders::TOP).fg(Color::Cyan))
+            .render(action_hint2, buf);
 
         Paragraph::new(
             "[h/l]Day\n\
