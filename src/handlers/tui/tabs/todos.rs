@@ -50,7 +50,7 @@ impl Todos {
 
 impl Tab for Todos {
     fn name(&self) -> &str {
-        "Todos [1]"
+        "Todos [ctrl+t]"
     }
 
     fn color(&self) -> Color {

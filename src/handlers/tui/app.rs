@@ -1,7 +1,7 @@
 use std::io::{Error, ErrorKind, Result};
 use std::sync::mpsc::{self, Receiver};
 
-use ratatui::crossterm::event::KeyCode;
+use ratatui::crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::layout::{Alignment, Constraint, Layout};
 use ratatui::style::{Color, Style, Stylize};
 use ratatui::text::{Line, Span};
@@ -63,16 +63,19 @@ impl App {
                     return Err(Error::new(ErrorKind::BrokenPipe, e));
                 }
                 Ok(Event::Key(key)) => match key.code {
-                    KeyCode::Char('q') => {
+                    KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                         self.alive = false;
                     }
-                    KeyCode::Char('f') => {
+                    KeyCode::Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                        self.alive = false;
+                    }
+                    KeyCode::Char('f') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                         self.fps.visible = !self.fps.visible;
                     }
-                    KeyCode::Char('1') => {
+                    KeyCode::Char('t') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                         self.selected = 0;
                     }
-                    KeyCode::Char('2') => {
+                    KeyCode::Char('p') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                         self.selected = 1;
                     }
                     KeyCode::Tab => {
