@@ -7,12 +7,11 @@ use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Widget};
 
-use crate::domains::todos::TodosState;
+use crate::domains::todos::todo::Todo;
 use crate::handlers::tui::widgets::input_area::{InputArea, InputAreaAction};
 
 use super::Tab;
 
-#[derive(PartialEq)]
 pub enum UiMode {
     Normal,
     Adding,
@@ -20,36 +19,31 @@ pub enum UiMode {
 }
 
 pub struct Todos {
-    state: TodosState,
+    items: Vec<Todo>,
     ui_mode: UiMode,
-    selected_item_index: usize,
-    adding_input_area: InputArea,
-    editing_input_area: InputArea,
+    selected: usize,
+    input_area: InputArea,
     list_state: RefCell<ListState>,
 }
 
 impl Todos {
     pub fn new() -> Self {
-        let state = TodosState::new();
-        let mut list_state = ListState::default();
-        list_state.select(Some(state.selected));
-
         Self {
-            state,
+            items: Todo::fakes(),
             ui_mode: UiMode::Normal,
-            selected_item_index: 0,
-            adding_input_area: InputArea::new(None),
-            editing_input_area: InputArea::new(None),
-            list_state: RefCell::new(list_state),
+            selected: 0,
+            input_area: InputArea::new(None),
+            list_state: RefCell::new(ListState::default()),
         }
     }
 
     fn sync_list_state(&self) {
-        let selected = if self.state.items.is_empty() {
+        let selected = if self.items.is_empty() {
             None
         } else {
-            Some(self.state.selected)
+            Some(self.selected)
         };
+
         self.list_state.borrow_mut().select(selected);
     }
 }
@@ -85,7 +79,6 @@ impl Tab for Todos {
         };
 
         let items: Vec<ListItem> = self
-            .state
             .items
             .iter()
             .map(|todo| {
@@ -119,18 +112,8 @@ impl Tab for Todos {
 
         frame.render_widget(Paragraph::new(hint).centered().fg(Color::DarkGray), hint_area);
 
-        match self.ui_mode {
-            UiMode::Normal => {}
-            UiMode::Adding => {
-                if let Some(area) = input_area {
-                    frame.render_widget(&self.adding_input_area, area);
-                }
-            }
-            UiMode::Editing => {
-                if let Some(area) = input_area {
-                    frame.render_widget(&self.editing_input_area, area);
-                }
-            }
+        if let Some(area) = input_area {
+            frame.render_widget(&self.input_area, area);
         }
     }
 
@@ -138,56 +121,59 @@ impl Tab for Todos {
         match self.ui_mode {
             UiMode::Normal => match key.code {
                 KeyCode::Char(' ') | KeyCode::Enter => {
-                    if !self.state.items.is_empty() {
-                        self.state.items[self.selected_item_index].done =
-                            !self.state.items[self.selected_item_index].done;
+                    if !self.items.is_empty() {
+                        self.items[self.selected].done = !self.items[self.selected].done;
                     }
                 }
                 KeyCode::Char('j') | KeyCode::Down => {
-                    if !self.state.items.is_empty() {
-                        self.selected_item_index = (self.selected_item_index + 1).min(self.state.items.len() - 1);
+                    if !self.items.is_empty() {
+                        self.selected = (self.selected + 1).min(self.items.len() - 1);
                     }
                 }
                 KeyCode::Char('k') | KeyCode::Up => {
-                    self.selected_item_index = self.selected_item_index.saturating_sub(1);
+                    self.selected = self.selected.saturating_sub(1);
                 }
                 KeyCode::Char('d') => {
-                    if !self.state.items.is_empty() {
-                        self.state.items.remove(self.selected_item_index);
-                        if !self.state.items.is_empty() {
-                            self.selected_item_index = self.selected_item_index.min(self.state.items.len() - 1);
+                    if !self.items.is_empty() {
+                        self.items.remove(self.selected);
+                        if !self.items.is_empty() {
+                            self.selected = self.selected.min(self.items.len() - 1);
                         } else {
-                            self.selected_item_index = 0;
+                            self.selected = 0;
                         }
                     }
                 }
                 KeyCode::Char('a') => {
                     self.ui_mode = UiMode::Adding;
-                    self.adding_input_area = InputArea::new(None)
+                    self.input_area = InputArea::new(None)
                 }
                 KeyCode::Char('e') => {
-                    if !self.state.items.is_empty() {
+                    if !self.items.is_empty() {
                         self.ui_mode = UiMode::Editing;
-                        let todo = &self.state.items[self.selected_item_index];
-                        self.editing_input_area = InputArea::new(Some(&todo.text))
+                        let todo = &self.items[self.selected];
+                        self.input_area = InputArea::new(Some(&todo.text))
                     }
                 }
                 _ => {}
             },
-            UiMode::Adding => {
-                match self.adding_input_area.handle(key) {
-                    InputAreaAction::Confirm(text) => {
-                        self.state.add(text);
-                        self.adding_input_area = InputArea::new(None)
-                    }
-                    InputAreaAction::None => {}
-                };
-            }
-            UiMode::Editing => {
-                //
-            }
+            UiMode::Adding => match self.input_area.handle(key) {
+                InputAreaAction::Confirm(text) => {
+                    self.items.push(Todo::new(&text));
+                    self.input_area = InputArea::new(None)
+                }
+                InputAreaAction::None => {}
+            },
+            UiMode::Editing => match self.input_area.handle(key) {
+                InputAreaAction::Confirm(text) => {
+                    self.items[self.selected].text = text;
+                    self.input_area = InputArea::new(None)
+                }
+                InputAreaAction::None => {}
+            },
         }
+
         self.sync_list_state();
+
         Ok(())
     }
 }

@@ -4,7 +4,7 @@ use ratatui::prelude::{Buffer, Rect, Widget};
 use ratatui::style::{Color, Style, Stylize};
 use ratatui::widgets::{Block, Borders, List, ListItem, Paragraph};
 
-use crate::domains::todos::Repeat;
+use crate::domains::todos::repeat::Repeat;
 
 pub enum RepeatAction {
     Confirm(Option<Repeat>),

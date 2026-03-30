@@ -1,6 +1,6 @@
 use time::Date;
 
-use super::Repeat;
+use super::repeat::Repeat;
 
 pub struct Todo {
     pub text: String,
