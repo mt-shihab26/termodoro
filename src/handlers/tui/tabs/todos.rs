@@ -7,15 +7,15 @@ use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Widget};
 
-use crate::domains::todos::{Mode, TodosState};
-use crate::handlers::tui::widgets::calendar_popup::{self, CalendarAction, CalendarPopup};
-use crate::handlers::tui::widgets::repeat_picker::{self, RepeatAction};
+use crate::domains::todos::{Mode, Repeat, TodosState};
+use crate::handlers::tui::widgets::calendar_popup::{CalendarAction, CalendarPopup};
 
 use super::Tab;
 
 pub struct Todos {
     state: TodosState,
     list: RefCell<ListState>,
+    calendar: CalendarPopup,
 }
 
 impl Todos {
@@ -26,6 +26,7 @@ impl Todos {
         Self {
             state,
             list: RefCell::new(list_state),
+            calendar: CalendarPopup::for_today(),
         }
     }
 
@@ -58,7 +59,7 @@ impl Tab for Todos {
         let area = inner;
 
         let (list_area, hint_area, input_area) = match self.state.mode {
-            Mode::Normal | Mode::SelectingDate | Mode::SelectingRepeat => {
+            Mode::Normal | Mode::SelectingDate => {
                 let [list, hint] = Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).areas(area);
                 (list, hint, None)
             }
@@ -100,7 +101,7 @@ impl Tab for Todos {
         let hint = match self.state.mode {
             Mode::Normal => "[j/k]Navigate  [Space]Toggle  [a]Add  [d]Delete  [e]Edit Date",
             Mode::Adding => "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char",
-            Mode::SelectingDate | Mode::SelectingRepeat => "",
+            Mode::SelectingDate => "",
         };
         frame.render_widget(Paragraph::new(hint).centered().fg(Color::DarkGray), hint_area);
 
@@ -113,21 +114,8 @@ impl Tab for Todos {
             frame.render_widget(Paragraph::new(format!("{}_", self.state.input)).fg(Color::White), inner);
         }
 
-        // Calendar popup overlay (also shows repeat section when in SelectingRepeat)
-        match self.state.mode {
-            Mode::SelectingDate => frame.render_widget(
-                CalendarPopup::new(self.state.calendar_date, self.state.calendar_view),
-                area,
-            ),
-            Mode::SelectingRepeat => frame.render_widget(
-                CalendarPopup::with_repeat(
-                    self.state.calendar_date,
-                    self.state.calendar_view,
-                    self.state.repeat_cursor,
-                ),
-                area,
-            ),
-            _ => {}
+        if self.state.mode == Mode::SelectingDate {
+            frame.render_widget(self.calendar, area);
         }
     }
 
@@ -139,11 +127,22 @@ impl Tab for Todos {
                 KeyCode::Char(' ') | KeyCode::Enter => self.state.toggle_selected(),
                 KeyCode::Char('a') => self.state.start_adding(),
                 KeyCode::Char('d') => self.state.delete_selected(),
-                KeyCode::Char('e') => self.state.start_edit_date(),
+                KeyCode::Char('e') => {
+                    if !self.state.items.is_empty() {
+                        let existing = self.state.items[self.state.selected].due_date;
+                        self.calendar = CalendarPopup::for_existing(existing);
+                        self.state.start_edit_date();
+                    }
+                }
                 _ => {}
             },
             Mode::Adding => match key.code {
-                KeyCode::Enter => self.state.confirm_add(),
+                KeyCode::Enter => {
+                    if !self.state.input.trim().is_empty() {
+                        self.calendar = CalendarPopup::for_today();
+                    }
+                    self.state.confirm_add();
+                }
                 KeyCode::Esc => self.state.cancel_add(),
                 KeyCode::Backspace => {
                     self.state.input.pop();
@@ -151,30 +150,28 @@ impl Tab for Todos {
                 KeyCode::Char(c) => self.state.input.push(c),
                 _ => {}
             },
-            Mode::SelectingDate => match calendar_popup::handle(key) {
-                CalendarAction::NavLeft => self.state.calendar_nav_left(),
-                CalendarAction::NavRight => self.state.calendar_nav_right(),
-                CalendarAction::NavUp => self.state.calendar_nav_up(),
-                CalendarAction::NavDown => self.state.calendar_nav_down(),
-                CalendarAction::PrevMonth => self.state.calendar_prev_month(),
-                CalendarAction::NextMonth => self.state.calendar_next_month(),
-                CalendarAction::Today => self.state.set_date_today(),
-                CalendarAction::Yesterday => self.state.set_date_yesterday(),
-                CalendarAction::Tomorrow => self.state.set_date_tomorrow(),
-                CalendarAction::OpenRepeat => self.state.open_repeat(),
-                CalendarAction::Confirm => self.state.confirm_date(),
+            Mode::SelectingDate => match self.calendar.handle(key) {
+                CalendarAction::Confirm => {
+                    let repeat = cursor_to_repeat(self.calendar.repeat);
+                    self.state.confirm_with(self.calendar.selected_date, repeat);
+                    self.calendar = CalendarPopup::for_today();
+                }
                 CalendarAction::Cancel => self.state.cancel_selecting_date(),
                 CalendarAction::None => {}
-            },
-            Mode::SelectingRepeat => match repeat_picker::handle(key) {
-                RepeatAction::MoveUp => self.state.repeat_move_up(),
-                RepeatAction::MoveDown => self.state.repeat_move_down(),
-                RepeatAction::Confirm => self.state.confirm_repeat(),
-                RepeatAction::Back => self.state.cancel_repeat(),
-                RepeatAction::None => {}
             },
         }
         self.sync_list_state();
         Ok(())
+    }
+}
+
+fn cursor_to_repeat(cursor: Option<usize>) -> Option<Repeat> {
+    match cursor {
+        Some(1) => Some(Repeat::Daily),
+        Some(2) => Some(Repeat::WeeklySameDay),
+        Some(3) => Some(Repeat::WeekdaysMonFri),
+        Some(4) => Some(Repeat::MonthlyOnDay),
+        Some(5) => Some(Repeat::YearlyOnDay),
+        _ => None,
     }
 }
