@@ -11,7 +11,7 @@ use ratatui::{DefaultTerminal, Frame, init, restore};
 use crate::{event::Event, log_error, workers::term};
 
 use super::tabs::{Tab, timer::Timer, todos::Todos};
-use super::widgets::fps_widget::FpsWidget;
+use super::widgets::fps::FpsWidget;
 
 pub struct App {
     alive: bool,

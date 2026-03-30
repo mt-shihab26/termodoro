@@ -8,7 +8,7 @@ use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Widget};
 
 use crate::domains::todos::todo::Todo;
-use crate::handlers::tui::widgets::input_widget::{InputWidget, InputWidgetAction};
+use crate::handlers::tui::widgets::input::{InputAction, InputWidget};
 
 use super::Tab;
 
@@ -101,7 +101,7 @@ impl Tab for Todos {
             UiMode::Adding => {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
-                        InputWidgetAction::Confirm { text, date, repeat } => {
+                        InputAction::Confirm { text, date, repeat } => {
                             self.items.push(Todo {
                                 text,
                                 done: false,
@@ -111,29 +111,29 @@ impl Tab for Todos {
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
                         }
-                        InputWidgetAction::Escape => {
+                        InputAction::Escape => {
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
                         }
-                        InputWidgetAction::None => {}
+                        InputAction::None => {}
                     }
                 }
             }
             UiMode::Editing => {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
-                        InputWidgetAction::Confirm { text, date, repeat } => {
+                        InputAction::Confirm { text, date, repeat } => {
                             self.items[self.selected].text = text;
                             self.items[self.selected].due_date = date;
                             self.items[self.selected].repeat = repeat;
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
                         }
-                        InputWidgetAction::Escape => {
+                        InputAction::Escape => {
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
                         }
-                        InputWidgetAction::None => {}
+                        InputAction::None => {}
                     }
                 }
             }

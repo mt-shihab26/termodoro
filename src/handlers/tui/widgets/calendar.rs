@@ -10,7 +10,7 @@ use crate::domains::todos::repeat::Repeat;
 use crate::handlers::tui::tabs::todos::COLOR;
 use crate::utils::date::{shift_month, today};
 
-use super::repeat_picker::{RepeatAction, RepeatPicker};
+use super::repeat::{RepeatAction, RepeatWidget};
 
 pub enum CalendarAction {
     Confirm { date: Option<Date>, repeat: Option<Repeat> },
@@ -18,13 +18,13 @@ pub enum CalendarAction {
     None,
 }
 
-pub struct CalendarPopup {
+pub struct CalendarWidget {
     date: Date,
     repeat: Option<Repeat>,
-    repeat_picker: Option<RepeatPicker>,
+    repeat_picker: Option<RepeatWidget>,
 }
 
-impl CalendarPopup {
+impl CalendarWidget {
     pub fn new(date: Option<Date>, repeat: Option<Repeat>) -> Self {
         let d = date.unwrap_or_else(today);
 
@@ -65,7 +65,7 @@ impl CalendarPopup {
             KeyCode::Char('j') | KeyCode::Down => self.navigate(self.date.checked_add(Duration::weeks(1))),
             KeyCode::Char('H') => self.navigate(Some(shift_month(self.date, -1))),
             KeyCode::Char('L') => self.navigate(Some(shift_month(self.date, 1))),
-            KeyCode::Char('r') => self.repeat_picker = Some(RepeatPicker::new(self.repeat)),
+            KeyCode::Char('r') => self.repeat_picker = Some(RepeatWidget::new(self.repeat)),
             KeyCode::Enter => {
                 return CalendarAction::Confirm {
                     date: Some(self.date),
@@ -87,7 +87,7 @@ impl CalendarPopup {
     }
 }
 
-impl Widget for &CalendarPopup {
+impl Widget for &CalendarWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let popup = centered_rect(area, 24, 5 + 10 + 3 + 5);
 

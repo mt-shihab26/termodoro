@@ -13,12 +13,11 @@ pub enum RepeatAction {
     None,
 }
 
-#[derive(Clone)]
-pub struct RepeatPicker {
+pub struct RepeatWidget {
     cursor: usize,
 }
 
-impl RepeatPicker {
+impl RepeatWidget {
     pub fn new(selected: Option<Repeat>) -> Self {
         let cursor = selected
             .and_then(|r| Repeat::ALL.iter().position(|v| v == &r).map(|i| i + 1))
@@ -51,7 +50,7 @@ impl RepeatPicker {
     }
 }
 
-impl Widget for &RepeatPicker {
+impl Widget for &RepeatWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let [list_area, hint_area] = Layout::vertical([Constraint::Fill(1), Constraint::Length(3)]).areas(area);
 

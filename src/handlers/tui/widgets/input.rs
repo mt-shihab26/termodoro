@@ -10,9 +10,9 @@ use time::Date;
 
 use crate::domains::todos::repeat::Repeat;
 use crate::handlers::tui::tabs::todos::COLOR;
-use crate::handlers::tui::widgets::calendar_popup::{CalendarAction, CalendarPopup};
+use crate::handlers::tui::widgets::calendar::{CalendarAction, CalendarWidget};
 
-pub enum InputWidgetAction {
+pub enum InputAction {
     Confirm {
         text: String,
         date: Option<Date>,
@@ -26,7 +26,7 @@ pub struct InputWidget {
     textarea: TextArea<'static>,
     date: Option<Date>,
     repeat: Option<Repeat>,
-    calendar_widget: Option<CalendarPopup>,
+    calendar_widget: Option<CalendarWidget>,
 }
 
 impl InputWidget {
@@ -45,7 +45,7 @@ impl InputWidget {
         }
     }
 
-    pub fn handle(&mut self, key: KeyEvent) -> InputWidgetAction {
+    pub fn handle(&mut self, key: KeyEvent) -> InputAction {
         if let Some(cal) = &mut self.calendar_widget {
             match cal.handle(key) {
                 CalendarAction::Confirm { date, repeat } => {
@@ -56,29 +56,29 @@ impl InputWidget {
                 CalendarAction::Cancel => self.calendar_widget = None,
                 CalendarAction::None => {}
             }
-            return InputWidgetAction::None;
+            return InputAction::None;
         }
 
         match key.code {
             KeyCode::Enter => {
                 let text = self.textarea.lines()[0].clone();
                 if !text.trim().is_empty() {
-                    return InputWidgetAction::Confirm {
+                    return InputAction::Confirm {
                         text,
                         date: self.date,
                         repeat: self.repeat,
                     };
                 }
             }
-            KeyCode::Esc => return InputWidgetAction::Escape,
+            KeyCode::Esc => return InputAction::Escape,
             KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                self.calendar_widget = Some(CalendarPopup::new(self.date, self.repeat));
+                self.calendar_widget = Some(CalendarWidget::new(self.date, self.repeat));
             }
             _ => {
                 self.textarea.input(key);
             }
         }
-        InputWidgetAction::None
+        InputAction::None
     }
 
     pub fn render_calendar(&self, frame: &mut Frame, area: Rect) {
