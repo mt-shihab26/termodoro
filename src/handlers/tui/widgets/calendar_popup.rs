@@ -11,15 +11,15 @@ use crate::domains::todos::Repeat;
 use super::repeat_picker::{RepeatAction, RepeatPicker};
 
 pub enum CalendarAction {
-    Confirm,
+    Confirm { date: Date, repeat: Option<Repeat> },
     Cancel,
     None,
 }
 
 #[derive(Copy, Clone)]
 pub struct CalendarPopup {
-    pub selected_date: Date,
-    pub selected_repeat: Option<Repeat>,
+    selected_date: Date,
+    selected_repeat: Option<Repeat>,
     view_date: Date,
     repeat_picker: Option<RepeatPicker>,
 }
@@ -42,7 +42,10 @@ impl CalendarPopup {
                 RepeatAction::Confirm(repeat) => {
                     self.repeat_picker = None;
                     self.selected_repeat = repeat;
-                    return CalendarAction::Confirm;
+                    return CalendarAction::Confirm {
+                        date: self.selected_date,
+                        repeat: self.selected_repeat,
+                    };
                 }
                 RepeatAction::Cancel => {
                     self.repeat_picker = None;
@@ -96,7 +99,10 @@ impl CalendarPopup {
                 self.repeat_picker = Some(RepeatPicker::new(self.selected_repeat));
             }
             KeyCode::Enter => {
-                return CalendarAction::Confirm;
+                return CalendarAction::Confirm {
+                    date: self.selected_date,
+                    repeat: self.selected_repeat,
+                };
             }
             KeyCode::Esc => {
                 return CalendarAction::Cancel;

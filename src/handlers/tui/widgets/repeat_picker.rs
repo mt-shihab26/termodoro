@@ -12,7 +12,6 @@ pub enum RepeatAction {
     None,
 }
 
-/// Index 0 = no repeat, indices 1..=N map to `Repeat::ALL`.
 #[derive(Copy, Clone)]
 pub struct RepeatPicker {
     cursor: usize,
@@ -27,7 +26,6 @@ impl RepeatPicker {
     }
 
     pub const fn height() -> u16 {
-        // All variants + "None" row + hint line
         Repeat::ALL.len() as u16 + 1 + 1
     }
 

@@ -152,9 +152,8 @@ impl Tab for Todos {
                 _ => {}
             },
             Mode::SelectingDate => match self.calendar.handle(key) {
-                CalendarAction::Confirm => {
-                    self.state
-                        .confirm_with(self.calendar.selected_date, self.calendar.selected_repeat);
+                CalendarAction::Confirm { date, repeat } => {
+                    self.state.confirm_with(date, repeat);
                     self.calendar = CalendarPopup::new(None, None);
                 }
                 CalendarAction::Cancel => self.state.cancel_selecting_date(),
