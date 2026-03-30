@@ -7,7 +7,6 @@ pub struct Todo {
     pub done: bool,
     pub due_date: Option<Date>,
     pub repeat: Option<Repeat>,
-    pub completions: Vec<Date>,
 }
 
 impl Todo {
@@ -17,23 +16,11 @@ impl Todo {
             done: false,
             due_date,
             repeat,
-            completions: vec![],
         }
     }
 
     pub fn toggle(&mut self) {
-        if self.done {
-            self.done = false;
-        } else {
-            if let Some(date) = self.due_date {
-                self.completions.push(date);
-            }
-            if let (Some(repeat), Some(date)) = (self.repeat, self.due_date) {
-                self.due_date = Some(repeat.next_date(date));
-            } else {
-                self.done = true;
-            }
-        }
+        self.done = !self.done;
     }
 
     pub fn fakes() -> Vec<Todo> {
@@ -49,13 +36,13 @@ impl Todo {
             Todo::new(
                 "Team retrospective meeting".to_string(),
                 Some(today - day * 4),
-                Some(super::repeat::Repeat::WeeklySameDay),
+                Some(Repeat::WeeklySameDay),
             ),
             // -3 days
             Todo::new(
                 "Review pull requests".to_string(),
                 Some(today - day * 3),
-                Some(super::repeat::Repeat::WeekdaysMonFri),
+                Some(Repeat::WeekdaysMonFri),
             ),
             // -2 days
             Todo::new("Update project roadmap".to_string(), Some(today - day * 2), None),
@@ -63,16 +50,8 @@ impl Todo {
             Todo::new("Call the dentist".to_string(), Some(today - day), None),
             // today
             Todo::new("Nothing".to_string(), Some(today), None),
-            Todo::new(
-                "Pay utility bills".to_string(),
-                Some(today),
-                Some(super::repeat::Repeat::MonthlyOnDay),
-            ),
-            Todo::new(
-                "Morning standup".to_string(),
-                Some(today),
-                Some(super::repeat::Repeat::WeekdaysMonFri),
-            ),
+            Todo::new("Pay utility bills".to_string(), Some(today), Some(Repeat::MonthlyOnDay)),
+            Todo::new("Morning standup".to_string(), Some(today), Some(Repeat::WeekdaysMonFri)),
             // +1 day
             Todo::new("Grocery shopping".to_string(), Some(today + day), None),
             // +2 days
@@ -81,7 +60,7 @@ impl Todo {
             Todo::new(
                 "Deploy new release".to_string(),
                 Some(today + day * 3),
-                Some(super::repeat::Repeat::Daily),
+                Some(Repeat::Daily),
             ),
             // +4 days
             Todo::new("Book flight tickets".to_string(), Some(today + day * 4), None),
@@ -89,17 +68,14 @@ impl Todo {
             Todo::new(
                 "Annual performance review".to_string(),
                 Some(today + day * 5),
-                Some(super::repeat::Repeat::YearlyOnDay),
+                Some(Repeat::YearlyOnDay),
             ),
         ];
 
-        // seed some fake history
-        todos[0].completions = vec![today - day * 12, today - day * 5];
+        // seed some fake completed todos for history
         todos[0].done = true;
-        todos[1].completions = vec![today - day * 11, today - day * 4];
-        todos[2].completions = vec![today - day * 10, today - day * 3];
-        todos[3].completions = vec![today - day * 9];
-        todos[4].completions = vec![today - day * 8];
+        todos[3].done = true;
+        todos[4].done = true;
 
         todos
     }

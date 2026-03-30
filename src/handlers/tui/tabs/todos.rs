@@ -50,10 +50,10 @@ impl Todos {
             .iter()
             .enumerate()
             .filter(|(_, todo)| match self.page {
-                Page::Due => todo.due_date.map_or(false, |d| d < today),
+                Page::Due => todo.due_date.map_or(false, |d| d < today) && !todo.done,
                 Page::Today => todo.due_date.map_or(false, |d| d == today),
                 Page::Future => todo.due_date.map_or(false, |d| d > today),
-                Page::History => !todo.completions.is_empty(),
+                Page::History => todo.done,
             })
             .map(|(i, _)| i)
             .collect()
@@ -104,6 +104,18 @@ impl Tab for Todos {
                         let indices = self.filtered_indices();
                         if let Some(&real) = indices.get(self.selected) {
                             self.items[real].toggle();
+                            if self.items[real].done {
+                                if let (Some(repeat), Some(date)) =
+                                    (self.items[real].repeat, self.items[real].due_date)
+                                {
+                                    let next = Todo::new(
+                                        self.items[real].text.clone(),
+                                        Some(repeat.next_date(date)),
+                                        Some(repeat),
+                                    );
+                                    self.items.push(next);
+                                }
+                            }
                         }
                     }
                 }
@@ -240,11 +252,14 @@ impl Tab for Todos {
         let labels: Vec<String> = if matches!(self.page, Page::History) {
             indices
                 .iter()
-                .flat_map(|&i| {
+                .map(|&i| {
                     let todo = &self.items[i];
-                    todo.completions
-                        .iter()
-                        .map(move |date| format!(" [✓] {}  [{}]", todo.text, date))
+                    let repeat_icon = if todo.repeat.is_some() { "⟳ " } else { "  " };
+                    let mut label = format!(" [✓] {}{}", repeat_icon, todo.text);
+                    if let Some(date) = todo.due_date {
+                        label.push_str(&format!("  [{}]", date));
+                    }
+                    label
                 })
                 .collect()
         } else {
@@ -253,12 +268,10 @@ impl Tab for Todos {
                 .map(|&i| {
                     let todo = &self.items[i];
                     let check = if todo.done { "[x]" } else { "[ ]" };
-                    let mut label = format!(" {} {}", check, todo.text);
+                    let repeat_icon = if todo.repeat.is_some() { "⟳ " } else { "  " };
+                    let mut label = format!(" {} {}{}", check, repeat_icon, todo.text);
                     if let Some(date) = todo.due_date {
                         label.push_str(&format!("  [{}]", date));
-                    }
-                    if let Some(ref repeat) = todo.repeat {
-                        label.push_str(&format!("  [{}]", repeat.label()));
                     }
                     label
                 })
@@ -280,9 +293,7 @@ impl Tab for Todos {
         let items: Vec<ListItem> = if matches!(self.page, Page::History) {
             labels
                 .into_iter()
-                .map(|label| {
-                    ListItem::new(label).style(Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT))
-                })
+                .map(|label| ListItem::new(label).style(Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)))
                 .collect()
         } else {
             labels
