@@ -275,7 +275,7 @@ impl Tab for Todos {
         frame.render_stateful_widget(list, list_area, &mut self.list_state.borrow_mut());
 
         let hint = match self.ui_mode {
-            UiMode::Normal => "[ [ / ] ]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [d]Delete",
+            UiMode::Normal => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [d]Delete",
             UiMode::Adding | UiMode::Editing => "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char",
         };
 
