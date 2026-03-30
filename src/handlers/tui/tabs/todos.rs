@@ -57,68 +57,6 @@ impl Tab for Todos {
         Color::Cyan
     }
 
-    fn render(&self, frame: &mut Frame, area: Rect) {
-        let buf = frame.buffer_mut();
-
-        let block = Block::bordered().fg(self.color());
-        let inner = block.inner(area);
-        block.render(area, buf);
-
-        let area = inner;
-
-        let (list_area, hint_area, input_area) = match self.ui_mode {
-            UiMode::Normal => {
-                let [list, hint] = Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).areas(area);
-                (list, hint, None)
-            }
-            UiMode::Adding | UiMode::Editing => {
-                let [list, hint, input] =
-                    Layout::vertical([Constraint::Fill(1), Constraint::Length(1), Constraint::Length(3)]).areas(area);
-                (list, hint, Some(input))
-            }
-        };
-
-        let items: Vec<ListItem> = self
-            .items
-            .iter()
-            .map(|todo| {
-                let check = if todo.done { "[x]" } else { "[ ]" };
-                let mut label = format!(" {} {}", check, todo.text);
-                if let Some(date) = todo.due_date {
-                    label.push_str(&format!("  [{}]", date));
-                }
-                if let Some(ref repeat) = todo.repeat {
-                    label.push_str(&format!("  [{}]", repeat.label()));
-                }
-                let style = if todo.done {
-                    Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)
-                } else {
-                    Style::default().fg(Color::White)
-                };
-                ListItem::new(label).style(style)
-            })
-            .collect();
-
-        let list = List::new(items)
-            .highlight_style(Style::default().fg(self.color()).bold())
-            .highlight_symbol(">");
-
-        frame.render_stateful_widget(list, list_area, &mut self.list_state.borrow_mut());
-
-        let hint = match self.ui_mode {
-            UiMode::Normal => "[j/k]Navigate  [Space]Toggle  [a]Add  [d]Delete  [e]Edit Date",
-            UiMode::Adding | UiMode::Editing => "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char",
-        };
-
-        frame.render_widget(Paragraph::new(hint).centered().fg(Color::DarkGray), hint_area);
-
-        if let Some(area) = input_area {
-            if let Some(input_area_widget) = &self.input_widget {
-                frame.render_widget(input_area_widget, area);
-            }
-        }
-    }
-
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
         match self.ui_mode {
             UiMode::Normal => match key.code {
@@ -187,5 +125,67 @@ impl Tab for Todos {
         self.sync_list_state();
 
         Ok(())
+    }
+
+    fn render(&self, frame: &mut Frame, area: Rect) {
+        let buf = frame.buffer_mut();
+
+        let block = Block::bordered().fg(self.color());
+        let inner = block.inner(area);
+        block.render(area, buf);
+
+        let area = inner;
+
+        let (list_area, hint_area, input_area) = match self.ui_mode {
+            UiMode::Normal => {
+                let [list, hint] = Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).areas(area);
+                (list, hint, None)
+            }
+            UiMode::Adding | UiMode::Editing => {
+                let [list, hint, input] =
+                    Layout::vertical([Constraint::Fill(1), Constraint::Length(1), Constraint::Length(3)]).areas(area);
+                (list, hint, Some(input))
+            }
+        };
+
+        let items: Vec<ListItem> = self
+            .items
+            .iter()
+            .map(|todo| {
+                let check = if todo.done { "[x]" } else { "[ ]" };
+                let mut label = format!(" {} {}", check, todo.text);
+                if let Some(date) = todo.due_date {
+                    label.push_str(&format!("  [{}]", date));
+                }
+                if let Some(ref repeat) = todo.repeat {
+                    label.push_str(&format!("  [{}]", repeat.label()));
+                }
+                let style = if todo.done {
+                    Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)
+                } else {
+                    Style::default().fg(Color::White)
+                };
+                ListItem::new(label).style(style)
+            })
+            .collect();
+
+        let list = List::new(items)
+            .highlight_style(Style::default().fg(self.color()).bold())
+            .highlight_symbol(">");
+
+        frame.render_stateful_widget(list, list_area, &mut self.list_state.borrow_mut());
+
+        let hint = match self.ui_mode {
+            UiMode::Normal => "[j/k]Navigate  [Space]Toggle  [a]Add  [d]Delete  [e]Edit Date",
+            UiMode::Adding | UiMode::Editing => "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char",
+        };
+
+        frame.render_widget(Paragraph::new(hint).centered().fg(Color::DarkGray), hint_area);
+
+        if let Some(area) = input_area {
+            if let Some(input_area_widget) = &self.input_widget {
+                frame.render_widget(input_area_widget, area);
+            }
+        }
     }
 }
