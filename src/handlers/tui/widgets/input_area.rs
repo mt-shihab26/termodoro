@@ -14,8 +14,10 @@ pub struct InputArea {
 }
 
 impl InputArea {
-    pub fn new() -> Self {
-        Self { text: "".to_string() }
+    pub fn new(text: Option<&str>) -> Self {
+        Self {
+            text: text.unwrap_or("").to_string(),
+        }
     }
 
     pub fn handle(&mut self, key: KeyEvent) -> InputAreaAction {
