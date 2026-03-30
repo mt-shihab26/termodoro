@@ -6,7 +6,7 @@ pub struct Todo {
     pub text: String,
     pub done: bool,
     pub due_date: Option<Date>,
-    pub repeat: Option<Repeat>,
+    pub repeat: Repeat,
 }
 
 impl Todo {
@@ -15,7 +15,7 @@ impl Todo {
             text: text.to_string(),
             done: false,
             due_date: None,
-            repeat: None,
+            repeat: Repeat::None,
         }
     }
 

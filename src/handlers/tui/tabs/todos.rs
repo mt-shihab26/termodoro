@@ -60,12 +60,17 @@ impl Tab for Todos {
 
         let (list_area, hint_area, input_area) = match self.state.mode {
             Mode::Normal | Mode::SelectingDate => {
-                let [list, hint] = Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).areas(area);
+                let [list, hint] =
+                    Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).areas(area);
                 (list, hint, None)
             }
             Mode::Adding => {
-                let [list, hint, input] =
-                    Layout::vertical([Constraint::Fill(1), Constraint::Length(1), Constraint::Length(3)]).areas(area);
+                let [list, hint, input] = Layout::vertical([
+                    Constraint::Fill(1),
+                    Constraint::Length(1),
+                    Constraint::Length(3),
+                ])
+                .areas(area);
                 (list, hint, Some(input))
             }
         };
@@ -80,8 +85,8 @@ impl Tab for Todos {
                 if let Some(date) = todo.due_date {
                     label.push_str(&format!("  [{}]", date));
                 }
-                if let Some(ref repeat) = todo.repeat {
-                    label.push_str(&format!("  [{}]", repeat.label()));
+                if todo.repeat != Repeat::None {
+                    label.push_str(&format!("  [{}]", todo.repeat.label()));
                 }
                 let style = if todo.done {
                     Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)
@@ -111,7 +116,10 @@ impl Tab for Todos {
                 .border_style(Style::default().fg(self.color()));
             let inner = block.inner(area);
             frame.render_widget(block, area);
-            frame.render_widget(Paragraph::new(format!("{}_", self.state.input)).fg(Color::White), inner);
+            frame.render_widget(
+                Paragraph::new(format!("{}_", self.state.input)).fg(Color::White),
+                inner,
+            );
         }
 
         if self.state.mode == Mode::SelectingDate {
@@ -129,8 +137,11 @@ impl Tab for Todos {
                 KeyCode::Char('d') => self.state.delete_selected(),
                 KeyCode::Char('e') => {
                     if !self.state.items.is_empty() {
-                        let existing = self.state.items[self.state.selected].due_date;
-                        self.calendar = CalendarPopup::for_existing(existing);
+                        let idx = self.state.selected;
+                        self.calendar = CalendarPopup::for_existing(
+                            self.state.items[idx].due_date,
+                            self.state.items[idx].repeat,
+                        );
                         self.state.start_edit_date();
                     }
                 }
@@ -152,8 +163,7 @@ impl Tab for Todos {
             },
             Mode::SelectingDate => match self.calendar.handle(key) {
                 CalendarAction::Confirm => {
-                    let repeat = cursor_to_repeat(self.calendar.is_repeat_open);
-                    self.state.confirm_with(self.calendar.selected_date, repeat);
+                    self.state.confirm_with(self.calendar.selected_date, self.calendar.selected_repeat);
                     self.calendar = CalendarPopup::for_today();
                 }
                 CalendarAction::Cancel => self.state.cancel_selecting_date(),
@@ -162,16 +172,5 @@ impl Tab for Todos {
         }
         self.sync_list_state();
         Ok(())
-    }
-}
-
-fn cursor_to_repeat(cursor: Option<usize>) -> Option<Repeat> {
-    match cursor {
-        Some(1) => Some(Repeat::Daily),
-        Some(2) => Some(Repeat::WeeklySameDay),
-        Some(3) => Some(Repeat::WeekdaysMonFri),
-        Some(4) => Some(Repeat::MonthlyOnDay),
-        Some(5) => Some(Repeat::YearlyOnDay),
-        _ => None,
     }
 }

@@ -16,20 +16,25 @@ pub enum CalendarAction {
     None,
 }
 
+/// `selected_date` and `selected_repeat` are the todo output values.
+/// `view_date`, `is_repeat_open`, and `repeat_cursor` are internal widget state.
 #[derive(Copy, Clone)]
 pub struct CalendarPopup {
     pub selected_date: Date,
-    pub selected_repeat: Repeat
+    pub selected_repeat: Repeat,
     view_date: Date,
     is_repeat_open: bool,
+    repeat_cursor: usize,
 }
 
 impl CalendarPopup {
     pub fn new(date: Date) -> Self {
         Self {
             selected_date: date,
+            selected_repeat: Repeat::None,
             view_date: date,
-            is_repeat_open: None,
+            is_repeat_open: false,
+            repeat_cursor: 0,
         }
     }
 
@@ -37,12 +42,19 @@ impl CalendarPopup {
         Self::new(today())
     }
 
-    pub fn for_existing(date: Option<Date>) -> Self {
-        Self::new(date.unwrap_or_else(today))
+    pub fn for_existing(date: Option<Date>, repeat: Repeat) -> Self {
+        let d = date.unwrap_or_else(today);
+        Self {
+            selected_date: d,
+            selected_repeat: repeat,
+            view_date: d,
+            is_repeat_open: false,
+            repeat_cursor: repeat_to_cursor(repeat),
+        }
     }
 
     pub fn handle(&mut self, key: KeyEvent) -> CalendarAction {
-        if self.is_repeat_open.is_some() {
+        if self.is_repeat_open {
             self.handle_repeat(key)
         } else {
             self.handle_calendar(key)
@@ -53,39 +65,39 @@ impl CalendarPopup {
         match key.code {
             KeyCode::Char('h') | KeyCode::Left => {
                 if let Some(d) = self.selected_date.previous_day() {
-                    self.set(d);
+                    self.nav(d);
                 }
             }
             KeyCode::Char('l') | KeyCode::Right => {
                 if let Some(d) = self.selected_date.next_day() {
-                    self.set(d);
+                    self.nav(d);
                 }
             }
             KeyCode::Char('k') | KeyCode::Up => {
                 if let Some(d) = self.selected_date.checked_sub(Duration::weeks(1)) {
-                    self.set(d);
+                    self.nav(d);
                 }
             }
             KeyCode::Char('j') | KeyCode::Down => {
                 if let Some(d) = self.selected_date.checked_add(Duration::weeks(1)) {
-                    self.set(d);
+                    self.nav(d);
                 }
             }
-            KeyCode::Char('H') => self.set(shift_month(self.selected_date, -1)),
-            KeyCode::Char('L') => self.set(shift_month(self.selected_date, 1)),
-            KeyCode::Char('t') => self.set(today()),
+            KeyCode::Char('H') => self.nav(shift_month(self.selected_date, -1)),
+            KeyCode::Char('L') => self.nav(shift_month(self.selected_date, 1)),
+            KeyCode::Char('t') => self.nav(today()),
             KeyCode::Char('y') => {
                 if let Some(d) = today().previous_day() {
-                    self.set(d);
+                    self.nav(d);
                 }
             }
             KeyCode::Char('n') => {
                 if let Some(d) = today().next_day() {
-                    self.set(d);
+                    self.nav(d);
                 }
             }
             KeyCode::Char('r') => {
-                self.is_repeat_open = Some(0);
+                self.is_repeat_open = true;
             }
             KeyCode::Enter => return CalendarAction::Confirm,
             KeyCode::Esc => return CalendarAction::Cancel,
@@ -95,24 +107,26 @@ impl CalendarPopup {
     }
 
     fn handle_repeat(&mut self, key: KeyEvent) -> CalendarAction {
-        let cursor = self.is_repeat_open.as_mut().unwrap();
         match key.code {
             KeyCode::Char('j') | KeyCode::Down => {
-                *cursor = (*cursor + 1).min(repeat_picker::OPTIONS.len() - 1);
+                self.repeat_cursor = (self.repeat_cursor + 1).min(repeat_picker::OPTIONS.len() - 1);
             }
             KeyCode::Char('k') | KeyCode::Up => {
-                *cursor = cursor.saturating_sub(1);
+                self.repeat_cursor = self.repeat_cursor.saturating_sub(1);
             }
-            KeyCode::Enter => return CalendarAction::Confirm,
+            KeyCode::Enter => {
+                self.selected_repeat = repeat_from_cursor(self.repeat_cursor);
+                return CalendarAction::Confirm;
+            }
             KeyCode::Esc => {
-                self.is_repeat_open = None;
+                self.is_repeat_open = false;
             }
             _ => {}
         }
         CalendarAction::None
     }
 
-    fn set(&mut self, date: Date) {
+    fn nav(&mut self, date: Date) {
         self.selected_date = date;
         self.view_date = date;
     }
@@ -120,7 +134,7 @@ impl CalendarPopup {
 
 impl Widget for CalendarPopup {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let popup_h = if self.is_repeat_open.is_some() {
+        let popup_h = if self.is_repeat_open {
             8 + 1 + 1 + 1 + RepeatPicker::height() + 2
         } else {
             8 + 1 + 1 + 2
@@ -138,8 +152,8 @@ impl Widget for CalendarPopup {
         let mut events = CalendarEventStore::today(Style::default().fg(Color::Yellow).bold());
         events.add(self.selected_date, Style::default().bg(Color::Cyan).fg(Color::Black));
 
-        if let Some(cursor) = self.is_repeat_open {
-            RepeatPicker::new(cursor).render(inner, buf);
+        if self.is_repeat_open {
+            RepeatPicker::new(self.repeat_cursor).render(inner, buf);
             return;
         }
 
@@ -169,11 +183,31 @@ fn today() -> Date {
         .date()
 }
 
+fn repeat_from_cursor(cursor: usize) -> Repeat {
+    match cursor {
+        1 => Repeat::Daily,
+        2 => Repeat::WeeklySameDay,
+        3 => Repeat::WeekdaysMonFri,
+        4 => Repeat::MonthlyOnDay,
+        5 => Repeat::YearlyOnDay,
+        _ => Repeat::None,
+    }
+}
+
+fn repeat_to_cursor(repeat: Repeat) -> usize {
+    match repeat {
+        Repeat::None => 0,
+        Repeat::Daily => 1,
+        Repeat::WeeklySameDay => 2,
+        Repeat::WeekdaysMonFri => 3,
+        Repeat::MonthlyOnDay => 4,
+        Repeat::YearlyOnDay => 5,
+    }
+}
+
 fn shift_month(date: Date, delta: i32) -> Date {
-    let month_num = date.month() as i32;
-    let year = date.year();
-    let total = month_num - 1 + delta;
-    let new_year = year + total.div_euclid(12);
+    let total = date.month() as i32 - 1 + delta;
+    let new_year = date.year() + total.div_euclid(12);
     let new_month_num = (total.rem_euclid(12) + 1) as u8;
     if let Ok(m) = Month::try_from(new_month_num) {
         let new_day = date.day().min(days_in_month(new_year, m));
