@@ -3,6 +3,8 @@ use ratatui::prelude::{Buffer, Rect, Widget};
 use ratatui::style::{Color, Style, Stylize};
 use ratatui::widgets::{Block, Paragraph};
 
+use crate::handlers::tui::tabs::todos::COLOR;
+
 pub enum InputAreaAction {
     Confirm(String),
     None,
@@ -45,7 +47,7 @@ impl Widget for &InputArea {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let block = Block::bordered()
             .title(" New Todo ")
-            .border_style(Style::default().fg(Color::Cyan));
+            .border_style(Style::default().fg(COLOR));
 
         let inner = block.inner(area);
 

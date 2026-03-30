@@ -12,6 +12,8 @@ use crate::handlers::tui::widgets::input_widget::{InputArea, InputAreaAction};
 
 use super::Tab;
 
+pub const COLOR: Color = Color::Cyan;
+
 pub enum UiMode {
     Normal,
     Adding,
@@ -54,7 +56,7 @@ impl Tab for Todos {
     }
 
     fn color(&self) -> Color {
-        Color::Cyan
+        COLOR
     }
 
     fn handle(&mut self, key: KeyEvent) -> Result<()> {

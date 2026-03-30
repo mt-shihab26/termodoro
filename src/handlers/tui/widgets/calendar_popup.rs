@@ -7,6 +7,7 @@ use ratatui::widgets::{Block, Borders, Clear, Paragraph, Widget};
 use time::{Date, Duration};
 
 use crate::domains::todos::repeat::Repeat;
+use crate::handlers::tui::tabs::todos::COLOR;
 use crate::utils::date::{shift_month, today};
 
 use super::repeat_picker::{RepeatAction, RepeatPicker};
@@ -94,13 +95,13 @@ impl Widget for &CalendarPopup {
 
         let block = Block::bordered()
             .title(" Due Date ")
-            .border_style(Style::default().fg(Color::Cyan));
+            .border_style(Style::default().fg(COLOR));
 
         let inner = block.inner(popup);
         block.render(popup, buf);
 
         let mut events = CalendarEventStore::today(Style::default().fg(Color::Yellow).bold());
-        events.add(self.date, Style::default().bg(Color::Cyan).fg(Color::Black));
+        events.add(self.date, Style::default().bg(COLOR).fg(Color::Black));
 
         if let Some(repeat_picker) = &self.repeat_picker {
             repeat_picker.render(inner, buf);
@@ -124,7 +125,7 @@ impl Widget for &CalendarPopup {
         .block(
             Block::default()
                 .borders(Borders::BOTTOM)
-                .border_style(Style::default().fg(Color::Cyan)),
+                .border_style(Style::default().fg(COLOR)),
         )
         .render(action_hint, buf);
 
@@ -137,7 +138,7 @@ impl Widget for &CalendarPopup {
             .block(
                 Block::default()
                     .borders(Borders::TOP | Borders::BOTTOM)
-                    .border_style(Style::default().fg(Color::Cyan)),
+                    .border_style(Style::default().fg(COLOR)),
             )
             .render(action_hint2, buf);
 

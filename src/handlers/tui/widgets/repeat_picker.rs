@@ -5,6 +5,7 @@ use ratatui::style::{Color, Style, Stylize};
 use ratatui::widgets::{Block, Borders, List, ListItem, Paragraph};
 
 use crate::domains::todos::repeat::Repeat;
+use crate::handlers::tui::tabs::todos::COLOR;
 
 pub enum RepeatAction {
     Confirm(Option<Repeat>),
@@ -61,7 +62,7 @@ impl Widget for &RepeatPicker {
             .map(|(i, label)| {
                 let active = i == self.cursor;
                 let style = if active {
-                    Style::default().fg(Color::Cyan).bold()
+                    Style::default().fg(COLOR).bold()
                 } else {
                     Style::default().fg(Color::White)
                 };
@@ -79,7 +80,7 @@ impl Widget for &RepeatPicker {
         .block(
             Block::default()
                 .borders(Borders::TOP)
-                .border_style(Style::default().fg(Color::Cyan)),
+                .border_style(Style::default().fg(COLOR)),
         )
         .fg(Color::DarkGray)
         .render(hint_area, buf);
