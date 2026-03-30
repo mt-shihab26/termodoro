@@ -1,6 +1,8 @@
 use time::{Date, Duration, Month, OffsetDateTime};
 
-use super::{mode::Mode, todo::{Repeat, Todo}};
+use crate::domains::todos::Repeat;
+
+use super::{mode::Mode, todo::Todo};
 
 pub struct TodosState {
     pub items: Vec<Todo>,
