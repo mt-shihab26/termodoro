@@ -8,45 +8,13 @@ use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Tabs, Widget};
 use time::OffsetDateTime;
 
+use crate::domains::todos::page::Page;
 use crate::domains::todos::todo::Todo;
 use crate::handlers::tui::widgets::input::{InputAction, InputWidget};
 
 use super::Tab;
 
 pub const COLOR: Color = Color::Green;
-
-#[derive(Clone, Copy, PartialEq)]
-pub enum Page {
-    Due,
-    Today,
-    Future,
-}
-
-impl Page {
-    const ALL: &'static [Page] = &[Page::Due, Page::Today, Page::Future];
-
-    fn label(&self) -> &str {
-        match self {
-            Page::Due => "Due",
-            Page::Today => "Today",
-            Page::Future => "Future",
-        }
-    }
-
-    fn index(&self) -> usize {
-        Self::ALL.iter().position(|p| p == self).unwrap()
-    }
-
-    fn next(&self) -> Page {
-        let i = (self.index() + 1) % Self::ALL.len();
-        Self::ALL[i]
-    }
-
-    fn prev(&self) -> Page {
-        let i = (self.index() + Self::ALL.len() - 1) % Self::ALL.len();
-        Self::ALL[i]
-    }
-}
 
 pub enum UiMode {
     Normal,
@@ -163,6 +131,12 @@ impl Tab for Todos {
                         self.input_widget = Some(InputWidget::new(Some(&todo.text), todo.due_date, todo.repeat));
                     }
                 }
+                KeyCode::Char(c) => {
+                    if let Some(&page) = Page::ALL.iter().find(|p| p.key() == c) {
+                        self.page = page;
+                        self.selected = 0;
+                    }
+                }
                 _ => {}
             },
             UiMode::Adding => {
@@ -239,12 +213,18 @@ impl Tab for Todos {
         };
 
         let tab_titles: Vec<&str> = Page::ALL.iter().map(|p| p.label()).collect();
+        let tabs_width: u16 = Page::ALL.iter().map(|p| p.label().len() as u16).sum::<u16>()
+            + (Page::ALL.len() as u16 - 1) * 3  // " | " dividers
+            + 1; // padding
+        let [_, center_area, _] =
+            Layout::horizontal([Constraint::Fill(1), Constraint::Length(tabs_width), Constraint::Fill(1)])
+                .areas(tabs_area);
         let tabs_widget = Tabs::new(tab_titles)
             .select(self.page.index())
             .style(Style::default().fg(Color::DarkGray))
             .highlight_style(Style::default().fg(COLOR).bold())
             .divider(" | ");
-        frame.render_widget(tabs_widget, tabs_area);
+        frame.render_widget(tabs_widget, center_area);
 
         let indices = self.filtered_indices();
         let items: Vec<ListItem> = indices
