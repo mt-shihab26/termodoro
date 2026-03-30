@@ -7,7 +7,7 @@ use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Widget};
 
-use crate::domains::todos::{Mode, Repeat, TodosState};
+use crate::domains::todos::{Mode, TodosState};
 use crate::handlers::tui::widgets::calendar_popup::{CalendarAction, CalendarPopup};
 
 use super::Tab;
@@ -85,8 +85,8 @@ impl Tab for Todos {
                 if let Some(date) = todo.due_date {
                     label.push_str(&format!("  [{}]", date));
                 }
-                if todo.repeat != Repeat::None {
-                    label.push_str(&format!("  [{}]", todo.repeat.label()));
+                if let Some(ref repeat) = todo.repeat {
+                    label.push_str(&format!("  [{}]", repeat.label()));
                 }
                 let style = if todo.done {
                     Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)

@@ -1,6 +1,5 @@
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Repeat {
-    None,
     Daily,
     WeeklySameDay,
     WeekdaysMonFri,
@@ -11,7 +10,6 @@ pub enum Repeat {
 impl Repeat {
     pub fn label(&self) -> &str {
         match self {
-            Repeat::None => "None",
             Repeat::Daily => "Daily",
             Repeat::WeeklySameDay => "Weekly (same day)",
             Repeat::WeekdaysMonFri => "Weekdays (Mon-Fri)",

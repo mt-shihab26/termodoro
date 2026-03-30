@@ -16,12 +16,10 @@ pub enum CalendarAction {
     None,
 }
 
-/// `selected_date` and `selected_repeat` are the todo output values.
-/// `view_date`, `is_repeat_open`, and `repeat_cursor` are internal widget state.
 #[derive(Copy, Clone)]
 pub struct CalendarPopup {
     pub selected_date: Date,
-    pub selected_repeat: Repeat,
+    pub selected_repeat: Option<Repeat>,
     view_date: Date,
     is_repeat_open: bool,
     repeat_cursor: usize,
@@ -31,7 +29,7 @@ impl CalendarPopup {
     pub fn new(date: Date) -> Self {
         Self {
             selected_date: date,
-            selected_repeat: Repeat::None,
+            selected_repeat: None,
             view_date: date,
             is_repeat_open: false,
             repeat_cursor: 0,
@@ -42,7 +40,7 @@ impl CalendarPopup {
         Self::new(today())
     }
 
-    pub fn for_existing(date: Option<Date>, repeat: Repeat) -> Self {
+    pub fn for_existing(date: Option<Date>, repeat: Option<Repeat>) -> Self {
         let d = date.unwrap_or_else(today);
         Self {
             selected_date: d,
@@ -183,25 +181,25 @@ fn today() -> Date {
         .date()
 }
 
-fn repeat_from_cursor(cursor: usize) -> Repeat {
+fn repeat_from_cursor(cursor: usize) -> Option<Repeat> {
     match cursor {
-        1 => Repeat::Daily,
-        2 => Repeat::WeeklySameDay,
-        3 => Repeat::WeekdaysMonFri,
-        4 => Repeat::MonthlyOnDay,
-        5 => Repeat::YearlyOnDay,
-        _ => Repeat::None,
+        1 => Some(Repeat::Daily),
+        2 => Some(Repeat::WeeklySameDay),
+        3 => Some(Repeat::WeekdaysMonFri),
+        4 => Some(Repeat::MonthlyOnDay),
+        5 => Some(Repeat::YearlyOnDay),
+        _ => None,
     }
 }
 
-fn repeat_to_cursor(repeat: Repeat) -> usize {
+fn repeat_to_cursor(repeat: Option<Repeat>) -> usize {
     match repeat {
-        Repeat::None => 0,
-        Repeat::Daily => 1,
-        Repeat::WeeklySameDay => 2,
-        Repeat::WeekdaysMonFri => 3,
-        Repeat::MonthlyOnDay => 4,
-        Repeat::YearlyOnDay => 5,
+        None => 0,
+        Some(Repeat::Daily) => 1,
+        Some(Repeat::WeeklySameDay) => 2,
+        Some(Repeat::WeekdaysMonFri) => 3,
+        Some(Repeat::MonthlyOnDay) => 4,
+        Some(Repeat::YearlyOnDay) => 5,
     }
 }
 

@@ -90,7 +90,7 @@ impl TodosState {
     }
 
     /// Commit the selected date and repeat to a new or existing todo.
-    pub fn confirm_with(&mut self, date: Date, repeat: Repeat) {
+    pub fn confirm_with(&mut self, date: Date, repeat: Option<Repeat>) {
         if let Some(idx) = self.editing_idx {
             self.items[idx].due_date = Some(date);
             self.items[idx].repeat = repeat;
