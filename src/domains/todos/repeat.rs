@@ -8,6 +8,14 @@ pub enum Repeat {
 }
 
 impl Repeat {
+    pub const ALL: &'static [Repeat] = &[
+        Repeat::Daily,
+        Repeat::WeeklySameDay,
+        Repeat::WeekdaysMonFri,
+        Repeat::MonthlyOnDay,
+        Repeat::YearlyOnDay,
+    ];
+
     pub fn label(&self) -> &str {
         match self {
             Repeat::Daily => "Daily",

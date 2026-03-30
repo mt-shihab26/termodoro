@@ -8,7 +8,7 @@ use time::{Date, Duration, Month, OffsetDateTime};
 
 use crate::domains::todos::Repeat;
 
-use super::repeat_picker::{self, RepeatPicker};
+use super::repeat_picker::{RepeatAction, RepeatPicker};
 
 pub enum CalendarAction {
     Confirm,
@@ -21,18 +21,17 @@ pub struct CalendarPopup {
     pub selected_date: Option<Date>,
     pub selected_repeat: Option<Repeat>,
     view_date: Date,
-    repeat_cursor: Option<usize>,
+    repeat_picker: Option<RepeatPicker>,
 }
 
 impl CalendarPopup {
     pub fn for_today() -> Self {
         let td = today();
-
         Self {
             selected_date: Some(td),
             selected_repeat: None,
             view_date: td,
-            repeat_cursor: None,
+            repeat_picker: None,
         }
     }
 
@@ -41,13 +40,24 @@ impl CalendarPopup {
             selected_date: date,
             selected_repeat: repeat,
             view_date: date.unwrap_or_else(today),
-            repeat_cursor: None,
+            repeat_picker: None,
         }
     }
 
     pub fn handle(&mut self, key: KeyEvent) -> CalendarAction {
-        if self.repeat_cursor.is_some() {
-            self.handle_repeat(key)
+        if let Some(ref mut picker) = self.repeat_picker {
+            match picker.handle(key) {
+                RepeatAction::Confirm(repeat) => {
+                    self.selected_repeat = repeat;
+                    self.repeat_picker = None;
+                    return CalendarAction::Confirm;
+                }
+                RepeatAction::Cancel => {
+                    self.repeat_picker = None;
+                }
+                RepeatAction::None => {}
+            }
+            CalendarAction::None
         } else {
             self.handle_calendar(key)
         }
@@ -93,32 +103,10 @@ impl CalendarPopup {
                 }
             }
             KeyCode::Char('r') => {
-                self.repeat_cursor = Some(repeat_to_cursor(self.selected_repeat));
+                self.repeat_picker = Some(RepeatPicker::new(self.selected_repeat));
             }
             KeyCode::Enter => return CalendarAction::Confirm,
             KeyCode::Esc => return CalendarAction::Cancel,
-            _ => {}
-        }
-        CalendarAction::None
-    }
-
-    fn handle_repeat(&mut self, key: KeyEvent) -> CalendarAction {
-        let cursor = self.repeat_cursor.unwrap_or(0);
-        match key.code {
-            KeyCode::Char('j') | KeyCode::Down => {
-                self.repeat_cursor = Some((cursor + 1).min(repeat_picker::OPTIONS.len() - 1));
-            }
-            KeyCode::Char('k') | KeyCode::Up => {
-                self.repeat_cursor = Some(cursor.saturating_sub(1));
-            }
-            KeyCode::Enter => {
-                self.selected_repeat = repeat_from_cursor(cursor);
-                self.repeat_cursor = None;
-                return CalendarAction::Confirm;
-            }
-            KeyCode::Esc => {
-                self.repeat_cursor = None;
-            }
             _ => {}
         }
         CalendarAction::None
@@ -132,7 +120,7 @@ impl CalendarPopup {
 
 impl Widget for CalendarPopup {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let popup_h = if self.repeat_cursor.is_some() {
+        let popup_h = if self.repeat_picker.is_some() {
             8 + 1 + 1 + 1 + RepeatPicker::height() + 2
         } else {
             8 + 1 + 1 + 2
@@ -152,8 +140,8 @@ impl Widget for CalendarPopup {
             events.add(d, Style::default().bg(Color::Cyan).fg(Color::Black));
         }
 
-        if let Some(cursor) = self.repeat_cursor {
-            RepeatPicker::new(cursor).render(inner, buf);
+        if let Some(picker) = self.repeat_picker {
+            picker.render(inner, buf);
             return;
         }
 
@@ -181,28 +169,6 @@ fn today() -> Date {
     OffsetDateTime::now_local()
         .unwrap_or_else(|_| OffsetDateTime::now_utc())
         .date()
-}
-
-fn repeat_from_cursor(cursor: usize) -> Option<Repeat> {
-    match cursor {
-        1 => Some(Repeat::Daily),
-        2 => Some(Repeat::WeeklySameDay),
-        3 => Some(Repeat::WeekdaysMonFri),
-        4 => Some(Repeat::MonthlyOnDay),
-        5 => Some(Repeat::YearlyOnDay),
-        _ => None,
-    }
-}
-
-fn repeat_to_cursor(repeat: Option<Repeat>) -> usize {
-    match repeat {
-        None => 0,
-        Some(Repeat::Daily) => 1,
-        Some(Repeat::WeeklySameDay) => 2,
-        Some(Repeat::WeekdaysMonFri) => 3,
-        Some(Repeat::MonthlyOnDay) => 4,
-        Some(Repeat::YearlyOnDay) => 5,
-    }
 }
 
 fn shift_month(date: Date, delta: i32) -> Date {
