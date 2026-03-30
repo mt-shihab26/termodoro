@@ -8,7 +8,7 @@ use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Widget};
 
 use crate::domains::todos::todo::Todo;
-use crate::handlers::tui::widgets::input_widget::{InputArea, InputAreaAction};
+use crate::handlers::tui::widgets::input_widget::{InputWidget, InputWidgetAction};
 
 use super::Tab;
 
@@ -25,7 +25,7 @@ pub struct Todos {
     ui_mode: UiMode,
     selected: usize,
     list_state: RefCell<ListState>,
-    input_widget: Option<InputArea>,
+    input_widget: Option<InputWidget>,
 }
 
 impl Todos {
@@ -87,13 +87,13 @@ impl Tab for Todos {
                 }
                 KeyCode::Char('a') => {
                     self.ui_mode = UiMode::Adding;
-                    self.input_widget = Some(InputArea::new(None, None, None))
+                    self.input_widget = Some(InputWidget::new(None, None, None))
                 }
                 KeyCode::Char('e') => {
                     if !self.items.is_empty() {
                         self.ui_mode = UiMode::Editing;
                         let todo = &self.items[self.selected];
-                        self.input_widget = Some(InputArea::new(Some(&todo.text), todo.due_date, todo.repeat))
+                        self.input_widget = Some(InputWidget::new(Some(&todo.text), todo.due_date, todo.repeat))
                     }
                 }
                 _ => {}
@@ -101,34 +101,39 @@ impl Tab for Todos {
             UiMode::Adding => {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
-                        InputAreaAction::Confirm { text, date, repeat } => {
-                            self.items.push(Todo { text, done: false, due_date: date, repeat });
+                        InputWidgetAction::Confirm { text, date, repeat } => {
+                            self.items.push(Todo {
+                                text,
+                                done: false,
+                                due_date: date,
+                                repeat,
+                            });
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
                         }
-                        InputAreaAction::Escape => {
+                        InputWidgetAction::Escape => {
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
                         }
-                        InputAreaAction::None => {}
+                        InputWidgetAction::None => {}
                     }
                 }
             }
             UiMode::Editing => {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
-                        InputAreaAction::Confirm { text, date, repeat } => {
+                        InputWidgetAction::Confirm { text, date, repeat } => {
                             self.items[self.selected].text = text;
                             self.items[self.selected].due_date = date;
                             self.items[self.selected].repeat = repeat;
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
                         }
-                        InputAreaAction::Escape => {
+                        InputWidgetAction::Escape => {
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
                         }
-                        InputAreaAction::None => {}
+                        InputWidgetAction::None => {}
                     }
                 }
             }
