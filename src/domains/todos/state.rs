@@ -173,16 +173,27 @@ impl TodosState {
         }
     }
 
+    /// Confirm the selected date and create/update the todo without a repeat.
     pub fn confirm_date(&mut self) {
+        self.pending_due = Some(self.calendar_date);
+        self.apply_todo(None);
+    }
+
+    /// Open the repeat section below the calendar (switches to SelectingRepeat).
+    pub fn open_repeat(&mut self) {
         self.pending_due = Some(self.calendar_date);
         self.repeat_cursor = 0;
         self.mode = Mode::SelectingRepeat;
     }
 
-    pub fn skip_date(&mut self) {
+    /// Cancel date selection entirely — discards the in-progress add/edit.
+    pub fn cancel_selecting_date(&mut self) {
+        if self.editing_idx.is_none() {
+            self.input.clear();
+        }
+        self.editing_idx = None;
         self.pending_due = None;
-        self.repeat_cursor = 0;
-        self.mode = Mode::SelectingRepeat;
+        self.mode = Mode::Normal;
     }
 
     // --- Repeat selection ---
@@ -195,13 +206,15 @@ impl TodosState {
         self.repeat_cursor = (self.repeat_cursor + 1).min(5);
     }
 
+    /// Confirm the highlighted repeat option and create/update the todo.
     pub fn confirm_repeat(&mut self) {
         let repeat = repeat_from_cursor(self.repeat_cursor);
         self.apply_todo(repeat);
     }
 
-    pub fn skip_repeat(&mut self) {
-        self.apply_todo(None);
+    /// Go back to the calendar without committing the todo yet.
+    pub fn cancel_repeat(&mut self) {
+        self.mode = Mode::SelectingDate;
     }
 
     fn apply_todo(&mut self, repeat: Option<Repeat>) {

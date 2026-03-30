@@ -5,21 +5,12 @@ use ratatui::Frame;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
-use ratatui::widgets::{Block, Clear, List, ListItem, ListState, Paragraph, Widget};
+use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Widget};
 
 use crate::domains::todos::{Mode, TodosState};
 use crate::handlers::tui::widgets::calendar_popup::CalendarPopup;
 
 use super::Tab;
-
-const REPEAT_OPTIONS: &[&str] = &[
-    "None",
-    "Daily",
-    "Weekly (same day)",
-    "Weekdays (Mon-Fri)",
-    "Monthly on day",
-    "Yearly on day",
-];
 
 pub struct Todos {
     state: TodosState,
@@ -45,45 +36,6 @@ impl Todos {
         };
         self.list.borrow_mut().select(selected);
     }
-
-    fn render_repeat_popup(&self, frame: &mut Frame, area: Rect) {
-        let popup_w = 30u16;
-        let popup_h = (REPEAT_OPTIONS.len() as u16) + 3; // border + hint
-        let popup = centered_rect(area, popup_w, popup_h);
-
-        frame.render_widget(Clear, popup);
-
-        let block = Block::bordered()
-            .title(" Repeat ")
-            .border_style(Style::default().fg(Color::Cyan));
-        let inner = block.inner(popup);
-        frame.render_widget(block, popup);
-
-        let [list_area, hint_area] = Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).areas(inner);
-
-        let items: Vec<ListItem> = REPEAT_OPTIONS
-            .iter()
-            .enumerate()
-            .map(|(i, &opt)| {
-                let selected = i == self.state.repeat_cursor;
-                let prefix = if selected { ">" } else { " " };
-                let style = if selected {
-                    Style::default().fg(Color::Cyan).bold()
-                } else {
-                    Style::default().fg(Color::White)
-                };
-                ListItem::new(format!("{} {}", prefix, opt)).style(style)
-            })
-            .collect();
-
-        frame.render_widget(List::new(items), list_area);
-        frame.render_widget(
-            Paragraph::new("[j/k]Navigate  [Enter]Select  [Esc]Skip")
-                .centered()
-                .fg(Color::DarkGray),
-            hint_area,
-        );
-    }
 }
 
 impl Tab for Todos {
@@ -106,12 +58,17 @@ impl Tab for Todos {
 
         let (list_area, hint_area, input_area) = match self.state.mode {
             Mode::Normal | Mode::SelectingDate | Mode::SelectingRepeat => {
-                let [list, hint] = Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).areas(area);
+                let [list, hint] =
+                    Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).areas(area);
                 (list, hint, None)
             }
             Mode::Adding => {
-                let [list, hint, input] =
-                    Layout::vertical([Constraint::Fill(1), Constraint::Length(1), Constraint::Length(3)]).areas(area);
+                let [list, hint, input] = Layout::vertical([
+                    Constraint::Fill(1),
+                    Constraint::Length(1),
+                    Constraint::Length(3),
+                ])
+                .areas(area);
                 (list, hint, Some(input))
             }
         };
@@ -147,8 +104,7 @@ impl Tab for Todos {
         let hint = match self.state.mode {
             Mode::Normal => "[j/k]Navigate  [Space]Toggle  [a]Add  [d]Delete  [e]Edit Date",
             Mode::Adding => "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char",
-            Mode::SelectingDate => "Calendar — navigate to pick a due date",
-            Mode::SelectingRepeat => "Repeat — choose how often this todo recurs",
+            Mode::SelectingDate | Mode::SelectingRepeat => "",
         };
         frame.render_widget(Paragraph::new(hint).centered().fg(Color::DarkGray), hint_area);
 
@@ -158,16 +114,26 @@ impl Tab for Todos {
                 .border_style(Style::default().fg(self.color()));
             let inner = block.inner(area);
             frame.render_widget(block, area);
-            frame.render_widget(Paragraph::new(format!("{}_", self.state.input)).fg(Color::White), inner);
+            frame.render_widget(
+                Paragraph::new(format!("{}_", self.state.input)).fg(Color::White),
+                inner,
+            );
         }
 
-        // Overlay popups
+        // Calendar popup overlay (also shows repeat section when in SelectingRepeat)
         match self.state.mode {
             Mode::SelectingDate => frame.render_widget(
                 CalendarPopup::new(self.state.calendar_date, self.state.calendar_view),
                 area,
             ),
-            Mode::SelectingRepeat => self.render_repeat_popup(frame, area),
+            Mode::SelectingRepeat => frame.render_widget(
+                CalendarPopup::with_repeat(
+                    self.state.calendar_date,
+                    self.state.calendar_view,
+                    self.state.repeat_cursor,
+                ),
+                area,
+            ),
             _ => {}
         }
     }
@@ -202,30 +168,20 @@ impl Tab for Todos {
                 KeyCode::Char('t') => self.state.set_date_today(),
                 KeyCode::Char('y') => self.state.set_date_yesterday(),
                 KeyCode::Char('n') => self.state.set_date_tomorrow(),
+                KeyCode::Char('r') => self.state.open_repeat(),
                 KeyCode::Enter => self.state.confirm_date(),
-                KeyCode::Esc => self.state.skip_date(),
+                KeyCode::Esc => self.state.cancel_selecting_date(),
                 _ => {}
             },
             Mode::SelectingRepeat => match key.code {
                 KeyCode::Char('j') | KeyCode::Down => self.state.repeat_move_down(),
                 KeyCode::Char('k') | KeyCode::Up => self.state.repeat_move_up(),
                 KeyCode::Enter => self.state.confirm_repeat(),
-                KeyCode::Esc => self.state.skip_repeat(),
+                KeyCode::Esc => self.state.cancel_repeat(),
                 _ => {}
             },
         }
         self.sync_list_state();
         Ok(())
-    }
-}
-
-fn centered_rect(area: Rect, width: u16, height: u16) -> Rect {
-    let x = area.x + area.width.saturating_sub(width) / 2;
-    let y = area.y + area.height.saturating_sub(height) / 2;
-    Rect {
-        x,
-        y,
-        width: width.min(area.width),
-        height: height.min(area.height),
     }
 }
