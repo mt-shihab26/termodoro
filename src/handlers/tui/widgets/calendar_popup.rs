@@ -2,17 +2,10 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Style, Stylize};
 use ratatui::widgets::calendar::{CalendarEventStore, Monthly};
-use ratatui::widgets::{Block, Clear, List, ListItem, Paragraph, Widget};
+use ratatui::widgets::{Block, Clear, Paragraph, Widget};
 use time::Date;
 
-pub const REPEAT_OPTIONS: &[&str] = &[
-    "None",
-    "Daily",
-    "Weekly (same day)",
-    "Weekdays (Mon-Fri)",
-    "Monthly on day",
-    "Yearly on day",
-];
+use super::repeat_picker::RepeatPicker;
 
 /// Calendar popup. When `repeat_cursor` is `Some`, the repeat list is shown
 /// below the calendar in the same popup.
@@ -43,10 +36,10 @@ impl CalendarPopup {
 
 impl Widget for CalendarPopup {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        // Height: 8 calendar + 1 nav hint + action row + border(2)
-        // +repeat: + 1 separator + options + 1 hint
+        // Height: 8 cal + 1 nav hint + 1 action hint + border(2)
+        // +repeat: + 1 separator + RepeatPicker::height()
         let popup_h = if self.repeat_cursor.is_some() {
-            8 + 1 + 1 + REPEAT_OPTIONS.len() as u16 + 1 + 2
+            8 + 1 + 1 + 1 + RepeatPicker::height() + 2
         } else {
             8 + 1 + 1 + 2
         };
@@ -64,12 +57,11 @@ impl Widget for CalendarPopup {
         events.add(self.selected, Style::default().bg(Color::Cyan).fg(Color::Black));
 
         if let Some(cursor) = self.repeat_cursor {
-            let [cal_area, nav_hint, sep, repeat_area, repeat_hint] = Layout::vertical([
+            let [cal_area, nav_hint, sep, repeat_area] = Layout::vertical([
                 Constraint::Length(8),
                 Constraint::Length(1),
                 Constraint::Length(1),
-                Constraint::Length(REPEAT_OPTIONS.len() as u16),
-                Constraint::Length(1),
+                Constraint::Length(RepeatPicker::height()),
             ])
             .areas(inner);
 
@@ -88,26 +80,7 @@ impl Widget for CalendarPopup {
                 .fg(Color::DarkGray)
                 .render(sep, buf);
 
-            let items: Vec<ListItem> = REPEAT_OPTIONS
-                .iter()
-                .enumerate()
-                .map(|(i, &opt)| {
-                    let active = i == cursor;
-                    let style = if active {
-                        Style::default().fg(Color::Cyan).bold()
-                    } else {
-                        Style::default().fg(Color::White)
-                    };
-                    ListItem::new(format!("{} {}", if active { ">" } else { " " }, opt)).style(style)
-                })
-                .collect();
-
-            List::new(items).render(repeat_area, buf);
-
-            Paragraph::new("[j/k]Navigate  [Enter]Confirm  [Esc]Back")
-                .centered()
-                .fg(Color::DarkGray)
-                .render(repeat_hint, buf);
+            RepeatPicker::new(cursor).render(repeat_area, buf);
         } else {
             let [cal_area, nav_hint, action_hint] =
                 Layout::vertical([Constraint::Length(8), Constraint::Length(1), Constraint::Length(1)]).areas(inner);
