@@ -21,8 +21,7 @@ pub struct CalendarPopup {
     pub selected_date: Option<Date>,
     pub selected_repeat: Option<Repeat>,
     view_date: Date,
-    is_repeat_open: bool,
-    repeat_cursor: usize,
+    repeat_cursor: Option<usize>,
 }
 
 impl CalendarPopup {
@@ -31,8 +30,7 @@ impl CalendarPopup {
             selected_date: None,
             selected_repeat: None,
             view_date: today(),
-            is_repeat_open: false,
-            repeat_cursor: 0,
+            repeat_cursor: None,
         }
     }
 
@@ -41,13 +39,12 @@ impl CalendarPopup {
             selected_date: date,
             selected_repeat: repeat,
             view_date: date.unwrap_or_else(today),
-            is_repeat_open: false,
-            repeat_cursor: repeat_to_cursor(repeat),
+            repeat_cursor: None,
         }
     }
 
     pub fn handle(&mut self, key: KeyEvent) -> CalendarAction {
-        if self.is_repeat_open {
+        if self.repeat_cursor.is_some() {
             self.handle_repeat(key)
         } else {
             self.handle_calendar(key)
@@ -94,7 +91,7 @@ impl CalendarPopup {
                 }
             }
             KeyCode::Char('r') => {
-                self.is_repeat_open = true;
+                self.repeat_cursor = Some(repeat_to_cursor(self.selected_repeat));
             }
             KeyCode::Enter => return CalendarAction::Confirm,
             KeyCode::Esc => return CalendarAction::Cancel,
@@ -104,19 +101,21 @@ impl CalendarPopup {
     }
 
     fn handle_repeat(&mut self, key: KeyEvent) -> CalendarAction {
+        let cursor = self.repeat_cursor.unwrap_or(0);
         match key.code {
             KeyCode::Char('j') | KeyCode::Down => {
-                self.repeat_cursor = (self.repeat_cursor + 1).min(repeat_picker::OPTIONS.len() - 1);
+                self.repeat_cursor = Some((cursor + 1).min(repeat_picker::OPTIONS.len() - 1));
             }
             KeyCode::Char('k') | KeyCode::Up => {
-                self.repeat_cursor = self.repeat_cursor.saturating_sub(1);
+                self.repeat_cursor = Some(cursor.saturating_sub(1));
             }
             KeyCode::Enter => {
-                self.selected_repeat = repeat_from_cursor(self.repeat_cursor);
+                self.selected_repeat = repeat_from_cursor(cursor);
+                self.repeat_cursor = None;
                 return CalendarAction::Confirm;
             }
             KeyCode::Esc => {
-                self.is_repeat_open = false;
+                self.repeat_cursor = None;
             }
             _ => {}
         }
@@ -131,7 +130,7 @@ impl CalendarPopup {
 
 impl Widget for CalendarPopup {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let popup_h = if self.is_repeat_open {
+        let popup_h = if self.repeat_cursor.is_some() {
             8 + 1 + 1 + 1 + RepeatPicker::height() + 2
         } else {
             8 + 1 + 1 + 2
@@ -151,8 +150,8 @@ impl Widget for CalendarPopup {
             events.add(d, Style::default().bg(Color::Cyan).fg(Color::Black));
         }
 
-        if self.is_repeat_open {
-            RepeatPicker::new(self.repeat_cursor).render(inner, buf);
+        if let Some(cursor) = self.repeat_cursor {
+            RepeatPicker::new(cursor).render(inner, buf);
             return;
         }
 
