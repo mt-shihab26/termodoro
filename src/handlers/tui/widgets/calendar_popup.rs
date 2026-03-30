@@ -121,26 +121,27 @@ impl CalendarPopup {
 
 impl Widget for CalendarPopup {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let popup = centered_rect(area, 28, 8 + 1 + 1 + 2);
+        let popup = centered_rect(area, 24, 8 + 1 + 1);
 
         Clear.render(popup, buf);
 
         let block = Block::bordered()
             .title(" Due Date ")
             .border_style(Style::default().fg(Color::Cyan));
+
         let inner = block.inner(popup);
         block.render(popup, buf);
 
         let mut events = CalendarEventStore::today(Style::default().fg(Color::Yellow).bold());
         events.add(self.selected_date, Style::default().bg(Color::Cyan).fg(Color::Black));
 
-        if let Some(picker) = self.repeat_picker {
-            picker.render(inner, buf);
+        if let Some(repeat_picker) = self.repeat_picker {
+            repeat_picker.render(inner, buf);
             return;
         }
 
         let [cal_area, nav_hint, action_hint] =
-            Layout::vertical([Constraint::Length(8), Constraint::Length(1), Constraint::Length(1)]).areas(inner);
+            Layout::vertical([Constraint::Length(8), Constraint::Length(3), Constraint::Length(1)]).areas(inner);
 
         Monthly::new(self.view_date, events)
             .show_month_header(Style::default().bold())
