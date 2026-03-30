@@ -5,7 +5,8 @@ use ratatui::Frame;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
-use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Widget};
+use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Tabs, Widget};
+use time::OffsetDateTime;
 
 use crate::domains::todos::todo::Todo;
 use crate::handlers::tui::widgets::input::{InputAction, InputWidget};
@@ -13,6 +14,39 @@ use crate::handlers::tui::widgets::input::{InputAction, InputWidget};
 use super::Tab;
 
 pub const COLOR: Color = Color::Green;
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum Page {
+    Due,
+    Today,
+    Future,
+}
+
+impl Page {
+    const ALL: &'static [Page] = &[Page::Due, Page::Today, Page::Future];
+
+    fn label(&self) -> &str {
+        match self {
+            Page::Due => "Due",
+            Page::Today => "Today",
+            Page::Future => "Future",
+        }
+    }
+
+    fn index(&self) -> usize {
+        Self::ALL.iter().position(|p| p == self).unwrap()
+    }
+
+    fn next(&self) -> Page {
+        let i = (self.index() + 1) % Self::ALL.len();
+        Self::ALL[i]
+    }
+
+    fn prev(&self) -> Page {
+        let i = (self.index() + Self::ALL.len() - 1) % Self::ALL.len();
+        Self::ALL[i]
+    }
+}
 
 pub enum UiMode {
     Normal,
@@ -22,6 +56,7 @@ pub enum UiMode {
 
 pub struct Todos {
     items: Vec<Todo>,
+    page: Page,
     ui_mode: UiMode,
     selected: usize,
     list_state: RefCell<ListState>,
@@ -32,6 +67,7 @@ impl Todos {
     pub fn new() -> Self {
         Self {
             items: Todo::fakes(),
+            page: Page::Today,
             ui_mode: UiMode::Normal,
             selected: 0,
             list_state: RefCell::new(ListState::default()),
@@ -39,14 +75,37 @@ impl Todos {
         }
     }
 
+    fn filtered_indices(&self) -> Vec<usize> {
+        let today = OffsetDateTime::now_utc().date();
+        self.items
+            .iter()
+            .enumerate()
+            .filter(|(_, todo)| match self.page {
+                Page::Due => todo.due_date.map_or(false, |d| d < today),
+                Page::Today => todo.due_date.map_or(false, |d| d == today),
+                Page::Future => todo.due_date.map_or(false, |d| d > today),
+            })
+            .map(|(i, _)| i)
+            .collect()
+    }
+
     fn sync_list_state(&self) {
-        let selected = if self.items.is_empty() {
+        let len = self.filtered_indices().len();
+        let selected = if len == 0 {
             None
         } else {
-            Some(self.selected)
+            Some(self.selected.min(len - 1))
         };
-
         self.list_state.borrow_mut().select(selected);
+    }
+
+    fn clamp_selected(&mut self) {
+        let len = self.filtered_indices().len();
+        if len == 0 {
+            self.selected = 0;
+        } else {
+            self.selected = self.selected.min(len - 1);
+        }
     }
 }
 
@@ -62,38 +121,46 @@ impl Tab for Todos {
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
         match self.ui_mode {
             UiMode::Normal => match key.code {
+                KeyCode::Char(']') => {
+                    self.page = self.page.next();
+                    self.selected = 0;
+                }
+                KeyCode::Char('[') => {
+                    self.page = self.page.prev();
+                    self.selected = 0;
+                }
                 KeyCode::Char(' ') | KeyCode::Enter => {
-                    if !self.items.is_empty() {
-                        self.items[self.selected].done = !self.items[self.selected].done;
+                    let indices = self.filtered_indices();
+                    if let Some(&real) = indices.get(self.selected) {
+                        self.items[real].done = !self.items[real].done;
                     }
                 }
                 KeyCode::Char('j') | KeyCode::Down => {
-                    if !self.items.is_empty() {
-                        self.selected = (self.selected + 1).min(self.items.len() - 1);
+                    let len = self.filtered_indices().len();
+                    if len > 0 {
+                        self.selected = (self.selected + 1).min(len - 1);
                     }
                 }
                 KeyCode::Char('k') | KeyCode::Up => {
                     self.selected = self.selected.saturating_sub(1);
                 }
                 KeyCode::Char('d') => {
-                    if !self.items.is_empty() {
-                        self.items.remove(self.selected);
-                        if !self.items.is_empty() {
-                            self.selected = self.selected.min(self.items.len() - 1);
-                        } else {
-                            self.selected = 0;
-                        }
+                    let indices = self.filtered_indices();
+                    if let Some(&real) = indices.get(self.selected) {
+                        self.items.remove(real);
+                        self.clamp_selected();
                     }
                 }
                 KeyCode::Char('a') => {
                     self.ui_mode = UiMode::Adding;
-                    self.input_widget = Some(InputWidget::new(None, None, None))
+                    self.input_widget = Some(InputWidget::new(None, None, None));
                 }
                 KeyCode::Char('e') => {
-                    if !self.items.is_empty() {
+                    let indices = self.filtered_indices();
+                    if let Some(&real) = indices.get(self.selected) {
                         self.ui_mode = UiMode::Editing;
-                        let todo = &self.items[self.selected];
-                        self.input_widget = Some(InputWidget::new(Some(&todo.text), todo.due_date, todo.repeat))
+                        let todo = &self.items[real];
+                        self.input_widget = Some(InputWidget::new(Some(&todo.text), todo.due_date, todo.repeat));
                     }
                 }
                 _ => {}
@@ -103,10 +170,9 @@ impl Tab for Todos {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
                             self.items.push(Todo::new(text, date, repeat));
-
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
-                            self.selected = self.items.len() - 1;
+                            self.clamp_selected();
                         }
                         InputAction::Escape => {
                             self.input_widget = None;
@@ -120,12 +186,13 @@ impl Tab for Todos {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
-                            let todo = &mut self.items[self.selected];
-
-                            todo.text = text;
-                            todo.due_date = date;
-                            todo.repeat = repeat;
-
+                            let indices = self.filtered_indices();
+                            if let Some(&real) = indices.get(self.selected) {
+                                let todo = &mut self.items[real];
+                                todo.text = text;
+                                todo.due_date = date;
+                                todo.repeat = repeat;
+                            }
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
                         }
@@ -153,22 +220,37 @@ impl Tab for Todos {
 
         let area = inner;
 
-        let (list_area, hint_area, input_area) = match self.ui_mode {
+        let (tabs_area, list_area, hint_area, input_area) = match self.ui_mode {
             UiMode::Normal => {
-                let [list, hint] = Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).areas(area);
-                (list, hint, None)
+                let [tabs, list, hint] =
+                    Layout::vertical([Constraint::Length(1), Constraint::Fill(1), Constraint::Length(1)]).areas(area);
+                (tabs, list, hint, None)
             }
             UiMode::Adding | UiMode::Editing => {
-                let [list, hint, input] =
-                    Layout::vertical([Constraint::Fill(1), Constraint::Length(1), Constraint::Length(3)]).areas(area);
-                (list, hint, Some(input))
+                let [tabs, list, hint, input] = Layout::vertical([
+                    Constraint::Length(1),
+                    Constraint::Fill(1),
+                    Constraint::Length(1),
+                    Constraint::Length(3),
+                ])
+                .areas(area);
+                (tabs, list, hint, Some(input))
             }
         };
 
-        let items: Vec<ListItem> = self
-            .items
+        let tab_titles: Vec<&str> = Page::ALL.iter().map(|p| p.label()).collect();
+        let tabs_widget = Tabs::new(tab_titles)
+            .select(self.page.index())
+            .style(Style::default().fg(Color::DarkGray))
+            .highlight_style(Style::default().fg(COLOR).bold())
+            .divider(" | ");
+        frame.render_widget(tabs_widget, tabs_area);
+
+        let indices = self.filtered_indices();
+        let items: Vec<ListItem> = indices
             .iter()
-            .map(|todo| {
+            .map(|&i| {
+                let todo = &self.items[i];
                 let check = if todo.done { "[x]" } else { "[ ]" };
                 let mut label = format!(" {} {}", check, todo.text);
                 if let Some(date) = todo.due_date {
@@ -193,7 +275,7 @@ impl Tab for Todos {
         frame.render_stateful_widget(list, list_area, &mut self.list_state.borrow_mut());
 
         let hint = match self.ui_mode {
-            UiMode::Normal => "[j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [d]Delete",
+            UiMode::Normal => "[ [ / ] ]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [d]Delete",
             UiMode::Adding | UiMode::Editing => "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char",
         };
 
