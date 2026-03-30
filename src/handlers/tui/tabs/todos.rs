@@ -7,17 +7,25 @@ use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Widget};
 
-use crate::domains::todos::{Mode, TodosState};
-use crate::handlers::tui::widgets::calendar_popup::{CalendarAction, CalendarPopup};
+use crate::domains::todos::TodosState;
 use crate::handlers::tui::widgets::input_area::{InputArea, InputAreaAction};
 
 use super::Tab;
 
+#[derive(PartialEq)]
+pub enum UiMode {
+    Normal,
+    Adding,
+    Editing(usize),
+}
+
 pub struct Todos {
     state: TodosState,
-    list: RefCell<ListState>,
-    input: InputArea,
-    calendar: CalendarPopup,
+    ui_mode: UiMode,
+    selected_item_index: usize,
+    adding_input_area: InputArea,
+    editing_input_area: InputArea,
+    list_state: RefCell<ListState>,
 }
 
 impl Todos {
@@ -25,11 +33,14 @@ impl Todos {
         let state = TodosState::new();
         let mut list_state = ListState::default();
         list_state.select(Some(state.selected));
+
         Self {
             state,
-            list: RefCell::new(list_state),
-            input: InputArea::new(),
-            calendar: CalendarPopup::new(None, None),
+            ui_mode: UiMode::Normal,
+            selected_item_index: 0,
+            adding_input_area: InputArea::new(),
+            editing_input_area: InputArea::new(),
+            list_state: RefCell::new(list_state),
         }
     }
 
@@ -39,7 +50,7 @@ impl Todos {
         } else {
             Some(self.state.selected)
         };
-        self.list.borrow_mut().select(selected);
+        self.list_state.borrow_mut().select(selected);
     }
 }
 
@@ -61,12 +72,12 @@ impl Tab for Todos {
 
         let area = inner;
 
-        let (list_area, hint_area, input_area) = match self.state.mode {
-            Mode::Normal | Mode::SelectingDate => {
+        let (list_area, hint_area, input_area) = match self.ui_mode {
+            UiMode::Normal => {
                 let [list, hint] = Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).areas(area);
                 (list, hint, None)
             }
-            Mode::Adding => {
+            UiMode::Adding | UiMode::Editing(_) => {
                 let [list, hint, input] =
                     Layout::vertical([Constraint::Fill(1), Constraint::Length(1), Constraint::Length(3)]).areas(area);
                 (list, hint, Some(input))
@@ -99,56 +110,74 @@ impl Tab for Todos {
             .highlight_style(Style::default().fg(self.color()).bold())
             .highlight_symbol(">");
 
-        frame.render_stateful_widget(list, list_area, &mut self.list.borrow_mut());
+        frame.render_stateful_widget(list, list_area, &mut self.list_state.borrow_mut());
 
-        let hint = match self.state.mode {
-            Mode::Normal => "[j/k]Navigate  [Space]Toggle  [a]Add  [d]Delete  [e]Edit Date",
-            Mode::Adding => "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char",
-            Mode::SelectingDate => "",
+        let hint = match self.ui_mode {
+            UiMode::Normal => "[j/k]Navigate  [Space]Toggle  [a]Add  [d]Delete  [e]Edit Date",
+            UiMode::Adding | UiMode::Editing(_) => "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char",
         };
+
         frame.render_widget(Paragraph::new(hint).centered().fg(Color::DarkGray), hint_area);
 
-        if let Some(area) = input_area {
-            frame.render_widget(&self.input, area);
-        }
-
-        if self.state.mode == Mode::SelectingDate {
-            frame.render_widget(&self.calendar, area);
+        match self.ui_mode {
+            UiMode::Normal => {}
+            UiMode::Adding => {
+                if let Some(area) = input_area {
+                    frame.render_widget(&self.adding_input_area, area);
+                }
+            }
+            UiMode::Editing(_) => {
+                if let Some(area) = input_area {
+                    frame.render_widget(&self.editing_input_area, area);
+                }
+            }
         }
     }
 
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
-        match self.state.mode {
-            Mode::Normal => match key.code {
-                KeyCode::Char('j') | KeyCode::Down => self.state.move_down(),
-                KeyCode::Char('k') | KeyCode::Up => self.state.move_up(),
-                KeyCode::Char(' ') | KeyCode::Enter => self.state.toggle_selected(),
-                KeyCode::Char('a') => self.state.start_adding(),
-                KeyCode::Char('d') => self.state.delete_selected(),
+        match self.ui_mode {
+            UiMode::Normal => match key.code {
+                KeyCode::Char(' ') | KeyCode::Enter => {
+                    if !self.state.items.is_empty() {
+                        self.state.items[self.selected_item_index].done =
+                            !self.state.items[self.selected_item_index].done;
+                    }
+                }
+                KeyCode::Char('j') | KeyCode::Down => {
+                    if !self.state.items.is_empty() {
+                        self.selected_item_index = (self.selected_item_index + 1).min(self.state.items.len() - 1);
+                    }
+                }
+                KeyCode::Char('k') | KeyCode::Up => {
+                    self.selected_item_index = self.selected_item_index.saturating_sub(1);
+                }
+                KeyCode::Char('d') => {
+                    if !self.state.items.is_empty() {
+                        self.state.items.remove(self.selected_item_index);
+                        if !self.state.items.is_empty() {
+                            self.selected_item_index = self.selected_item_index.min(self.state.items.len() - 1);
+                        } else {
+                            self.selected_item_index = 0;
+                        }
+                    }
+                }
+                KeyCode::Char('a') => {
+                    self.ui_mode = UiMode::Adding;
+                }
                 KeyCode::Char('e') => {
                     if !self.state.items.is_empty() {
-                        let idx = self.state.selected;
-                        self.calendar =
-                            CalendarPopup::new(self.state.items[idx].due_date, self.state.items[idx].repeat);
-                        self.state.start_edit_date();
+                        self.ui_mode = UiMode::Editing(self.selected_item_index);
                     }
                 }
                 _ => {}
             },
-            Mode::Adding => {
-                match self.input.handle(key) {
+            UiMode::Adding => {
+                match self.adding_input_area.handle(key) {
                     InputAreaAction::Confirm(text) => self.state.add(text),
                     InputAreaAction::None => {}
                 };
             }
-            Mode::SelectingDate => match self.calendar.handle(key) {
-                CalendarAction::Confirm { date, repeat } => {
-                    self.state.confirm_with(date, repeat);
-                    self.calendar = CalendarPopup::new(None, None);
-                }
-                CalendarAction::Cancel => self.state.cancel_selecting_date(),
-                CalendarAction::None => {}
-            },
+            UiMode::Editing(_) => todo!(),
         }
         self.sync_list_state();
         Ok(())
