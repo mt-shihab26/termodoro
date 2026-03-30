@@ -1,9 +1,8 @@
 use std::time::{Duration, Instant};
 
 pub struct Fps {
-    pub per_second: f64,
-    pub per_lifetime: u64,
-    pub visible: bool,
+    per_second: f64,
+    per_lifetime: u64,
     frame_count_per_second: u32,
     interval_start: Instant,
 }
@@ -13,10 +12,17 @@ impl Fps {
         Self {
             per_second: 0.0,
             per_lifetime: 0,
-            visible: true,
             frame_count_per_second: 0,
             interval_start: Instant::now() - Duration::from_secs(1),
         }
+    }
+
+    pub fn per_second(&self) -> f64 {
+        self.per_second
+    }
+
+    pub fn per_lifetime(&self) -> u64 {
+        self.per_lifetime
     }
 
     pub fn tick(&mut self) {

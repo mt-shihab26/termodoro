@@ -1,43 +1,44 @@
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::prelude::{Buffer, Rect, Widget};
-use ratatui::style::{Color, Style, Stylize};
-use ratatui::widgets::{Block, Paragraph};
+use ratatui::style::Style;
+use ratatui::widgets::Block;
+use ratatui_textarea::TextArea;
 
 use crate::handlers::tui::tabs::todos::COLOR;
 
 pub enum InputAreaAction {
     Confirm(String),
+    Escape,
     None,
 }
 
-#[derive(Clone)]
 pub struct InputArea {
-    text: String,
+    textarea: TextArea<'static>,
 }
 
 impl InputArea {
     pub fn new(text: Option<&str>) -> Self {
-        Self {
-            text: text.unwrap_or("").to_string(),
+        let mut textarea = TextArea::default();
+        if let Some(t) = text {
+            textarea.insert_str(t);
         }
+        textarea.set_block(Block::bordered().border_style(Style::default().fg(COLOR)));
+        textarea.set_cursor_line_style(Style::default());
+        Self { textarea }
     }
 
     pub fn handle(&mut self, key: KeyEvent) -> InputAreaAction {
         match key.code {
-            KeyCode::Backspace => {
-                self.text.pop();
-            }
-            KeyCode::Char(c) => {
-                self.text.push(c);
-            }
             KeyCode::Enter => {
-                if !self.text.trim().is_empty() {
-                    let text = self.text.clone();
-                    self.text.clear();
+                let text = self.textarea.lines()[0].clone();
+                if !text.trim().is_empty() {
                     return InputAreaAction::Confirm(text);
                 }
             }
-            _ => {}
+            KeyCode::Esc => return InputAreaAction::Escape,
+            _ => {
+                self.textarea.input(key);
+            }
         }
         InputAreaAction::None
     }
@@ -45,15 +46,6 @@ impl InputArea {
 
 impl Widget for &InputArea {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let block = Block::bordered()
-            .title(" New Todo ")
-            .border_style(Style::default().fg(COLOR));
-
-        let inner = block.inner(area);
-
-        block.render(area, buf);
-
-        let display = format!("{}█", self.text);
-        Paragraph::new(display).fg(Color::White).render(inner, buf);
+        Widget::render(&self.textarea, area, buf);
     }
 }

@@ -18,7 +18,7 @@ pub struct App {
     selected: usize,
     tabs: Vec<Box<dyn Tab>>,
     events: Receiver<Event>,
-    fps: Fps,
+    fps: Option<Fps>,
 }
 
 impl App {
@@ -34,7 +34,7 @@ impl App {
             selected: 0,
             tabs,
             events,
-            fps: Fps::new(),
+            fps: Some(Fps::new()),
         }
     }
 
@@ -50,7 +50,9 @@ impl App {
 
     fn event_loop(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
         while self.alive {
-            self.fps.tick();
+            if let Some(fps) = &mut self.fps {
+                fps.tick();
+            }
 
             if let Err(e) = terminal.draw(|frame| self.render_frame(frame)) {
                 log_error!("terminal draw failed: {e}");
@@ -70,7 +72,11 @@ impl App {
                         self.alive = false;
                     }
                     KeyCode::Char('f') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        self.fps.visible = !self.fps.visible;
+                        if self.fps.is_some() {
+                            self.fps = None;
+                        } else {
+                            self.fps = Some(Fps::new());
+                        }
                     }
                     KeyCode::Char('t') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                         self.selected = 0;
@@ -111,13 +117,9 @@ impl App {
         ])
         .render(left, frame.buffer_mut());
 
-        if self.fps.visible {
+        if let Some(fps) = &mut self.fps {
             Line::from(
-                Span::from(format!(
-                    "{:.0} fps  {} frames",
-                    self.fps.per_second, self.fps.per_lifetime
-                ))
-                .fg(Color::DarkGray),
+                Span::from(format!("{:.0} fps  {} frames", fps.per_second(), fps.per_lifetime())).fg(Color::DarkGray),
             )
             .alignment(Alignment::Right)
             .render(right, frame.buffer_mut());

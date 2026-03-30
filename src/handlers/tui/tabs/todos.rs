@@ -106,6 +106,10 @@ impl Tab for Todos {
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
                         }
+                        InputAreaAction::Escape => {
+                            self.input_widget = None;
+                            self.ui_mode = UiMode::Normal;
+                        }
                         InputAreaAction::None => {}
                     }
                 }
@@ -115,6 +119,10 @@ impl Tab for Todos {
                     match input_widget.handle(key) {
                         InputAreaAction::Confirm(text) => {
                             self.items[self.selected].text = text;
+                            self.input_widget = None;
+                            self.ui_mode = UiMode::Normal;
+                        }
+                        InputAreaAction::Escape => {
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
                         }
