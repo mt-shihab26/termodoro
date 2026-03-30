@@ -105,7 +105,9 @@ impl Widget for &InputWidget {
         .areas(area);
 
         if self.repeat.is_some() {
-            Paragraph::new(Repeat::icon()).fg(COLOR).bold().centered().render(icon_area, buf);
+            let v_offset = icon_area.height / 2;
+            let centered = Rect { y: icon_area.y + v_offset, height: 1, ..icon_area };
+            Paragraph::new(Repeat::icon()).fg(COLOR).bold().centered().render(centered, buf);
         }
 
         Widget::render(&self.textarea, text_area, buf);
