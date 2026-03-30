@@ -99,9 +99,12 @@ impl Widget for &InputWidget {
             None => "no date".to_string(),
         };
 
-        let block = Block::bordered()
+        let mut block = Block::bordered()
             .title(Span::from(" ^d ").fg(Color::DarkGray).bold())
             .border_style(Style::default().fg(COLOR));
+        if let Some(ref repeat) = self.repeat {
+            block = block.title_bottom(Span::from(format!(" {} ", repeat.label())).fg(COLOR).bold());
+        }
         let inner = block.inner(date_area);
         block.render(date_area, buf);
 
