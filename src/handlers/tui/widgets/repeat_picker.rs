@@ -50,7 +50,7 @@ impl RepeatPicker {
     }
 }
 
-impl Widget for RepeatPicker {
+impl Widget for &RepeatPicker {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let [list_area, hint_area] = Layout::vertical([Constraint::Fill(1), Constraint::Length(3)]).areas(area);
 

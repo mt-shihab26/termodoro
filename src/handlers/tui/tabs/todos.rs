@@ -9,12 +9,14 @@ use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Widget};
 
 use crate::domains::todos::{Mode, TodosState};
 use crate::handlers::tui::widgets::calendar_popup::{CalendarAction, CalendarPopup};
+use crate::handlers::tui::widgets::input_area::InputArea;
 
 use super::Tab;
 
 pub struct Todos {
     state: TodosState,
     list: RefCell<ListState>,
+    input: InputArea,
     calendar: CalendarPopup,
 }
 
@@ -26,6 +28,7 @@ impl Todos {
         Self {
             state,
             list: RefCell::new(list_state),
+            input: InputArea::new(),
             calendar: CalendarPopup::new(None, None),
         }
     }
@@ -106,16 +109,11 @@ impl Tab for Todos {
         frame.render_widget(Paragraph::new(hint).centered().fg(Color::DarkGray), hint_area);
 
         if let Some(area) = input_area {
-            let block = Block::bordered()
-                .title(" New Todo ")
-                .border_style(Style::default().fg(self.color()));
-            let inner = block.inner(area);
-            frame.render_widget(block, area);
-            frame.render_widget(Paragraph::new(format!("{}_", self.state.input)).fg(Color::White), inner);
+            frame.render_widget(&self.input, area);
         }
 
         if self.state.mode == Mode::SelectingDate {
-            frame.render_widget(self.calendar.clone(), area);
+            frame.render_widget(&self.calendar, area);
         }
     }
 

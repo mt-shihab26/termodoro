@@ -17,7 +17,6 @@ pub enum CalendarAction {
     None,
 }
 
-#[derive(Clone)]
 pub struct CalendarPopup {
     date: Date,
     repeat: Option<Repeat>,
@@ -87,7 +86,7 @@ impl CalendarPopup {
     }
 }
 
-impl Widget for CalendarPopup {
+impl Widget for &CalendarPopup {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let popup = centered_rect(area, 24, 5 + 10 + 3 + 5);
 
@@ -103,7 +102,7 @@ impl Widget for CalendarPopup {
         let mut events = CalendarEventStore::today(Style::default().fg(Color::Yellow).bold());
         events.add(self.date, Style::default().bg(Color::Cyan).fg(Color::Black));
 
-        if let Some(repeat_picker) = self.repeat_picker {
+        if let Some(repeat_picker) = &self.repeat_picker {
             repeat_picker.render(inner, buf);
             return;
         }
