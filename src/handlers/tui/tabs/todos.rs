@@ -60,17 +60,12 @@ impl Tab for Todos {
 
         let (list_area, hint_area, input_area) = match self.state.mode {
             Mode::Normal | Mode::SelectingDate => {
-                let [list, hint] =
-                    Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).areas(area);
+                let [list, hint] = Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).areas(area);
                 (list, hint, None)
             }
             Mode::Adding => {
-                let [list, hint, input] = Layout::vertical([
-                    Constraint::Fill(1),
-                    Constraint::Length(1),
-                    Constraint::Length(3),
-                ])
-                .areas(area);
+                let [list, hint, input] =
+                    Layout::vertical([Constraint::Fill(1), Constraint::Length(1), Constraint::Length(3)]).areas(area);
                 (list, hint, Some(input))
             }
         };
@@ -116,10 +111,7 @@ impl Tab for Todos {
                 .border_style(Style::default().fg(self.color()));
             let inner = block.inner(area);
             frame.render_widget(block, area);
-            frame.render_widget(
-                Paragraph::new(format!("{}_", self.state.input)).fg(Color::White),
-                inner,
-            );
+            frame.render_widget(Paragraph::new(format!("{}_", self.state.input)).fg(Color::White), inner);
         }
 
         if self.state.mode == Mode::SelectingDate {
@@ -138,10 +130,8 @@ impl Tab for Todos {
                 KeyCode::Char('e') => {
                     if !self.state.items.is_empty() {
                         let idx = self.state.selected;
-                        self.calendar = CalendarPopup::for_existing(
-                            self.state.items[idx].due_date,
-                            self.state.items[idx].repeat,
-                        );
+                        self.calendar =
+                            CalendarPopup::for_existing(self.state.items[idx].due_date, self.state.items[idx].repeat);
                         self.state.start_edit_date();
                     }
                 }
@@ -163,7 +153,8 @@ impl Tab for Todos {
             },
             Mode::SelectingDate => match self.calendar.handle(key) {
                 CalendarAction::Confirm => {
-                    self.state.confirm_with(self.calendar.selected_date, self.calendar.selected_repeat);
+                    self.state
+                        .confirm_with(self.calendar.selected_date, self.calendar.selected_repeat);
                     self.calendar = CalendarPopup::for_today();
                 }
                 CalendarAction::Cancel => self.state.cancel_selecting_date(),

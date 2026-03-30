@@ -26,7 +26,7 @@ pub struct CalendarPopup {
 }
 
 impl CalendarPopup {
-    pub fn new(date: Date) -> Self {
+    fn new(date: Date) -> Self {
         Self {
             selected_date: date,
             selected_repeat: None,
@@ -42,6 +42,7 @@ impl CalendarPopup {
 
     pub fn for_existing(date: Option<Date>, repeat: Option<Repeat>) -> Self {
         let d = date.unwrap_or_else(today);
+
         Self {
             selected_date: d,
             selected_repeat: repeat,
