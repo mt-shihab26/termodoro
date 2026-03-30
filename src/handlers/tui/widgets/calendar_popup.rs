@@ -1,4 +1,5 @@
 use ratatui::buffer::Buffer;
+use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Style, Stylize};
 use ratatui::widgets::calendar::{CalendarEventStore, Monthly};
@@ -6,6 +7,40 @@ use ratatui::widgets::{Block, Clear, Paragraph, Widget};
 use time::Date;
 
 use super::repeat_picker::RepeatPicker;
+
+pub enum CalendarAction {
+    NavLeft,
+    NavRight,
+    NavUp,
+    NavDown,
+    PrevMonth,
+    NextMonth,
+    Today,
+    Yesterday,
+    Tomorrow,
+    OpenRepeat,
+    Confirm,
+    Cancel,
+    None,
+}
+
+pub fn handle(key: KeyEvent) -> CalendarAction {
+    match key.code {
+        KeyCode::Char('h') | KeyCode::Left => CalendarAction::NavLeft,
+        KeyCode::Char('l') | KeyCode::Right => CalendarAction::NavRight,
+        KeyCode::Char('j') | KeyCode::Down => CalendarAction::NavDown,
+        KeyCode::Char('k') | KeyCode::Up => CalendarAction::NavUp,
+        KeyCode::Char('H') => CalendarAction::PrevMonth,
+        KeyCode::Char('L') => CalendarAction::NextMonth,
+        KeyCode::Char('t') => CalendarAction::Today,
+        KeyCode::Char('y') => CalendarAction::Yesterday,
+        KeyCode::Char('n') => CalendarAction::Tomorrow,
+        KeyCode::Char('r') => CalendarAction::OpenRepeat,
+        KeyCode::Enter => CalendarAction::Confirm,
+        KeyCode::Esc => CalendarAction::Cancel,
+        _ => CalendarAction::None,
+    }
+}
 
 pub struct CalendarPopup {
     pub selected: Date,
@@ -57,7 +92,8 @@ impl Widget for CalendarPopup {
         }
 
         let [cal_area, nav_hint, action_hint] =
-            Layout::vertical([Constraint::Length(8), Constraint::Length(1), Constraint::Length(1)]).areas(inner);
+            Layout::vertical([Constraint::Length(8), Constraint::Length(1), Constraint::Length(1)])
+                .areas(inner);
 
         Monthly::new(self.view, events)
             .show_month_header(Style::default().bold())

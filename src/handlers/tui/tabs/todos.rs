@@ -8,7 +8,8 @@ use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Widget};
 
 use crate::domains::todos::{Mode, TodosState};
-use crate::handlers::tui::widgets::calendar_popup::CalendarPopup;
+use crate::handlers::tui::widgets::calendar_popup::{self, CalendarAction, CalendarPopup};
+use crate::handlers::tui::widgets::repeat_picker::{self, RepeatAction};
 
 use super::Tab;
 
@@ -150,27 +151,27 @@ impl Tab for Todos {
                 KeyCode::Char(c) => self.state.input.push(c),
                 _ => {}
             },
-            Mode::SelectingDate => match key.code {
-                KeyCode::Char('h') | KeyCode::Left => self.state.calendar_nav_left(),
-                KeyCode::Char('l') | KeyCode::Right => self.state.calendar_nav_right(),
-                KeyCode::Char('j') | KeyCode::Down => self.state.calendar_nav_down(),
-                KeyCode::Char('k') | KeyCode::Up => self.state.calendar_nav_up(),
-                KeyCode::Char('H') => self.state.calendar_prev_month(),
-                KeyCode::Char('L') => self.state.calendar_next_month(),
-                KeyCode::Char('t') => self.state.set_date_today(),
-                KeyCode::Char('y') => self.state.set_date_yesterday(),
-                KeyCode::Char('n') => self.state.set_date_tomorrow(),
-                KeyCode::Char('r') => self.state.open_repeat(),
-                KeyCode::Enter => self.state.confirm_date(),
-                KeyCode::Esc => self.state.cancel_selecting_date(),
-                _ => {}
+            Mode::SelectingDate => match calendar_popup::handle(key) {
+                CalendarAction::NavLeft => self.state.calendar_nav_left(),
+                CalendarAction::NavRight => self.state.calendar_nav_right(),
+                CalendarAction::NavUp => self.state.calendar_nav_up(),
+                CalendarAction::NavDown => self.state.calendar_nav_down(),
+                CalendarAction::PrevMonth => self.state.calendar_prev_month(),
+                CalendarAction::NextMonth => self.state.calendar_next_month(),
+                CalendarAction::Today => self.state.set_date_today(),
+                CalendarAction::Yesterday => self.state.set_date_yesterday(),
+                CalendarAction::Tomorrow => self.state.set_date_tomorrow(),
+                CalendarAction::OpenRepeat => self.state.open_repeat(),
+                CalendarAction::Confirm => self.state.confirm_date(),
+                CalendarAction::Cancel => self.state.cancel_selecting_date(),
+                CalendarAction::None => {}
             },
-            Mode::SelectingRepeat => match key.code {
-                KeyCode::Char('j') | KeyCode::Down => self.state.repeat_move_down(),
-                KeyCode::Char('k') | KeyCode::Up => self.state.repeat_move_up(),
-                KeyCode::Enter => self.state.confirm_repeat(),
-                KeyCode::Esc => self.state.cancel_repeat(),
-                _ => {}
+            Mode::SelectingRepeat => match repeat_picker::handle(key) {
+                RepeatAction::MoveUp => self.state.repeat_move_up(),
+                RepeatAction::MoveDown => self.state.repeat_move_down(),
+                RepeatAction::Confirm => self.state.confirm_repeat(),
+                RepeatAction::Back => self.state.cancel_repeat(),
+                RepeatAction::None => {}
             },
         }
         self.sync_list_state();

@@ -1,7 +1,26 @@
 use ratatui::buffer::Buffer;
+use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Style, Stylize};
 use ratatui::widgets::{List, ListItem, Paragraph, Widget};
+
+pub enum RepeatAction {
+    MoveUp,
+    MoveDown,
+    Confirm,
+    Back,
+    None,
+}
+
+pub fn handle(key: KeyEvent) -> RepeatAction {
+    match key.code {
+        KeyCode::Char('j') | KeyCode::Down => RepeatAction::MoveDown,
+        KeyCode::Char('k') | KeyCode::Up => RepeatAction::MoveUp,
+        KeyCode::Enter => RepeatAction::Confirm,
+        KeyCode::Esc => RepeatAction::Back,
+        _ => RepeatAction::None,
+    }
+}
 
 pub const OPTIONS: &[&str] = &[
     "None",
