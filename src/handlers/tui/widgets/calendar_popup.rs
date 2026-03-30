@@ -43,9 +43,13 @@ impl CalendarPopup {
 
 impl Widget for CalendarPopup {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        // Always show repeat options below the calendar.
-        // Height: 8 cal + 1 nav hint + 1 action hint + 1 sep + options + 1 repeat hint + 2 border
-        let popup_h = 8 + 1 + 1 + 1 + REPEAT_OPTIONS.len() as u16 + 1 + 2;
+        // Height: 8 calendar + 1 nav hint + action row + border(2)
+        // +repeat: + 1 separator + options + 1 hint
+        let popup_h = if self.repeat_cursor.is_some() {
+            8 + 1 + 1 + REPEAT_OPTIONS.len() as u16 + 1 + 2
+        } else {
+            8 + 1 + 1 + 2
+        };
 
         let popup = centered_rect(area, 28, popup_h);
         Clear.render(popup, buf);
@@ -56,72 +60,73 @@ impl Widget for CalendarPopup {
         let inner = block.inner(popup);
         block.render(popup, buf);
 
-        let [cal_area, nav_hint, action_hint, sep, repeat_area, repeat_hint] = Layout::vertical([
-            Constraint::Length(8),
-            Constraint::Length(1),
-            Constraint::Length(1),
-            Constraint::Length(1),
-            Constraint::Length(REPEAT_OPTIONS.len() as u16),
-            Constraint::Length(1),
-        ])
-        .areas(inner);
-
         let mut events = CalendarEventStore::today(Style::default().fg(Color::Yellow).bold());
         events.add(self.selected, Style::default().bg(Color::Cyan).fg(Color::Black));
 
-        Monthly::new(self.view, events)
-            .show_month_header(Style::default().bold())
-            .show_weekdays_header(Style::default().fg(Color::DarkGray))
-            .render(cal_area, buf);
+        if let Some(cursor) = self.repeat_cursor {
+            let [cal_area, nav_hint, sep, repeat_area, repeat_hint] = Layout::vertical([
+                Constraint::Length(8),
+                Constraint::Length(1),
+                Constraint::Length(1),
+                Constraint::Length(REPEAT_OPTIONS.len() as u16),
+                Constraint::Length(1),
+            ])
+            .areas(inner);
 
-        let repeat_focused = self.repeat_cursor.is_some();
+            Monthly::new(self.view, events)
+                .show_month_header(Style::default().bold())
+                .show_weekdays_header(Style::default().fg(Color::DarkGray))
+                .render(cal_area, buf);
 
-        Paragraph::new("[h/l]Day  [j/k]Week  [H/L]Month")
-            .centered()
-            .fg(if repeat_focused { Color::DarkGray } else { Color::Gray })
-            .render(nav_hint, buf);
+            Paragraph::new("[h/l]Day  [j/k]Week  [H/L]Month  [t/y/n]Today/Yest/Tom  [Enter]Confirm")
+                .centered()
+                .fg(Color::DarkGray)
+                .render(nav_hint, buf);
 
-        Paragraph::new(if repeat_focused {
-            "[Enter]Confirm date  [Esc]Cancel"
+            Paragraph::new("─── Repeat ───")
+                .centered()
+                .fg(Color::DarkGray)
+                .render(sep, buf);
+
+            let items: Vec<ListItem> = REPEAT_OPTIONS
+                .iter()
+                .enumerate()
+                .map(|(i, &opt)| {
+                    let active = i == cursor;
+                    let style = if active {
+                        Style::default().fg(Color::Cyan).bold()
+                    } else {
+                        Style::default().fg(Color::White)
+                    };
+                    ListItem::new(format!("{} {}", if active { ">" } else { " " }, opt)).style(style)
+                })
+                .collect();
+
+            List::new(items).render(repeat_area, buf);
+
+            Paragraph::new("[j/k]Navigate  [Enter]Confirm  [Esc]Back")
+                .centered()
+                .fg(Color::DarkGray)
+                .render(repeat_hint, buf);
         } else {
-            "[t]Today  [y]Yesterday  [n]Tomorrow  [Enter]Confirm  [Esc]Cancel"
-        })
-        .centered()
-        .fg(if repeat_focused { Color::DarkGray } else { Color::Gray })
-        .render(action_hint, buf);
+            let [cal_area, nav_hint, action_hint] =
+                Layout::vertical([Constraint::Length(8), Constraint::Length(1), Constraint::Length(1)]).areas(inner);
 
-        Paragraph::new("─── Repeat ───")
-            .centered()
-            .fg(if repeat_focused { Color::Cyan } else { Color::DarkGray })
-            .render(sep, buf);
+            Monthly::new(self.view, events)
+                .show_month_header(Style::default().bold())
+                .show_weekdays_header(Style::default().fg(Color::DarkGray))
+                .render(cal_area, buf);
 
-        let cursor = self.repeat_cursor.unwrap_or(usize::MAX); // no highlight when unfocused
-        let items: Vec<ListItem> = REPEAT_OPTIONS
-            .iter()
-            .enumerate()
-            .map(|(i, &opt)| {
-                let active = repeat_focused && i == cursor;
-                let style = if active {
-                    Style::default().fg(Color::Cyan).bold()
-                } else if repeat_focused {
-                    Style::default().fg(Color::White)
-                } else {
-                    Style::default().fg(Color::DarkGray)
-                };
-                ListItem::new(format!("{} {}", if active { ">" } else { " " }, opt)).style(style)
-            })
-            .collect();
+            Paragraph::new("[h/l]Day  [j/k]Week  [H/L]Month")
+                .centered()
+                .fg(Color::DarkGray)
+                .render(nav_hint, buf);
 
-        List::new(items).render(repeat_area, buf);
-
-        Paragraph::new(if repeat_focused {
-            "[j/k]Navigate  [Enter]Confirm  [Esc]Back"
-        } else {
-            "[r] Select repeat"
-        })
-        .centered()
-        .fg(if repeat_focused { Color::Gray } else { Color::DarkGray })
-        .render(repeat_hint, buf);
+            Paragraph::new("[t]Today  [y]Yesterday  [n]Tomorrow  [Enter]Confirm  [r]Repeat  [Esc]Cancel")
+                .centered()
+                .fg(Color::DarkGray)
+                .render(action_hint, buf);
+        }
     }
 }
 
