@@ -18,7 +18,7 @@ pub enum CalendarAction {
 
 #[derive(Copy, Clone)]
 pub struct CalendarPopup {
-    pub selected_date: Date,
+    pub selected_date: Option<Date>,
     pub selected_repeat: Option<Repeat>,
     view_date: Date,
     is_repeat_open: bool,
@@ -26,27 +26,21 @@ pub struct CalendarPopup {
 }
 
 impl CalendarPopup {
-    fn new(date: Date) -> Self {
+    pub fn for_today() -> Self {
         Self {
-            selected_date: date,
+            selected_date: None,
             selected_repeat: None,
-            view_date: date,
+            view_date: today(),
             is_repeat_open: false,
             repeat_cursor: 0,
         }
     }
 
-    pub fn for_today() -> Self {
-        Self::new(today())
-    }
-
     pub fn for_existing(date: Option<Date>, repeat: Option<Repeat>) -> Self {
-        let d = date.unwrap_or_else(today);
-
         Self {
-            selected_date: d,
+            selected_date: date,
             selected_repeat: repeat,
-            view_date: d,
+            view_date: date.unwrap_or_else(today),
             is_repeat_open: false,
             repeat_cursor: repeat_to_cursor(repeat),
         }
@@ -60,30 +54,34 @@ impl CalendarPopup {
         }
     }
 
+    fn nav_base(&self) -> Date {
+        self.selected_date.unwrap_or(self.view_date)
+    }
+
     fn handle_calendar(&mut self, key: KeyEvent) -> CalendarAction {
         match key.code {
             KeyCode::Char('h') | KeyCode::Left => {
-                if let Some(d) = self.selected_date.previous_day() {
+                if let Some(d) = self.nav_base().previous_day() {
                     self.nav(d);
                 }
             }
             KeyCode::Char('l') | KeyCode::Right => {
-                if let Some(d) = self.selected_date.next_day() {
+                if let Some(d) = self.nav_base().next_day() {
                     self.nav(d);
                 }
             }
             KeyCode::Char('k') | KeyCode::Up => {
-                if let Some(d) = self.selected_date.checked_sub(Duration::weeks(1)) {
+                if let Some(d) = self.nav_base().checked_sub(Duration::weeks(1)) {
                     self.nav(d);
                 }
             }
             KeyCode::Char('j') | KeyCode::Down => {
-                if let Some(d) = self.selected_date.checked_add(Duration::weeks(1)) {
+                if let Some(d) = self.nav_base().checked_add(Duration::weeks(1)) {
                     self.nav(d);
                 }
             }
-            KeyCode::Char('H') => self.nav(shift_month(self.selected_date, -1)),
-            KeyCode::Char('L') => self.nav(shift_month(self.selected_date, 1)),
+            KeyCode::Char('H') => self.nav(shift_month(self.nav_base(), -1)),
+            KeyCode::Char('L') => self.nav(shift_month(self.nav_base(), 1)),
             KeyCode::Char('t') => self.nav(today()),
             KeyCode::Char('y') => {
                 if let Some(d) = today().previous_day() {
@@ -126,7 +124,7 @@ impl CalendarPopup {
     }
 
     fn nav(&mut self, date: Date) {
-        self.selected_date = date;
+        self.selected_date = Some(date);
         self.view_date = date;
     }
 }
@@ -149,7 +147,9 @@ impl Widget for CalendarPopup {
         block.render(popup, buf);
 
         let mut events = CalendarEventStore::today(Style::default().fg(Color::Yellow).bold());
-        events.add(self.selected_date, Style::default().bg(Color::Cyan).fg(Color::Black));
+        if let Some(d) = self.selected_date {
+            events.add(d, Style::default().bg(Color::Cyan).fg(Color::Black));
+        }
 
         if self.is_repeat_open {
             RepeatPicker::new(self.repeat_cursor).render(inner, buf);
