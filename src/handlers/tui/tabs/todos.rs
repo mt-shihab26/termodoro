@@ -8,7 +8,7 @@ use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Widget};
 
 use crate::domains::todos::todo::Todo;
-use crate::handlers::tui::widgets::input_area::{InputArea, InputAreaAction};
+use crate::handlers::tui::widgets::input_widget::{InputArea, InputAreaAction};
 
 use super::Tab;
 
@@ -22,8 +22,8 @@ pub struct Todos {
     items: Vec<Todo>,
     ui_mode: UiMode,
     selected: usize,
-    input_area: InputArea,
     list_state: RefCell<ListState>,
+    input_widget: Option<InputArea>,
 }
 
 impl Todos {
@@ -32,8 +32,8 @@ impl Todos {
             items: Todo::fakes(),
             ui_mode: UiMode::Normal,
             selected: 0,
-            input_area: InputArea::new(None),
             list_state: RefCell::new(ListState::default()),
+            input_widget: None,
         }
     }
 
@@ -113,7 +113,9 @@ impl Tab for Todos {
         frame.render_widget(Paragraph::new(hint).centered().fg(Color::DarkGray), hint_area);
 
         if let Some(area) = input_area {
-            frame.render_widget(&self.input_area, area);
+            if let Some(input_area_widget) = &self.input_widget {
+                frame.render_widget(input_area_widget, area);
+            }
         }
     }
 
@@ -145,31 +147,39 @@ impl Tab for Todos {
                 }
                 KeyCode::Char('a') => {
                     self.ui_mode = UiMode::Adding;
-                    self.input_area = InputArea::new(None)
+                    self.input_widget = Some(InputArea::new(None))
                 }
                 KeyCode::Char('e') => {
                     if !self.items.is_empty() {
                         self.ui_mode = UiMode::Editing;
                         let todo = &self.items[self.selected];
-                        self.input_area = InputArea::new(Some(&todo.text))
+                        self.input_widget = Some(InputArea::new(Some(&todo.text)))
                     }
                 }
                 _ => {}
             },
-            UiMode::Adding => match self.input_area.handle(key) {
-                InputAreaAction::Confirm(text) => {
-                    self.items.push(Todo::new(&text));
-                    self.input_area = InputArea::new(None)
+            UiMode::Adding => {
+                if let Some(input_widget) = &self.input_widget {
+                    match input_widget.handle(key) {
+                        InputAreaAction::Confirm(text) => {
+                            self.items.push(Todo::new(&text));
+                            self.input_widget = None;
+                        }
+                        InputAreaAction::None => {}
+                    }
                 }
-                InputAreaAction::None => {}
-            },
-            UiMode::Editing => match self.input_area.handle(key) {
-                InputAreaAction::Confirm(text) => {
-                    self.items[self.selected].text = text;
-                    self.input_area = InputArea::new(None)
+            }
+            UiMode::Editing => {
+                if let Some(input_widget) = &self.input_widget {
+                    match input_widget.handle(key) {
+                        InputAreaAction::Confirm(text) => {
+                            self.items[self.selected].text = text;
+                            self.input_widget = None;
+                        }
+                        InputAreaAction::None => {}
+                    }
                 }
-                InputAreaAction::None => {}
-            },
+            }
         }
 
         self.sync_list_state();
