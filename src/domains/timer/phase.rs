@@ -2,6 +2,8 @@ use ratatui::style::Color;
 
 use super::config::Config;
 
+pub const COLOR: Color = Color::Red;
+
 #[derive(Clone, PartialEq)]
 pub enum Phase {
     Work,
@@ -20,7 +22,7 @@ impl Phase {
 
     pub fn color(&self) -> Color {
         match self {
-            Phase::Work => Color::Red,
+            Phase::Work => COLOR,
             Phase::Break => Color::Green,
             Phase::LongBreak => Color::Cyan,
         }

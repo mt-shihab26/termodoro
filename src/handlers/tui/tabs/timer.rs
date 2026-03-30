@@ -10,7 +10,7 @@ use ratatui::style::{Color, Style, Stylize};
 use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_big_text::{BigText, PixelSize};
 
-use crate::domains::timer::phase::Phase;
+use crate::domains::timer::phase::COLOR;
 use crate::domains::timer::state::TimerState;
 use crate::event::Event;
 use crate::workers::timer;
@@ -45,7 +45,7 @@ impl Tab for Timer {
     }
 
     fn color(&self) -> Color {
-        Phase::Work.color()
+        COLOR
     }
 
     fn render(&self, frame: &mut Frame, area: Rect) {
