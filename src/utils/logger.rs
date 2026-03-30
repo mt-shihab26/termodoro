@@ -75,15 +75,15 @@ pub fn write(level: &str, msg: &str) {
 
 #[macro_export]
 macro_rules! log_error {
-    ($($arg:tt)*) => { $crate::logger::write("ERROR", &format!($($arg)*)) };
+    ($($arg:tt)*) => { $crate::utils::logger::write("ERROR", &format!($($arg)*)) };
 }
 
 #[macro_export]
 macro_rules! log_warn {
-    ($($arg:tt)*) => { $crate::logger::write("WARN", &format!($($arg)*)) };
+    ($($arg:tt)*) => { $crate::utils::logger::write("WARN", &format!($($arg)*)) };
 }
 
 #[macro_export]
 macro_rules! log_info {
-    ($($arg:tt)*) => { $crate::logger::write("INFO", &format!($($arg)*)) };
+    ($($arg:tt)*) => { $crate::utils::logger::write("INFO", &format!($($arg)*)) };
 }

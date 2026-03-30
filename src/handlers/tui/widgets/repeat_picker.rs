@@ -25,10 +25,6 @@ impl RepeatPicker {
         Self { cursor }
     }
 
-    pub const fn height() -> u16 {
-        Repeat::ALL.len() as u16 + 1 + 1
-    }
-
     pub fn handle(&mut self, key: KeyEvent) -> RepeatAction {
         let max = Repeat::ALL.len();
         match key.code {
