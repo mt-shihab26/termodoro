@@ -213,9 +213,8 @@ impl Tab for Todos {
         };
 
         let tab_titles: Vec<&str> = Page::ALL.iter().map(|p| p.label()).collect();
-        let tabs_width: u16 = Page::ALL.iter().map(|p| p.label().len() as u16).sum::<u16>()
-            + (Page::ALL.len() as u16 - 1) * 3  // " | " dividers
-            + 1; // padding
+        let tabs_width: u16 = Page::ALL.iter().map(|p| p.label().len() as u16 + 2).sum::<u16>() // +2 per tab for ratatui padding
+            + (Page::ALL.len() as u16 - 1) * 3; // " | " dividers
         let [_, center_area, _] =
             Layout::horizontal([Constraint::Fill(1), Constraint::Length(tabs_width), Constraint::Fill(1)])
                 .areas(tabs_area);
