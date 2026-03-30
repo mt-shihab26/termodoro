@@ -53,6 +53,7 @@ impl Widget for &InputArea {
 
         block.render(area, buf);
 
-        Paragraph::new(self.text.clone()).fg(Color::White).render(inner, buf);
+        let display = format!("{}█", self.text);
+        Paragraph::new(display).fg(Color::White).render(inner, buf);
     }
 }
