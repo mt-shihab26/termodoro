@@ -113,7 +113,9 @@ impl App {
 
         Line::from(vec![
             Span::from("^q").fg(Color::DarkGray).bold(),
-            Span::from(" quit").fg(Color::DarkGray),
+            Span::from(" quit  ").fg(Color::DarkGray),
+            Span::from("^f").fg(Color::DarkGray).bold(),
+            Span::from(" fps").fg(Color::DarkGray),
         ])
         .render(left, frame.buffer_mut());
 
