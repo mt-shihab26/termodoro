@@ -26,10 +26,12 @@ pub struct CalendarPopup {
 
 impl CalendarPopup {
     pub fn for_today() -> Self {
+        let td = today();
+
         Self {
-            selected_date: None,
+            selected_date: Some(td),
             selected_repeat: None,
-            view_date: today(),
+            view_date: td,
             repeat_cursor: None,
         }
     }
