@@ -12,7 +12,7 @@ use crate::handlers::tui::widgets::input_widget::{InputArea, InputAreaAction};
 
 use super::Tab;
 
-pub const COLOR: Color = Color::Cyan;
+pub const COLOR: Color = Color::Green;
 
 pub enum UiMode {
     Normal,
