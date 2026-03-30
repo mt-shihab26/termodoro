@@ -48,6 +48,29 @@ impl Tab for Timer {
         COLOR
     }
 
+    fn handle(&mut self, key: KeyEvent) -> Result<()> {
+        let mut s = self.state.lock().map_err(|e| {
+            let err = Error::new(ErrorKind::Other, e.to_string());
+            log_error!("timer state mutex poisoned in handle: {err}");
+            err
+        })?;
+
+        match key.code {
+            KeyCode::Char(' ') => {
+                s.running = !s.running;
+            }
+            KeyCode::Char('r') => {
+                s.millis = s.phase.duration(&s.config);
+                s.running = false;
+            }
+            KeyCode::Char('n') => {
+                s.advance();
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+
     fn render(&self, frame: &mut Frame, area: Rect) {
         self.tick_render_count();
 
@@ -119,34 +142,11 @@ impl Tab for Timer {
             .fg(if s.running { Color::Green } else { Color::DarkGray })
             .render(status_row, buf);
 
-        Paragraph::new("[Space] Toggle   [R] Reset   [N] Skip")
+        Paragraph::new("[Space] Toggle   [r] Reset   [n] Skip")
             .centered()
             .fg(Color::DarkGray)
             .render(hint_row, buf);
 
         drop(s);
-    }
-
-    fn handle(&mut self, key: KeyEvent) -> Result<()> {
-        let mut s = self.state.lock().map_err(|e| {
-            let err = Error::new(ErrorKind::Other, e.to_string());
-            log_error!("timer state mutex poisoned in handle: {err}");
-            err
-        })?;
-
-        match key.code {
-            KeyCode::Char(' ') => {
-                s.running = !s.running;
-            }
-            KeyCode::Char('r') => {
-                s.millis = s.phase.duration(&s.config);
-                s.running = false;
-            }
-            KeyCode::Char('n') => {
-                s.advance();
-            }
-            _ => {}
-        }
-        Ok(())
     }
 }

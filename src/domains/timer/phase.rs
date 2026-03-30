@@ -4,7 +4,6 @@ use super::config::Config;
 
 pub const COLOR: Color = Color::Red;
 
-#[derive(Clone, PartialEq)]
 pub enum Phase {
     Work,
     Break,
