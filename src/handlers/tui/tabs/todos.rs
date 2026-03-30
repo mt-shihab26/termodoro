@@ -152,7 +152,7 @@ impl Tab for Todos {
             },
             Mode::SelectingDate => match self.calendar.handle(key) {
                 CalendarAction::Confirm => {
-                    let repeat = cursor_to_repeat(self.calendar.repeat);
+                    let repeat = cursor_to_repeat(self.calendar.is_repeat_open);
                     self.state.confirm_with(self.calendar.selected_date, repeat);
                     self.calendar = CalendarPopup::for_today();
                 }

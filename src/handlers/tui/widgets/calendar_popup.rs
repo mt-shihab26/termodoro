@@ -6,6 +6,8 @@ use ratatui::widgets::calendar::{CalendarEventStore, Monthly};
 use ratatui::widgets::{Block, Clear, Paragraph, Widget};
 use time::{Date, Duration, Month, OffsetDateTime};
 
+use crate::domains::todos::Repeat;
+
 use super::repeat_picker::{self, RepeatPicker};
 
 pub enum CalendarAction {
@@ -17,16 +19,17 @@ pub enum CalendarAction {
 #[derive(Copy, Clone)]
 pub struct CalendarPopup {
     pub selected_date: Date,
-    pub repeat: Option<usize>,
-    view: Date,
+    pub selected_repeat: Repeat
+    view_date: Date,
+    is_repeat_open: bool,
 }
 
 impl CalendarPopup {
     pub fn new(date: Date) -> Self {
         Self {
             selected_date: date,
-            view: date,
-            repeat: None,
+            view_date: date,
+            is_repeat_open: None,
         }
     }
 
@@ -39,7 +42,7 @@ impl CalendarPopup {
     }
 
     pub fn handle(&mut self, key: KeyEvent) -> CalendarAction {
-        if self.repeat.is_some() {
+        if self.is_repeat_open.is_some() {
             self.handle_repeat(key)
         } else {
             self.handle_calendar(key)
@@ -82,7 +85,7 @@ impl CalendarPopup {
                 }
             }
             KeyCode::Char('r') => {
-                self.repeat = Some(0);
+                self.is_repeat_open = Some(0);
             }
             KeyCode::Enter => return CalendarAction::Confirm,
             KeyCode::Esc => return CalendarAction::Cancel,
@@ -92,7 +95,7 @@ impl CalendarPopup {
     }
 
     fn handle_repeat(&mut self, key: KeyEvent) -> CalendarAction {
-        let cursor = self.repeat.as_mut().unwrap();
+        let cursor = self.is_repeat_open.as_mut().unwrap();
         match key.code {
             KeyCode::Char('j') | KeyCode::Down => {
                 *cursor = (*cursor + 1).min(repeat_picker::OPTIONS.len() - 1);
@@ -102,7 +105,7 @@ impl CalendarPopup {
             }
             KeyCode::Enter => return CalendarAction::Confirm,
             KeyCode::Esc => {
-                self.repeat = None;
+                self.is_repeat_open = None;
             }
             _ => {}
         }
@@ -111,13 +114,13 @@ impl CalendarPopup {
 
     fn set(&mut self, date: Date) {
         self.selected_date = date;
-        self.view = date;
+        self.view_date = date;
     }
 }
 
 impl Widget for CalendarPopup {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let popup_h = if self.repeat.is_some() {
+        let popup_h = if self.is_repeat_open.is_some() {
             8 + 1 + 1 + 1 + RepeatPicker::height() + 2
         } else {
             8 + 1 + 1 + 2
@@ -135,7 +138,7 @@ impl Widget for CalendarPopup {
         let mut events = CalendarEventStore::today(Style::default().fg(Color::Yellow).bold());
         events.add(self.selected_date, Style::default().bg(Color::Cyan).fg(Color::Black));
 
-        if let Some(cursor) = self.repeat {
+        if let Some(cursor) = self.is_repeat_open {
             RepeatPicker::new(cursor).render(inner, buf);
             return;
         }
@@ -143,7 +146,7 @@ impl Widget for CalendarPopup {
         let [cal_area, nav_hint, action_hint] =
             Layout::vertical([Constraint::Length(8), Constraint::Length(1), Constraint::Length(1)]).areas(inner);
 
-        Monthly::new(self.view, events)
+        Monthly::new(self.view_date, events)
             .show_month_header(Style::default().bold())
             .show_weekdays_header(Style::default().fg(Color::DarkGray))
             .render(cal_area, buf);
