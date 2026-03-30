@@ -96,8 +96,17 @@ impl Widget for &InputWidget {
             .map(|r| (r.label().len() as u16 + 4).max(14))
             .unwrap_or(14);
 
-        let [text_area, date_area] =
-            Layout::horizontal([Constraint::Fill(1), Constraint::Length(date_area_width)]).areas(area);
+        let icon_width = if self.repeat.is_some() { 2 } else { 0 };
+        let [icon_area, text_area, date_area] = Layout::horizontal([
+            Constraint::Length(icon_width),
+            Constraint::Fill(1),
+            Constraint::Length(date_area_width),
+        ])
+        .areas(area);
+
+        if self.repeat.is_some() {
+            Paragraph::new(Repeat::icon()).fg(COLOR).bold().centered().render(icon_area, buf);
+        }
 
         Widget::render(&self.textarea, text_area, buf);
 
