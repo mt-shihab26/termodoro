@@ -7,6 +7,7 @@ pub struct Todo {
     pub done: bool,
     pub due_date: Option<Date>,
     pub repeat: Option<Repeat>,
+    pub completions: Vec<Date>,
 }
 
 impl Todo {
@@ -16,6 +17,27 @@ impl Todo {
             done: false,
             due_date,
             repeat,
+            completions: vec![],
+        }
+    }
+
+    pub fn toggle(&mut self) {
+        if self.repeat.is_some() {
+            self.advance_repeat();
+        } else {
+            if !self.done {
+                if let Some(date) = self.due_date {
+                    self.completions.push(date);
+                }
+            }
+            self.done = !self.done;
+        }
+    }
+
+    fn advance_repeat(&mut self) {
+        if let (Some(repeat), Some(date)) = (self.repeat, self.due_date) {
+            self.completions.push(date);
+            self.due_date = Some(repeat.next_date(date));
         }
     }
 
@@ -25,7 +47,7 @@ impl Todo {
         let today = OffsetDateTime::now_utc().date();
         let day = time::Duration::days(1);
 
-        vec![
+        let mut todos = vec![
             // -5 days
             Todo::new("Submit quarterly report".to_string(), Some(today - day * 5), None),
             // -4 days
@@ -73,6 +95,16 @@ impl Todo {
                 Some(today + day * 5),
                 Some(super::repeat::Repeat::YearlyOnDay),
             ),
-        ]
+        ];
+
+        // seed some fake history
+        todos[0].completions = vec![today - day * 12, today - day * 5];
+        todos[0].done = true;
+        todos[1].completions = vec![today - day * 11, today - day * 4];
+        todos[2].completions = vec![today - day * 10, today - day * 3];
+        todos[3].completions = vec![today - day * 9];
+        todos[4].completions = vec![today - day * 8];
+
+        todos
     }
 }

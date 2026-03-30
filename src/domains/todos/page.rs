@@ -3,16 +3,18 @@ pub enum Page {
     Due,
     Today,
     Future,
+    History,
 }
 
 impl Page {
-    pub const ALL: &'static [Page] = &[Page::Due, Page::Today, Page::Future];
+    pub const ALL: &'static [Page] = &[Page::Due, Page::Today, Page::Future, Page::History];
 
     pub fn label(&self) -> &str {
         match self {
             Page::Due => "Due [1]",
             Page::Today => "Today [2]",
             Page::Future => "Future [3]",
+            Page::History => "History [4]",
         }
     }
 
@@ -21,6 +23,7 @@ impl Page {
             Page::Due => '1',
             Page::Today => '2',
             Page::Future => '3',
+            Page::History => '4',
         }
     }
 

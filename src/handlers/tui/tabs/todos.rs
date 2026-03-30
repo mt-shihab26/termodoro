@@ -45,6 +45,7 @@ impl Todos {
 
     fn filtered_indices(&self) -> Vec<usize> {
         let today = OffsetDateTime::now_utc().date();
+
         self.items
             .iter()
             .enumerate()
@@ -52,6 +53,7 @@ impl Todos {
                 Page::Due => todo.due_date.map_or(false, |d| d < today),
                 Page::Today => todo.due_date.map_or(false, |d| d == today),
                 Page::Future => todo.due_date.map_or(false, |d| d > today),
+                Page::History => !todo.completions.is_empty(),
             })
             .map(|(i, _)| i)
             .collect()
@@ -98,9 +100,11 @@ impl Tab for Todos {
                     self.selected = 0;
                 }
                 KeyCode::Char(' ') | KeyCode::Enter => {
-                    let indices = self.filtered_indices();
-                    if let Some(&real) = indices.get(self.selected) {
-                        self.items[real].done = !self.items[real].done;
+                    if !matches!(self.page, Page::History) {
+                        let indices = self.filtered_indices();
+                        if let Some(&real) = indices.get(self.selected) {
+                            self.items[real].toggle();
+                        }
                     }
                 }
                 KeyCode::Char('j') | KeyCode::Down => {
@@ -113,22 +117,28 @@ impl Tab for Todos {
                     self.selected = self.selected.saturating_sub(1);
                 }
                 KeyCode::Char('d') => {
-                    let indices = self.filtered_indices();
-                    if let Some(&real) = indices.get(self.selected) {
-                        self.items.remove(real);
-                        self.clamp_selected();
+                    if !matches!(self.page, Page::History) {
+                        let indices = self.filtered_indices();
+                        if let Some(&real) = indices.get(self.selected) {
+                            self.items.remove(real);
+                            self.clamp_selected();
+                        }
                     }
                 }
                 KeyCode::Char('a') => {
-                    self.ui_mode = UiMode::Adding;
-                    self.input_widget = Some(InputWidget::new(None, None, None));
+                    if !matches!(self.page, Page::History) {
+                        self.ui_mode = UiMode::Adding;
+                        self.input_widget = Some(InputWidget::new(None, None, None));
+                    }
                 }
                 KeyCode::Char('e') => {
-                    let indices = self.filtered_indices();
-                    if let Some(&real) = indices.get(self.selected) {
-                        self.ui_mode = UiMode::Editing;
-                        let todo = &self.items[real];
-                        self.input_widget = Some(InputWidget::new(Some(&todo.text), todo.due_date, todo.repeat));
+                    if !matches!(self.page, Page::History) {
+                        let indices = self.filtered_indices();
+                        if let Some(&real) = indices.get(self.selected) {
+                            self.ui_mode = UiMode::Editing;
+                            let todo = &self.items[real];
+                            self.input_widget = Some(InputWidget::new(Some(&todo.text), todo.due_date, todo.repeat));
+                        }
                     }
                 }
                 KeyCode::Char(c) => {
@@ -213,8 +223,8 @@ impl Tab for Todos {
         };
 
         let tab_titles: Vec<&str> = Page::ALL.iter().map(|p| p.label()).collect();
-        let tabs_width: u16 = Page::ALL.iter().map(|p| p.label().len() as u16 + 2).sum::<u16>() // +2 per tab for ratatui padding
-            + (Page::ALL.len() as u16 - 1) * 3; // " | " dividers
+        let tabs_width: u16 =
+            Page::ALL.iter().map(|p| p.label().len() as u16 + 2).sum::<u16>() + (Page::ALL.len() as u16 - 1) * 3;
         let [_, center_area, _] =
             Layout::horizontal([Constraint::Fill(1), Constraint::Length(tabs_width), Constraint::Fill(1)])
                 .areas(tabs_area);
@@ -226,25 +236,37 @@ impl Tab for Todos {
         frame.render_widget(tabs_widget, center_area);
 
         let indices = self.filtered_indices();
-        let labels: Vec<String> = indices
-            .iter()
-            .map(|&i| {
-                let todo = &self.items[i];
-                let check = if todo.done { "[x]" } else { "[ ]" };
-                let mut label = format!(" {} {}", check, todo.text);
-                if let Some(date) = todo.due_date {
-                    label.push_str(&format!("  [{}]", date));
-                }
-                if let Some(ref repeat) = todo.repeat {
-                    label.push_str(&format!("  [{}]", repeat.label()));
-                }
-                label
-            })
-            .collect();
 
-        let max_width = labels.iter().map(|l| l.len() as u16).max().unwrap_or(0) + 2; // +2 for highlight symbol
+        let labels: Vec<String> = if matches!(self.page, Page::History) {
+            indices
+                .iter()
+                .flat_map(|&i| {
+                    let todo = &self.items[i];
+                    todo.completions
+                        .iter()
+                        .map(move |date| format!(" [✓] {}  [{}]", todo.text, date))
+                })
+                .collect()
+        } else {
+            indices
+                .iter()
+                .map(|&i| {
+                    let todo = &self.items[i];
+                    let check = if todo.done { "[x]" } else { "[ ]" };
+                    let mut label = format!(" {} {}", check, todo.text);
+                    if let Some(date) = todo.due_date {
+                        label.push_str(&format!("  [{}]", date));
+                    }
+                    if let Some(ref repeat) = todo.repeat {
+                        label.push_str(&format!("  [{}]", repeat.label()));
+                    }
+                    label
+                })
+                .collect()
+        };
+
+        let max_width = labels.iter().map(|l| l.len() as u16).max().unwrap_or(0) + 2;
         let list_width = max_width.min(list_area.width);
-
         let h_offset = list_area.width.saturating_sub(list_width) / 2;
 
         let top_padding = 1;
@@ -255,19 +277,28 @@ impl Tab for Todos {
             height: list_area.height.saturating_sub(top_padding),
         };
 
-        let items: Vec<ListItem> = labels
-            .into_iter()
-            .zip(indices.iter())
-            .map(|(label, &i)| {
-                let todo = &self.items[i];
-                let style = if todo.done {
-                    Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)
-                } else {
-                    Style::default().fg(Color::White)
-                };
-                ListItem::new(label).style(style)
-            })
-            .collect();
+        let items: Vec<ListItem> = if matches!(self.page, Page::History) {
+            labels
+                .into_iter()
+                .map(|label| {
+                    ListItem::new(label).style(Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT))
+                })
+                .collect()
+        } else {
+            labels
+                .into_iter()
+                .zip(indices.iter())
+                .map(|(label, &i)| {
+                    let todo = &self.items[i];
+                    let style = if todo.done {
+                        Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)
+                    } else {
+                        Style::default().fg(Color::White)
+                    };
+                    ListItem::new(label).style(style)
+                })
+                .collect()
+        };
 
         let list = List::new(items)
             .highlight_style(Style::default().fg(self.color()).bold())
@@ -276,7 +307,10 @@ impl Tab for Todos {
         frame.render_stateful_widget(list, centered_list_area, &mut self.list_state.borrow_mut());
 
         let hint = match self.ui_mode {
-            UiMode::Normal => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [d]Delete",
+            UiMode::Normal => match self.page {
+                Page::History => "[[/]]Page  [j/k]Navigate",
+                _ => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [d]Delete",
+            },
             UiMode::Adding | UiMode::Editing => "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char",
         };
 
