@@ -87,13 +87,13 @@ impl Tab for Todos {
                 }
                 KeyCode::Char('a') => {
                     self.ui_mode = UiMode::Adding;
-                    self.input_widget = Some(InputArea::new(None))
+                    self.input_widget = Some(InputArea::new(None, None, None))
                 }
                 KeyCode::Char('e') => {
                     if !self.items.is_empty() {
                         self.ui_mode = UiMode::Editing;
                         let todo = &self.items[self.selected];
-                        self.input_widget = Some(InputArea::new(Some(&todo.text)))
+                        self.input_widget = Some(InputArea::new(Some(&todo.text), todo.due_date, todo.repeat))
                     }
                 }
                 _ => {}
@@ -101,8 +101,8 @@ impl Tab for Todos {
             UiMode::Adding => {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
-                        InputAreaAction::Confirm(text) => {
-                            self.items.push(Todo::new(&text));
+                        InputAreaAction::Confirm { text, date, repeat } => {
+                            self.items.push(Todo { text, done: false, due_date: date, repeat });
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
                         }
@@ -117,8 +117,10 @@ impl Tab for Todos {
             UiMode::Editing => {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
-                        InputAreaAction::Confirm(text) => {
+                        InputAreaAction::Confirm { text, date, repeat } => {
                             self.items[self.selected].text = text;
+                            self.items[self.selected].due_date = date;
+                            self.items[self.selected].repeat = repeat;
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
                         }
@@ -192,9 +194,10 @@ impl Tab for Todos {
 
         frame.render_widget(Paragraph::new(hint).centered().fg(Color::DarkGray), hint_area);
 
-        if let Some(area) = input_area {
+        if let Some(input_rect) = input_area {
             if let Some(input_area_widget) = &self.input_widget {
-                frame.render_widget(input_area_widget, area);
+                frame.render_widget(input_area_widget, input_rect);
+                input_area_widget.render_calendar(frame, area);
             }
         }
     }
