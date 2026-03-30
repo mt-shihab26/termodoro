@@ -2,7 +2,7 @@ use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Style, Stylize};
-use ratatui::widgets::{List, ListItem, Paragraph, Widget};
+use ratatui::widgets::{Block, Borders, List, ListItem, Paragraph, Widget};
 
 use crate::domains::todos::Repeat;
 
@@ -52,7 +52,7 @@ impl RepeatPicker {
 
 impl Widget for RepeatPicker {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let [list_area, hint_area] = Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).areas(area);
+        let [list_area, hint_area] = Layout::vertical([Constraint::Fill(1), Constraint::Length(3)]).areas(area);
 
         let options = std::iter::once("None").chain(Repeat::ALL.iter().map(|r| r.label()));
 
@@ -75,6 +75,11 @@ impl Widget for RepeatPicker {
             "[j/k]Navigate\n\
             [Enter]Confirm\n\
             [Esc]Back",
+        )
+        .block(
+            Block::default()
+                .borders(Borders::TOP)
+                .border_style(Style::default().fg(Color::Cyan)),
         )
         .fg(Color::DarkGray)
         .render(hint_area, buf);

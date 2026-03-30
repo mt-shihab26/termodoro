@@ -121,7 +121,7 @@ impl CalendarPopup {
 
 impl Widget for CalendarPopup {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let popup = centered_rect(area, 24, 4 + 10 + 1 + 5);
+        let popup = centered_rect(area, 24, 4 + 10 + 3 + 5);
 
         Clear.render(popup, buf);
 
@@ -143,7 +143,7 @@ impl Widget for CalendarPopup {
         let [action_hint, cal_area, action_hint2, nav_hint] = Layout::vertical([
             Constraint::Length(4),
             Constraint::Length(10),
-            Constraint::Length(1),
+            Constraint::Length(3),
             Constraint::Length(5),
         ])
         .areas(inner);
@@ -153,7 +153,11 @@ impl Widget for CalendarPopup {
             [y]Yesterday\n\
             [n]Tomorrow",
         )
-        .block(Block::default().borders(Borders::BOTTOM))
+        .block(
+            Block::default()
+                .borders(Borders::BOTTOM)
+                .border_style(Style::default().fg(Color::Cyan)),
+        )
         .render(action_hint, buf);
 
         Monthly::new(self.view_date, events)
@@ -162,7 +166,11 @@ impl Widget for CalendarPopup {
             .render(cal_area, buf);
 
         Paragraph::new("[r]Repeat\n")
-            .block(Block::default().borders(Borders::TOP).fg(Color::Cyan))
+            .block(
+                Block::default()
+                    .borders(Borders::TOP | Borders::BOTTOM)
+                    .border_style(Style::default().fg(Color::Cyan)),
+            )
             .render(action_hint2, buf);
 
         Paragraph::new(
