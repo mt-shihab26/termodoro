@@ -105,8 +105,7 @@ impl Tab for Todos {
                         if let Some(&real) = indices.get(self.selected) {
                             self.items[real].toggle();
                             if self.items[real].done {
-                                if let (Some(repeat), Some(date)) =
-                                    (self.items[real].repeat, self.items[real].due_date)
+                                if let (Some(repeat), Some(date)) = (self.items[real].repeat, self.items[real].due_date)
                                 {
                                     let next = Todo::new(
                                         self.items[real].text.clone(),
@@ -293,7 +292,9 @@ impl Tab for Todos {
         let items: Vec<ListItem> = if matches!(self.page, Page::History) {
             labels
                 .into_iter()
-                .map(|label| ListItem::new(label).style(Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)))
+                .map(|label| {
+                    ListItem::new(label).style(Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT))
+                })
                 .collect()
         } else {
             labels
