@@ -12,14 +12,13 @@ use crate::utils::date::{shift_month, today};
 use super::repeat_picker::{RepeatAction, RepeatPicker};
 
 pub enum CalendarAction {
-    Confirm { date: Date, repeat: Option<Repeat> },
+    Confirm { date: Option<Date>, repeat: Option<Repeat> },
     Cancel,
     None,
 }
 
 #[derive(Copy, Clone)]
 pub struct CalendarPopup {
-    selected_date: Date,
     selected_repeat: Option<Repeat>,
     view_date: Date,
     repeat_picker: Option<RepeatPicker>,
@@ -30,7 +29,6 @@ impl CalendarPopup {
         let d = date.unwrap_or_else(today);
 
         Self {
-            selected_date: d,
             selected_repeat: repeat,
             view_date: d,
             repeat_picker: None,
@@ -44,8 +42,8 @@ impl CalendarPopup {
                     self.repeat_picker = None;
                     self.selected_repeat = repeat;
                     return CalendarAction::Confirm {
-                        date: self.selected_date,
-                        repeat: self.selected_repeat,
+                        date: Some(self.view_date),
+                        repeat: repeat,
                     };
                 }
                 RepeatAction::Cancel => {
@@ -57,52 +55,21 @@ impl CalendarPopup {
         }
 
         match key.code {
-            KeyCode::Char('h') | KeyCode::Left => {
-                if let Some(d) = self.selected_date.previous_day() {
-                    self.navigate(d);
-                }
-            }
-            KeyCode::Char('l') | KeyCode::Right => {
-                if let Some(d) = self.selected_date.next_day() {
-                    self.navigate(d);
-                }
-            }
-            KeyCode::Char('k') | KeyCode::Up => {
-                if let Some(d) = self.selected_date.checked_sub(Duration::weeks(1)) {
-                    self.navigate(d);
-                }
-            }
-            KeyCode::Char('j') | KeyCode::Down => {
-                if let Some(d) = self.selected_date.checked_add(Duration::weeks(1)) {
-                    self.navigate(d);
-                }
-            }
-            KeyCode::Char('H') => {
-                self.navigate(shift_month(self.selected_date, -1));
-            }
-            KeyCode::Char('L') => {
-                self.navigate(shift_month(self.selected_date, 1));
-            }
-            KeyCode::Char('t') => {
-                self.navigate(today());
-            }
-            KeyCode::Char('y') => {
-                if let Some(d) = today().previous_day() {
-                    self.navigate(d);
-                }
-            }
-            KeyCode::Char('n') => {
-                if let Some(d) = today().next_day() {
-                    self.navigate(d);
-                }
-            }
-            KeyCode::Char('r') => {
-                self.repeat_picker = Some(RepeatPicker::new(self.selected_repeat));
-            }
+            KeyCode::Char('x') => self.navigate(None),
+            KeyCode::Char('t') => self.navigate(Some(today())),
+            KeyCode::Char('y') => self.navigate(today().previous_day()),
+            KeyCode::Char('n') => self.navigate(today().next_day()),
+            KeyCode::Char('h') | KeyCode::Left => self.navigate(self.view_date.previous_day()),
+            KeyCode::Char('l') | KeyCode::Right => self.navigate(self.view_date.next_day()),
+            KeyCode::Char('k') | KeyCode::Up => self.navigate(self.view_date.checked_sub(Duration::weeks(1))),
+            KeyCode::Char('j') | KeyCode::Down => self.navigate(self.view_date.checked_add(Duration::weeks(1))),
+            KeyCode::Char('H') => self.navigate(Some(shift_month(self.view_date, -1))),
+            KeyCode::Char('L') => self.navigate(Some(shift_month(self.view_date, 1))),
+            KeyCode::Char('r') => self.repeat_picker = Some(RepeatPicker::new(self.selected_repeat)),
             KeyCode::Enter => {
                 return CalendarAction::Confirm {
-                    date: self.selected_date,
-                    repeat: self.selected_repeat,
+                    date: Some(self.view_date),
+                    repeat: None,
                 };
             }
             KeyCode::Esc => {
@@ -113,15 +80,16 @@ impl CalendarPopup {
         CalendarAction::None
     }
 
-    fn navigate(&mut self, date: Date) {
-        self.selected_date = date;
-        self.view_date = date;
+    fn navigate(&mut self, date: Option<Date>) {
+        if let Some(date) = date {
+            self.view_date = date;
+        }
     }
 }
 
 impl Widget for CalendarPopup {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let popup = centered_rect(area, 24, 4 + 10 + 3 + 5);
+        let popup = centered_rect(area, 24, 5 + 10 + 3 + 5);
 
         Clear.render(popup, buf);
 
@@ -133,7 +101,7 @@ impl Widget for CalendarPopup {
         block.render(popup, buf);
 
         let mut events = CalendarEventStore::today(Style::default().fg(Color::Yellow).bold());
-        events.add(self.selected_date, Style::default().bg(Color::Cyan).fg(Color::Black));
+        events.add(self.view_date, Style::default().bg(Color::Cyan).fg(Color::Black));
 
         if let Some(repeat_picker) = self.repeat_picker {
             repeat_picker.render(inner, buf);
@@ -141,7 +109,7 @@ impl Widget for CalendarPopup {
         }
 
         let [action_hint, cal_area, action_hint2, nav_hint] = Layout::vertical([
-            Constraint::Length(4),
+            Constraint::Length(5),
             Constraint::Length(10),
             Constraint::Length(3),
             Constraint::Length(5),
@@ -149,7 +117,8 @@ impl Widget for CalendarPopup {
         .areas(inner);
 
         Paragraph::new(
-            "[t]Today\n\
+            "[x]No Date\n\
+            [t]Today\n\
             [y]Yesterday\n\
             [n]Tomorrow",
         )
