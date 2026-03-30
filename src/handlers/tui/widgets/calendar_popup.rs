@@ -17,7 +17,7 @@ pub enum CalendarAction {
     None,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct CalendarPopup {
     date: Date,
     repeat: Option<Repeat>,

@@ -115,7 +115,7 @@ impl Tab for Todos {
         }
 
         if self.state.mode == Mode::SelectingDate {
-            frame.render_widget(self.calendar, area);
+            frame.render_widget(self.calendar.clone(), area);
         }
     }
 

@@ -1,8 +1,8 @@
-use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
-use ratatui::layout::{Constraint, Layout, Rect};
+use ratatui::layout::{Constraint, Layout};
+use ratatui::prelude::{Buffer, Rect, Widget};
 use ratatui::style::{Color, Style, Stylize};
-use ratatui::widgets::{Block, Borders, List, ListItem, Paragraph, Widget};
+use ratatui::widgets::{Block, Borders, List, ListItem, Paragraph};
 
 use crate::domains::todos::Repeat;
 
@@ -12,7 +12,7 @@ pub enum RepeatAction {
     None,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct RepeatPicker {
     cursor: usize,
 }
