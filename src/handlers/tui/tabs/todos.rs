@@ -164,6 +164,7 @@ impl Tab for Todos {
                         InputAreaAction::Confirm(text) => {
                             self.items.push(Todo::new(&text));
                             self.input_widget = None;
+                            self.ui_mode = UiMode::Normal;
                         }
                         InputAreaAction::None => {}
                     }
@@ -175,6 +176,7 @@ impl Tab for Todos {
                         InputAreaAction::Confirm(text) => {
                             self.items[self.selected].text = text;
                             self.input_widget = None;
+                            self.ui_mode = UiMode::Normal;
                         }
                         InputAreaAction::None => {}
                     }
