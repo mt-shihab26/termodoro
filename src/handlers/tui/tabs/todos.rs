@@ -226,7 +226,7 @@ impl Tab for Todos {
         frame.render_widget(tabs_widget, center_area);
 
         let indices = self.filtered_indices();
-        let items: Vec<ListItem> = indices
+        let labels: Vec<String> = indices
             .iter()
             .map(|&i| {
                 let todo = &self.items[i];
@@ -238,6 +238,27 @@ impl Tab for Todos {
                 if let Some(ref repeat) = todo.repeat {
                     label.push_str(&format!("  [{}]", repeat.label()));
                 }
+                label
+            })
+            .collect();
+
+        let max_width = labels.iter().map(|l| l.len() as u16).max().unwrap_or(0) + 2; // +2 for highlight symbol
+        let list_width = max_width.min(list_area.width);
+
+        let h_offset = list_area.width.saturating_sub(list_width) / 2;
+
+        let centered_list_area = Rect {
+            x: list_area.x + h_offset,
+            y: list_area.y,
+            width: list_width,
+            height: list_area.height,
+        };
+
+        let items: Vec<ListItem> = labels
+            .into_iter()
+            .zip(indices.iter())
+            .map(|(label, &i)| {
+                let todo = &self.items[i];
                 let style = if todo.done {
                     Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)
                 } else {
@@ -251,7 +272,7 @@ impl Tab for Todos {
             .highlight_style(Style::default().fg(self.color()).bold())
             .highlight_symbol(">");
 
-        frame.render_stateful_widget(list, list_area, &mut self.list_state.borrow_mut());
+        frame.render_stateful_widget(list, centered_list_area, &mut self.list_state.borrow_mut());
 
         let hint = match self.ui_mode {
             UiMode::Normal => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [d]Delete",
