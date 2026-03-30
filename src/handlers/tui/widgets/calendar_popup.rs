@@ -121,7 +121,7 @@ impl CalendarPopup {
 
 impl Widget for CalendarPopup {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let popup = centered_rect(area, 24, 8 + 1 + 1);
+        let popup = centered_rect(area, 24, 4 + 10 + 6);
 
         Clear.render(popup, buf);
 
@@ -140,23 +140,21 @@ impl Widget for CalendarPopup {
             return;
         }
 
-        let [cal_area, nav_hint, action_hint] =
-            Layout::vertical([Constraint::Length(8), Constraint::Length(3), Constraint::Length(1)]).areas(inner);
+        let [action_hint, cal_area, nav_hint] =
+            Layout::vertical([Constraint::Length(4), Constraint::Length(8), Constraint::Length(6)]).areas(inner);
+
+        Paragraph::new("[t]Today\n[y]Yesterday\n[n]Tomorrow\n")
+            .fg(Color::DarkGray)
+            .render(action_hint, buf);
 
         Monthly::new(self.view_date, events)
             .show_month_header(Style::default().bold())
             .show_weekdays_header(Style::default().fg(Color::DarkGray))
             .render(cal_area, buf);
 
-        Paragraph::new("[h/l]Day  [j/k]Week  [H/L]Month")
-            .centered()
+        Paragraph::new("[h/l]Day\n[j/k]Week\n[H/L]Month\n[Enter]Confirm\n[r]Repeat\n[Esc]Cancel")
             .fg(Color::DarkGray)
             .render(nav_hint, buf);
-
-        Paragraph::new("[t]Today  [y]Yesterday  [n]Tomorrow  [Enter]Confirm  [r]Repeat  [Esc]Cancel")
-            .centered()
-            .fg(Color::DarkGray)
-            .render(action_hint, buf);
     }
 }
 
