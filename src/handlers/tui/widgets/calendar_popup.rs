@@ -153,7 +153,7 @@ impl Widget for CalendarPopup {
             [y]Yesterday\n\
             [n]Tomorrow",
         )
-        .block(Block::default().borders(Borders::BOTTOM).fg(Color::Cyan))
+        .block(Block::default().borders(Borders::BOTTOM))
         .render(action_hint, buf);
 
         Monthly::new(self.view_date, events)

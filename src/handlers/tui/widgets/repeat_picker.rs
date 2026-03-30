@@ -22,6 +22,7 @@ impl RepeatPicker {
         let cursor = selected
             .and_then(|r| Repeat::ALL.iter().position(|v| v == &r).map(|i| i + 1))
             .unwrap_or(0);
+
         Self { cursor }
     }
 
@@ -70,9 +71,12 @@ impl Widget for RepeatPicker {
 
         List::new(items).render(list_area, buf);
 
-        Paragraph::new("[j/k]Navigate  [Enter]Confirm  [Esc]Back")
-            .centered()
-            .fg(Color::DarkGray)
-            .render(hint_area, buf);
+        Paragraph::new(
+            "[j/k]Navigate\n\
+            [Enter]Confirm\n\
+            [Esc]Back",
+        )
+        .fg(Color::DarkGray)
+        .render(hint_area, buf);
     }
 }
