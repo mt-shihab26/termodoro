@@ -58,17 +58,12 @@ impl Tab for Todos {
 
         let (list_area, hint_area, input_area) = match self.state.mode {
             Mode::Normal | Mode::SelectingDate | Mode::SelectingRepeat => {
-                let [list, hint] =
-                    Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).areas(area);
+                let [list, hint] = Layout::vertical([Constraint::Fill(1), Constraint::Length(1)]).areas(area);
                 (list, hint, None)
             }
             Mode::Adding => {
-                let [list, hint, input] = Layout::vertical([
-                    Constraint::Fill(1),
-                    Constraint::Length(1),
-                    Constraint::Length(3),
-                ])
-                .areas(area);
+                let [list, hint, input] =
+                    Layout::vertical([Constraint::Fill(1), Constraint::Length(1), Constraint::Length(3)]).areas(area);
                 (list, hint, Some(input))
             }
         };
@@ -114,10 +109,7 @@ impl Tab for Todos {
                 .border_style(Style::default().fg(self.color()));
             let inner = block.inner(area);
             frame.render_widget(block, area);
-            frame.render_widget(
-                Paragraph::new(format!("{}_", self.state.input)).fg(Color::White),
-                inner,
-            );
+            frame.render_widget(Paragraph::new(format!("{}_", self.state.input)).fg(Color::White), inner);
         }
 
         // Calendar popup overlay (also shows repeat section when in SelectingRepeat)
