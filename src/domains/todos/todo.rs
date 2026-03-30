@@ -22,22 +22,17 @@ impl Todo {
     }
 
     pub fn toggle(&mut self) {
-        if self.repeat.is_some() {
-            self.advance_repeat();
+        if self.done {
+            self.done = false;
         } else {
-            if !self.done {
-                if let Some(date) = self.due_date {
-                    self.completions.push(date);
-                }
+            if let Some(date) = self.due_date {
+                self.completions.push(date);
             }
-            self.done = !self.done;
-        }
-    }
-
-    fn advance_repeat(&mut self) {
-        if let (Some(repeat), Some(date)) = (self.repeat, self.due_date) {
-            self.completions.push(date);
-            self.due_date = Some(repeat.next_date(date));
+            if let (Some(repeat), Some(date)) = (self.repeat, self.due_date) {
+                self.due_date = Some(repeat.next_date(date));
+            } else {
+                self.done = true;
+            }
         }
     }
 
@@ -67,6 +62,7 @@ impl Todo {
             // -1 day (yesterday)
             Todo::new("Call the dentist".to_string(), Some(today - day), None),
             // today
+            Todo::new("Nothing".to_string(), Some(today), None),
             Todo::new(
                 "Pay utility bills".to_string(),
                 Some(today),
