@@ -26,7 +26,7 @@ impl Todos {
         Self {
             state,
             list: RefCell::new(list_state),
-            calendar: CalendarPopup::for_today(),
+            calendar: CalendarPopup::new(None, None),
         }
     }
 
@@ -131,7 +131,7 @@ impl Tab for Todos {
                     if !self.state.items.is_empty() {
                         let idx = self.state.selected;
                         self.calendar =
-                            CalendarPopup::for_existing(self.state.items[idx].due_date, self.state.items[idx].repeat);
+                            CalendarPopup::new(self.state.items[idx].due_date, self.state.items[idx].repeat);
                         self.state.start_edit_date();
                     }
                 }
@@ -140,7 +140,7 @@ impl Tab for Todos {
             Mode::Adding => match key.code {
                 KeyCode::Enter => {
                     if !self.state.input.trim().is_empty() {
-                        self.calendar = CalendarPopup::for_today();
+                        self.calendar = CalendarPopup::new(None, None);
                     }
                     self.state.confirm_add();
                 }
@@ -155,7 +155,7 @@ impl Tab for Todos {
                 CalendarAction::Confirm => {
                     self.state
                         .confirm_with(self.calendar.selected_date, self.calendar.selected_repeat);
-                    self.calendar = CalendarPopup::for_today();
+                    self.calendar = CalendarPopup::new(None, None);
                 }
                 CalendarAction::Cancel => self.state.cancel_selecting_date(),
                 CalendarAction::None => {}
