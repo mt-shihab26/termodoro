@@ -247,11 +247,12 @@ impl Tab for Todos {
 
         let h_offset = list_area.width.saturating_sub(list_width) / 2;
 
+        let top_padding = 1;
         let centered_list_area = Rect {
             x: list_area.x + h_offset,
-            y: list_area.y,
+            y: list_area.y + top_padding,
             width: list_width,
-            height: list_area.height,
+            height: list_area.height.saturating_sub(top_padding),
         };
 
         let items: Vec<ListItem> = labels
