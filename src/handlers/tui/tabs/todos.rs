@@ -159,7 +159,7 @@ impl Tab for Todos {
                 _ => {}
             },
             UiMode::Adding => {
-                if let Some(input_widget) = &self.input_widget {
+                if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
                         InputAreaAction::Confirm(text) => {
                             self.items.push(Todo::new(&text));
@@ -170,7 +170,7 @@ impl Tab for Todos {
                 }
             }
             UiMode::Editing => {
-                if let Some(input_widget) = &self.input_widget {
+                if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
                         InputAreaAction::Confirm(text) => {
                             self.items[self.selected].text = text;
