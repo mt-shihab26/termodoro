@@ -1,6 +1,6 @@
 use std::io::Result;
 
-use crate::handlers::tui::App;
+use crate::handlers::tui::app::App;
 
 use super::Command;
 

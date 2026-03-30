@@ -1,6 +1,3 @@
 mod config;
-mod phase;
-mod state;
-
-pub use phase::Phase;
-pub use state::TimerState;
+pub mod phase;
+pub mod state;
