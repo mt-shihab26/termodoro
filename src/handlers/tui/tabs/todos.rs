@@ -248,34 +248,19 @@ impl Tab for Todos {
 
         let indices = self.filtered_indices();
 
-        let labels: Vec<String> = if matches!(self.page, Page::History) {
-            indices
-                .iter()
-                .map(|&i| {
-                    let todo = &self.items[i];
-                    let repeat_icon = if todo.repeat.is_some() { "⟳ " } else { "  " };
-                    let mut label = format!(" [✓] {}{}", repeat_icon, todo.text);
-                    if let Some(date) = todo.due_date {
-                        label.push_str(&format!("  [{}]", date));
-                    }
-                    label
-                })
-                .collect()
-        } else {
-            indices
-                .iter()
-                .map(|&i| {
-                    let todo = &self.items[i];
-                    let check = if todo.done { "[x]" } else { "[ ]" };
-                    let repeat_icon = if todo.repeat.is_some() { "⟳ " } else { "  " };
-                    let mut label = format!(" {} {}{}", check, repeat_icon, todo.text);
-                    if let Some(date) = todo.due_date {
-                        label.push_str(&format!("  [{}]", date));
-                    }
-                    label
-                })
-                .collect()
-        };
+        let labels: Vec<String> = indices
+            .iter()
+            .map(|&i| {
+                let todo = &self.items[i];
+                let check = if todo.done { "[✓]" } else { "[ ]" };
+                let repeat_icon = if todo.repeat.is_some() { "⟳ " } else { "" };
+                let mut label = format!(" {} {}{}", check, repeat_icon, todo.text);
+                if let Some(date) = todo.due_date {
+                    label.push_str(&format!("  [{}]", date));
+                }
+                label
+            })
+            .collect();
 
         let max_width = labels.iter().map(|l| l.len() as u16).max().unwrap_or(0) + 2;
         let list_width = max_width.min(list_area.width);
