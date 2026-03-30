@@ -1,13 +1,18 @@
 use std::time::{Duration, Instant};
 
-pub struct Fps {
+use ratatui::prelude::{Buffer, Rect};
+use ratatui::style::{Color, Stylize};
+use ratatui::text::{Line, Span};
+use ratatui::{layout::Alignment, widgets::Widget};
+
+pub struct FpsWidget {
     per_second: f64,
     per_lifetime: u64,
     frame_count_per_second: u32,
     interval_start: Instant,
 }
 
-impl Fps {
+impl FpsWidget {
     pub fn new() -> Self {
         Self {
             per_second: 0.0,
@@ -15,14 +20,6 @@ impl Fps {
             frame_count_per_second: 0,
             interval_start: Instant::now() - Duration::from_secs(1),
         }
-    }
-
-    pub fn per_second(&self) -> f64 {
-        self.per_second
-    }
-
-    pub fn per_lifetime(&self) -> u64 {
-        self.per_lifetime
     }
 
     pub fn tick(&mut self) {
@@ -36,5 +33,13 @@ impl Fps {
             self.frame_count_per_second = 0;
             self.interval_start = Instant::now();
         }
+    }
+}
+
+impl Widget for &FpsWidget {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        Line::from(Span::from(format!("{:.0} fps  {} frames", self.per_second, self.per_lifetime)).fg(Color::DarkGray))
+            .alignment(Alignment::Right)
+            .render(area, buf);
     }
 }

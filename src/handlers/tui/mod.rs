@@ -1,4 +1,3 @@
-mod fps;
 mod tabs;
 mod widgets;
 

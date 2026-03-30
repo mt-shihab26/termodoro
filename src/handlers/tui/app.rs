@@ -2,7 +2,7 @@ use std::io::{Error, ErrorKind, Result};
 use std::sync::mpsc::{self, Receiver};
 
 use ratatui::crossterm::event::{KeyCode, KeyModifiers};
-use ratatui::layout::{Alignment, Constraint, Layout};
+use ratatui::layout::{Constraint, Layout};
 use ratatui::style::{Color, Style, Stylize};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Paragraph, Widget};
@@ -10,15 +10,15 @@ use ratatui::{DefaultTerminal, Frame, init, restore};
 
 use crate::{event::Event, log_error, workers::term};
 
-use super::tabs::{timer::Timer, todos::Todos};
-use super::{fps::Fps, tabs::Tab};
+use super::tabs::{Tab, timer::Timer, todos::Todos};
+use super::widgets::fps_widget::FpsWidget;
 
 pub struct App {
     alive: bool,
     selected: usize,
     tabs: Vec<Box<dyn Tab>>,
     events: Receiver<Event>,
-    fps: Option<Fps>,
+    fps_widget: Option<FpsWidget>,
 }
 
 impl App {
@@ -34,7 +34,7 @@ impl App {
             selected: 0,
             tabs,
             events,
-            fps: Some(Fps::new()),
+            fps_widget: Some(FpsWidget::new()),
         }
     }
 
@@ -50,7 +50,7 @@ impl App {
 
     fn event_loop(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
         while self.alive {
-            if let Some(fps) = &mut self.fps {
+            if let Some(fps) = &mut self.fps_widget {
                 fps.tick();
             }
 
@@ -72,10 +72,10 @@ impl App {
                         self.alive = false;
                     }
                     KeyCode::Char('f') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        if self.fps.is_some() {
-                            self.fps = None;
+                        if self.fps_widget.is_some() {
+                            self.fps_widget = None;
                         } else {
-                            self.fps = Some(Fps::new());
+                            self.fps_widget = Some(FpsWidget::new());
                         }
                     }
                     KeyCode::Char('t') if key.modifiers.contains(KeyModifiers::CONTROL) => {
@@ -117,12 +117,8 @@ impl App {
         ])
         .render(left, frame.buffer_mut());
 
-        if let Some(fps) = &mut self.fps {
-            Line::from(
-                Span::from(format!("{:.0} fps  {} frames", fps.per_second(), fps.per_lifetime())).fg(Color::DarkGray),
-            )
-            .alignment(Alignment::Right)
-            .render(right, frame.buffer_mut());
+        if let Some(fps_widget) = &mut self.fps_widget {
+            fps_widget.render(right, frame.buffer_mut());
         }
 
         let constraints = vec![Constraint::Fill(1); self.tabs.len()];
