@@ -140,8 +140,13 @@ impl Widget for CalendarPopup {
             return;
         }
 
-        let [action_hint, cal_area, nav_hint] =
-            Layout::vertical([Constraint::Length(4), Constraint::Length(10), Constraint::Length(6)]).areas(inner);
+        let [action_hint, cal_area, action_hint2, nav_hint] = Layout::vertical([
+            Constraint::Length(4),
+            Constraint::Length(10),
+            Constraint::Length(1),
+            Constraint::Length(6),
+        ])
+        .areas(inner);
 
         Paragraph::new("[t]Today\n[y]Yesterday\n[n]Tomorrow").render(action_hint, buf);
 
@@ -150,12 +155,13 @@ impl Widget for CalendarPopup {
             .show_weekdays_header(Style::default().fg(Color::DarkGray))
             .render(cal_area, buf);
 
+        Paragraph::new("[r]Repeat\n").render(action_hint2, buf);
+
         Paragraph::new(
             "[h/l]Day\n\
             [j/k]Week\n\
             [H/L]Month\n\
             [Enter]Confirm\n\
-            [r]Repeat\n\
             [Esc]Cancel",
         )
         .fg(Color::DarkGray)
