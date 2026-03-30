@@ -23,6 +23,10 @@ impl TodosState {
         }
     }
 
+    pub fn add(&mut self, text: String) {
+        self.items.push(Todo::new(&text));
+    }
+
     pub fn move_down(&mut self) {
         if !self.items.is_empty() {
             self.selected = (self.selected + 1).min(self.items.len() - 1);

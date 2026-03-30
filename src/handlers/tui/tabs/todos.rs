@@ -9,7 +9,7 @@ use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Widget};
 
 use crate::domains::todos::{Mode, TodosState};
 use crate::handlers::tui::widgets::calendar_popup::{CalendarAction, CalendarPopup};
-use crate::handlers::tui::widgets::input_area::InputArea;
+use crate::handlers::tui::widgets::input_area::{InputArea, InputAreaAction};
 
 use super::Tab;
 
@@ -135,20 +135,12 @@ impl Tab for Todos {
                 }
                 _ => {}
             },
-            Mode::Adding => match key.code {
-                KeyCode::Enter => {
-                    if !self.state.input.trim().is_empty() {
-                        self.calendar = CalendarPopup::new(None, None);
-                    }
-                    self.state.confirm_add();
-                }
-                KeyCode::Esc => self.state.cancel_add(),
-                KeyCode::Backspace => {
-                    self.state.input.pop();
-                }
-                KeyCode::Char(c) => self.state.input.push(c),
-                _ => {}
-            },
+            Mode::Adding => {
+                match self.input.handle(key) {
+                    InputAreaAction::Confirm(text) => self.state.add(text),
+                    InputAreaAction::None => {}
+                };
+            }
             Mode::SelectingDate => match self.calendar.handle(key) {
                 CalendarAction::Confirm { date, repeat } => {
                     self.state.confirm_with(date, repeat);
