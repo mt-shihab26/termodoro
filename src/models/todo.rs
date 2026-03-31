@@ -134,29 +134,6 @@ impl Todo {
         }
     }
 
-    // -----------------------------------------------
-
-    fn to_model(&self) -> ActiveModel {
-        let due_date = self.due_date.map(format_date);
-        let repeat = self.repeat.as_ref().map(|r| r.to_db_str().to_string());
-        match self.id {
-            Some(id) => ActiveModel {
-                id: Set(id),
-                text: Set(self.text.clone()),
-                done: Set(self.done),
-                due_date: Set(due_date),
-                repeat: Set(repeat),
-            },
-            None => ActiveModel {
-                text: Set(self.text.clone()),
-                done: Set(self.done),
-                due_date: Set(due_date),
-                repeat: Set(repeat),
-                ..Default::default()
-            },
-        }
-    }
-
     pub fn save(&mut self, db: &DatabaseConnection) -> bool {
         match self.id {
             Some(_) => self.update(db),
@@ -183,6 +160,27 @@ impl Todo {
                 log_error!("failed to update todo: {e}");
                 false
             }
+        }
+    }
+
+    fn to_model(&self) -> ActiveModel {
+        let due_date = self.due_date.map(format_date);
+        let repeat = self.repeat.as_ref().map(|r| r.to_db_str().to_string());
+        match self.id {
+            Some(id) => ActiveModel {
+                id: Set(id),
+                text: Set(self.text.clone()),
+                done: Set(self.done),
+                due_date: Set(due_date),
+                repeat: Set(repeat),
+            },
+            None => ActiveModel {
+                text: Set(self.text.clone()),
+                done: Set(self.done),
+                due_date: Set(due_date),
+                repeat: Set(repeat),
+                ..Default::default()
+            },
         }
     }
 }
