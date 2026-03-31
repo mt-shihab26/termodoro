@@ -4,8 +4,8 @@ use sea_orm::{ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, DatabaseC
 use sea_orm::{DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait};
 use time::Date;
 
-use crate::log_error;
 use crate::{kinds::repeat::Repeat, utils::db::rt};
+use crate::{log_error, log_warn};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "todos")]
@@ -127,7 +127,7 @@ impl Todo {
 
     pub fn delete(&self, db: &DatabaseConnection) -> bool {
         let Some(id) = self.id else {
-            log_error!("failed to delete todo: missing id");
+            log_warn!("todo has no id, skipping db delete");
             return false;
         };
 

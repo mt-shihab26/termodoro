@@ -10,7 +10,6 @@ use sea_orm::DatabaseConnection;
 use time::OffsetDateTime;
 
 use crate::kinds::{page::Page, repeat::Repeat};
-use crate::log_warn;
 use crate::models::todo::Todo;
 use crate::widgets::input::{InputAction, InputWidget};
 
@@ -124,13 +123,9 @@ impl Tab for Todos {
                 KeyCode::Char('d') => {
                     if !matches!(self.page, Page::History) {
                         let indices = self.filtered_indices();
-                        if let Some(&real) = indices.get(self.selected) {
-                            if self.items[real].id.is_none() {
-                                log_warn!("todo has no id, skipping db delete");
-                            } else {
-                                self.items[real].delete(&self.db);
-                            }
-                            self.items.remove(real);
+                        if let Some(&index) = indices.get(self.selected) {
+                            self.items[index].delete(&self.db);
+                            self.items.remove(index);
                             self.clamp_selected();
                         }
                     }
