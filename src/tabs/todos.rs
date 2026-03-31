@@ -115,17 +115,11 @@ impl Tab for Todos {
     }
 
     fn render(&self, frame: &mut Frame, area: Rect) {
-        let items = self.current_items();
         let buf = frame.buffer_mut();
 
         let block = Block::bordered().fg(self.color());
         let inner = block.inner(area);
         block.render(area, buf);
-
-        frame.render_widget(
-            TodosCacheStatusWidget::new(items.len(), items.get(self.selected).and_then(|todo| todo.id)),
-            area,
-        );
 
         let area = inner;
 
@@ -148,6 +142,12 @@ impl Tab for Todos {
         };
 
         self.set_visible_capacity(list_area);
+        let items = self.current_items();
+
+        frame.render_widget(
+            TodosCacheStatusWidget::new(items.len(), items.get(self.selected).and_then(|todo| todo.id)),
+            area,
+        );
 
         frame.render_widget(
             TodosTabsWidget {
