@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::io::Result;
 
 use ratatui::Frame;
@@ -26,6 +26,8 @@ pub struct Todos {
     page: Page,
     ui_mode: UiMode,
     selected: usize,
+    offset: usize,
+    page_size: Cell<usize>,
     list_state: RefCell<ListState>,
     cache: RefCell<Option<Vec<Todo>>>,
     input_widget: Option<InputWidget>,
@@ -134,6 +136,8 @@ impl Tab for Todos {
             }
         };
 
+        self.set_visible_capacity(list_area);
+
         frame.render_widget(
             TodosTabsWidget {
                 page: self.page,
@@ -182,6 +186,8 @@ impl Todos {
             page: Page::Today,
             ui_mode: UiMode::Normal,
             selected: 0,
+            offset: 0,
+            page_size: Cell::new(1),
             list_state: RefCell::new(ListState::default()),
             cache: RefCell::new(None),
             input_widget: None,
@@ -192,10 +198,21 @@ impl Todos {
         {
             let mut cache = self.cache.borrow_mut();
             if cache.is_none() {
-                *cache = Some(Todo::list(&self.db, self.page));
+                *cache = Some(Todo::list(&self.db, self.page, self.offset, self.page_size.get()));
             }
         }
         self.cache.borrow().as_deref().unwrap_or(&[]).to_vec()
+    }
+
+    fn set_visible_capacity(&self, list_area: Rect) {
+        let top_padding = 1usize;
+        let capacity = list_area.height.saturating_sub(top_padding as u16) as usize;
+        let capacity = capacity.max(1);
+
+        if self.page_size.get() != capacity {
+            self.page_size.set(capacity);
+            self.invalidate_cache();
+        }
     }
 
     fn invalidate_cache(&self) {
@@ -212,7 +229,13 @@ impl Todos {
     }
 
     fn clamp_selected(&mut self) {
-        let len = self.current_items().len();
+        let mut len = self.current_items().len();
+        if len == 0 && self.offset > 0 {
+            self.offset = self.offset.saturating_sub(self.page_size.get().max(1));
+            self.invalidate_cache();
+            len = self.current_items().len();
+        }
+
         if len == 0 {
             self.selected = 0;
         } else {
@@ -232,6 +255,7 @@ impl Todos {
 
     fn set_page(&mut self, page: Page) {
         self.page = page;
+        self.offset = 0;
         self.selected = 0;
         self.invalidate_cache();
     }
@@ -243,7 +267,21 @@ impl Todos {
             return;
         }
 
-        self.selected = self.selected.saturating_add_signed(delta).min(len - 1);
+        if delta > 0 {
+            if self.selected + 1 < len {
+                self.selected += 1;
+            } else if len == self.page_size.get().max(1) {
+                self.offset += 1;
+                self.invalidate_cache();
+            }
+        } else if delta < 0 {
+            if self.selected > 0 {
+                self.selected -= 1;
+            } else if self.offset > 0 {
+                self.offset -= 1;
+                self.invalidate_cache();
+            }
+        }
     }
 
     fn cancel_input(&mut self) {

@@ -1,6 +1,7 @@
 use std::io;
 
 use sea_orm::QueryOrder;
+use sea_orm::QuerySelect;
 use sea_orm::{ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, DatabaseConnection};
 use sea_orm::{ColumnTrait, Condition, QueryFilter};
 use sea_orm::{DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait};
@@ -47,7 +48,11 @@ impl Todo {
         }
     }
 
-    pub fn list(db: &DatabaseConnection, page: Page) -> Vec<Todo> {
+    pub fn list(db: &DatabaseConnection, page: Page, offset: usize, limit: usize) -> Vec<Todo> {
+        if limit == 0 {
+            return vec![];
+        }
+
         let today = format_date(today());
 
         let query = match page {
@@ -63,7 +68,7 @@ impl Todo {
                 .filter(
                     Condition::any()
                         .add(Column::DueDate.is_null())
-                        .add(Column::DueDate.gt(today)),
+                        .add(Column::DueDate.gte(today)),
                 )
                 .order_by_asc(Column::DueDate)
                 .order_by_asc(Column::Id),
@@ -71,12 +76,19 @@ impl Todo {
                 .filter(Column::Done.eq(true))
                 .order_by_desc(Column::DueDate)
                 .order_by_desc(Column::Id),
-        };
+        }
+        .offset(offset as u64)
+        .limit(limit as u64);
 
         match rt().block_on(async { query.all(db).await.map_err(io_err) }) {
             Ok(models) => models.into_iter().map(Todo::from).collect(),
             Err(e) => {
-                log_error!("failed to load todos for page {}: {e}", page.label());
+                log_error!(
+                    "failed to load todos for page {} (offset={}, limit={}): {e}",
+                    page.label(),
+                    offset,
+                    limit
+                );
                 vec![]
             }
         }
