@@ -12,6 +12,7 @@ use crate::kinds::ui_mode::UiMode;
 use crate::kinds::{page::Page, repeat::Repeat};
 use crate::models::todo::Todo;
 use crate::widgets::input::{InputAction, InputWidget};
+use crate::widgets::todos_cache_status::TodosCacheStatusWidget;
 use crate::widgets::todos_dated_list::TodosDatedListWidget;
 use crate::widgets::todos_hint::TodosHintWidget;
 use crate::widgets::todos_index::TodosIndexWidget;
@@ -111,10 +112,12 @@ impl Tab for Todos {
 
     fn render(&self, frame: &mut Frame, area: Rect) {
         let buf = frame.buffer_mut();
+        let status = self.cache_status();
 
         let block = Block::bordered().fg(self.color());
         let inner = block.inner(area);
         block.render(area, buf);
+        frame.render_widget(TodosCacheStatusWidget { status }, area);
 
         let area = inner;
 
@@ -217,6 +220,14 @@ impl Todos {
 
     fn invalidate_cache(&self) {
         *self.cache.borrow_mut() = None;
+    }
+
+    fn cache_status(&self) -> &'static str {
+        if self.cache.borrow().is_none() {
+            " refresh "
+        } else {
+            " cached "
+        }
     }
 
     fn refresh(&mut self) {

@@ -3,6 +3,7 @@ pub mod fps;
 pub mod input;
 pub mod repeat;
 pub mod todo_item;
+pub mod todos_cache_status;
 pub mod todos_dated_list;
 pub mod todos_hint;
 pub mod todos_index;
