@@ -10,16 +10,18 @@ Config file location: `~/.config/orivo/config.toml`
 # Orivo configuration
 
 
+# Database connection — Orivo uses Turso (libSQL/SQLite) for syncing todos across machines.
+[db]
+url   = "libsql://your-db-name.turso.io"   # libSQL URL from: turso db show orivo --url
+token = "your-auth-token"                  # auth token from: turso db tokens create orivo
 # Get your Turso credentials:
 #   turso auth login
 #   turso db create orivo
 #   turso db show orivo --url
 #   turso db tokens create orivo
-[db]
-url   = "libsql://your-db-name.turso.io"   # libSQL URL from: turso db show orivo --url
-token = "your-auth-token"                  # auth token from: turso db tokens create orivo
 
 
+# Pomodoro timer settings — controls session lengths and when long breaks are triggered.
 [timer]
 show_millis         = true   # show milliseconds in the timer display
 work_duration       = 25     # work session length in minutes
