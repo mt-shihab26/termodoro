@@ -1,7 +1,7 @@
 use std::env;
 use std::io::{Error, ErrorKind, Result};
 
-use orivo::cmd::{Cmd, help::Help, sync::Sync, tui::Tui, version::Version};
+use orivo::cmds::{Cmd, help::Help, sync::Sync, tui::Tui, version::Version};
 
 fn main() -> Result<()> {
     let cmds: Vec<(&str, Box<dyn Cmd>)> = vec![

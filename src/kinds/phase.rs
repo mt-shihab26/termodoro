@@ -1,6 +1,6 @@
 use ratatui::style::Color;
 
-use super::config::Config;
+use crate::domains::timer::config::Config;
 
 pub const COLOR: Color = Color::Red;
 

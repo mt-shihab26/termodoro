@@ -1,6 +1,6 @@
 use std::io::Result;
 
-use crate::cmd::Cmd;
+use crate::cmds::Cmd;
 
 pub struct Version;
 

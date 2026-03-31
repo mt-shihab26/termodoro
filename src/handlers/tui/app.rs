@@ -8,7 +8,7 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Paragraph, Widget};
 use ratatui::{DefaultTerminal, Frame, init, restore};
 
-use crate::{event::Event, log_error, workers::term};
+use crate::{kinds::event::Event, log_error, workers::term};
 
 use super::tabs::{Tab, timer::Timer, todos::Todos};
 use super::widgets::fps::FpsWidget;

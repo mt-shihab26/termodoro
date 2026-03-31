@@ -1,3 +1,2 @@
-mod config;
-pub mod phase;
+pub mod config;
 pub mod state;

@@ -1,6 +1,6 @@
 use time::Date;
 
-use super::repeat::Repeat;
+use crate::kinds::repeat::Repeat;
 
 pub struct Todo {
     pub text: String,

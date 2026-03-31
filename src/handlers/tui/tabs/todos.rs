@@ -8,10 +8,9 @@ use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Tabs, Widget};
 use time::OffsetDateTime;
 
-use crate::domains::todos::page::Page;
-use crate::domains::todos::repeat::Repeat;
 use crate::domains::todos::todo::Todo;
 use crate::handlers::tui::widgets::input::{InputAction, InputWidget};
+use crate::kinds::{page::Page, repeat::Repeat};
 
 use super::Tab;
 
@@ -254,7 +253,11 @@ impl Tab for Todos {
             .map(|&i| {
                 let todo = &self.items[i];
                 let check = if todo.done { "[✓]" } else { "[ ]" };
-                let repeat_icon = if todo.repeat.is_some() { &format!("{} ", Repeat::icon()) } else { "" };
+                let repeat_icon = if todo.repeat.is_some() {
+                    &format!("{} ", Repeat::icon())
+                } else {
+                    ""
+                };
                 let mut label = format!(" {} {}{}", check, repeat_icon, todo.text);
                 if let Some(date) = todo.due_date {
                     label.push_str(&format!("  [{}]", date));

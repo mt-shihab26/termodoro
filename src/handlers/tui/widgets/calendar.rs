@@ -6,8 +6,8 @@ use ratatui::widgets::calendar::{CalendarEventStore, Monthly};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph, Widget};
 use time::{Date, Duration};
 
-use crate::domains::todos::repeat::Repeat;
 use crate::handlers::tui::tabs::todos::COLOR;
+use crate::kinds::repeat::Repeat;
 use crate::utils::date::{shift_month, today};
 
 use super::repeat::{RepeatAction, RepeatWidget};

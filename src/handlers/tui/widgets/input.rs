@@ -8,9 +8,9 @@ use ratatui::widgets::{Block, Paragraph};
 use ratatui_textarea::TextArea;
 use time::Date;
 
-use crate::domains::todos::repeat::Repeat;
 use crate::handlers::tui::tabs::todos::COLOR;
 use crate::handlers::tui::widgets::calendar::{CalendarAction, CalendarWidget};
+use crate::kinds::repeat::Repeat;
 
 pub enum InputAction {
     Confirm {
@@ -106,8 +106,16 @@ impl Widget for &InputWidget {
 
         if self.repeat.is_some() {
             let v_offset = icon_area.height / 2;
-            let centered = Rect { y: icon_area.y + v_offset, height: 1, ..icon_area };
-            Paragraph::new(Repeat::icon()).fg(COLOR).bold().centered().render(centered, buf);
+            let centered = Rect {
+                y: icon_area.y + v_offset,
+                height: 1,
+                ..icon_area
+            };
+            Paragraph::new(Repeat::icon())
+                .fg(COLOR)
+                .bold()
+                .centered()
+                .render(centered, buf);
         }
 
         Widget::render(&self.textarea, text_area, buf);
@@ -126,9 +134,6 @@ impl Widget for &InputWidget {
         let inner = block.inner(date_area);
         block.render(date_area, buf);
 
-        Paragraph::new(date_str)
-            .fg(COLOR)
-            .centered()
-            .render(inner, buf);
+        Paragraph::new(date_str).fg(COLOR).centered().render(inner, buf);
     }
 }

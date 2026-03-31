@@ -1,5 +1,6 @@
+use crate::kinds::phase::Phase;
+
 use super::config::Config;
-use super::phase::Phase;
 
 pub struct TimerState {
     pub phase: Phase,

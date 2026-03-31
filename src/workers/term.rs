@@ -2,7 +2,7 @@ use std::{sync::mpsc::Sender, thread};
 
 use ratatui::crossterm::event::{self, Event as TerminalEvent, KeyEventKind};
 
-use crate::{event::Event, log_error, log_warn};
+use crate::{kinds::event::Event, log_error, log_warn};
 
 pub fn spawn(sender: Sender<Event>) {
     thread::spawn(move || {
