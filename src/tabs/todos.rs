@@ -108,7 +108,7 @@ impl Tab for Todos {
                 KeyCode::Char(' ') | KeyCode::Enter => {
                     if let Some(&index) = self.filtered_indices().get(self.selected) {
                         let item = &mut self.items[index];
-                        if let Some(next) = item.toggle_and_save(&self.db) {
+                        if let Some(next) = item.toggle(&self.db) {
                             self.items.push(next);
                         }
                     }

@@ -50,7 +50,7 @@ impl Todo {
         }
     }
 
-    pub fn toggle_and_save(&mut self, db: &DatabaseConnection) -> Option<Todo> {
+    pub fn toggle(&mut self, db: &DatabaseConnection) -> Option<Todo> {
         self.done = !self.done;
 
         if !self.update(db) {
