@@ -3,15 +3,15 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TimerConfig {
     #[serde(default)]
-    pub show_millis: bool,
+    show_millis: bool,
     #[serde(default)]
-    pub work_duration: u64,
+    work_duration: u16,
     #[serde(default)]
-    pub break_duration: u64,
+    break_duration: u16,
     #[serde(default)]
-    pub long_break_duration: u64,
+    long_break_duration: u16,
     #[serde(default)]
-    pub long_break_interval: u64,
+    long_break_interval: u16,
 }
 
 impl Default for TimerConfig {
@@ -23,5 +23,31 @@ impl Default for TimerConfig {
             long_break_duration: 15,
             long_break_interval: 4,
         }
+    }
+}
+
+impl TimerConfig {
+    pub fn show_millis(&self) -> bool {
+        self.show_millis
+    }
+
+    pub fn work_duration(&self) -> u64 {
+        self.work_duration as u64 * 60 * 1000
+    }
+
+    pub fn break_duration(&self) -> u64 {
+        self.break_duration as u64 * 60 * 1000
+    }
+
+    pub fn long_break_duration(&self) -> u64 {
+        self.long_break_duration as u64 * 60 * 1000
+    }
+
+    pub fn long_break_interval(&self) -> u16 {
+        self.long_break_interval
+    }
+
+    pub fn tick_interval(&self) -> u64 {
+        if self.show_millis { 10 } else { 1000 }
     }
 }
