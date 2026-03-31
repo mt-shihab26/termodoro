@@ -39,23 +39,27 @@ impl Tab for Todos {
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
         match self.ui_mode {
             UiMode::Normal => match key.code {
+                KeyCode::Char('1') => self.set_page(Page::Due),
+                KeyCode::Char('2') => self.set_page(Page::Today),
+                KeyCode::Char('3') => self.set_page(Page::Index),
+                KeyCode::Char('4') => self.set_page(Page::History),
                 KeyCode::Char(']') => {
                     self.set_page(self.page.next());
                 }
                 KeyCode::Char('[') => {
                     self.set_page(self.page.prev());
                 }
-                KeyCode::Char(' ') | KeyCode::Enter => {
-                    if let Some(mut todo) = self.selected_item() {
-                        todo.toggle(&self.db);
-                        self.refresh();
-                    }
-                }
                 KeyCode::Char('j') | KeyCode::Down => {
                     self.move_selection(1);
                 }
                 KeyCode::Char('k') | KeyCode::Up => {
                     self.move_selection(-1);
+                }
+                KeyCode::Char(' ') | KeyCode::Enter => {
+                    if let Some(mut todo) = self.selected_item() {
+                        todo.toggle(&self.db);
+                        self.refresh();
+                    }
                 }
                 KeyCode::Char('d') => {
                     if !matches!(self.page, Page::History) {
@@ -67,9 +71,21 @@ impl Tab for Todos {
                         }
                     }
                 }
-                KeyCode::Char('a') => self.start_adding(),
-                KeyCode::Char('e') => self.start_editing(),
-                KeyCode::Char(c) => self.select_page(c),
+                KeyCode::Char('a') => {
+                    if !matches!(self.page, Page::History) {
+                        self.ui_mode = UiMode::Adding;
+                        self.input_widget = Some(InputWidget::new(None, None, None));
+                    }
+                }
+                KeyCode::Char('e') => {
+                    if !matches!(self.page, Page::History) {
+                        if let Some(todo) = self.selected_item() {
+                            self.ui_mode = UiMode::Editing;
+                            self.input_widget =
+                                Some(InputWidget::new(Some(&todo.text), todo.due_date, todo.repeat.as_ref()));
+                        }
+                    }
+                }
                 _ => {}
             },
             UiMode::Adding => {
@@ -278,42 +294,6 @@ impl Todos {
         }
 
         self.selected = self.selected.saturating_add_signed(delta).min(len - 1);
-    }
-
-    fn delete_selected(&mut self) {}
-
-    fn start_adding(&mut self) {
-        if matches!(self.page, Page::History) {
-            return;
-        }
-
-        self.ui_mode = UiMode::Adding;
-        self.input_widget = Some(InputWidget::new(None, None, None));
-    }
-
-    fn start_editing(&mut self) {
-        if matches!(self.page, Page::History) {
-            return;
-        }
-
-        if let Some(todo) = self.selected_item() {
-            self.ui_mode = UiMode::Editing;
-            self.input_widget = Some(InputWidget::new(Some(&todo.text), todo.due_date, todo.repeat.as_ref()));
-        }
-    }
-
-    fn select_page(&mut self, key: char) {
-        let page = match key {
-            '1' => Some(Page::Due),
-            '2' => Some(Page::Today),
-            '3' => Some(Page::Index),
-            '4' => Some(Page::History),
-            _ => None,
-        };
-
-        if let Some(page) = page {
-            self.set_page(page);
-        }
     }
 
     fn cancel_input(&mut self) {
