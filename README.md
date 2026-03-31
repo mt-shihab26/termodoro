@@ -17,6 +17,7 @@ Config file location: `~/.config/orivo/config.toml`
 ```toml
 # Orivo configuration
 
+show_fps = false # show the FPS counter in the TUI header on startup
 
 # Database connection — Orivo uses Turso (libSQL/SQLite) for syncing todos across machines.
 [db]
@@ -37,6 +38,10 @@ break_duration      = 5      # short break length in minutes
 long_break_duration = 15     # long break length in minutes
 long_break_interval = 4      # number of work sessions before a long break
 ```
+
+### Root Options
+
+- `show_fps` → show the FPS counter when the TUI starts. You can still toggle it at runtime with `Ctrl+F`.
 
 ### Database (`[db]`)
 

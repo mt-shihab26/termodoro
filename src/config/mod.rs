@@ -11,12 +11,24 @@ use serde::{Deserialize, Serialize};
 use crate::config::db::DBConfig;
 use crate::config::timer::TimerConfig;
 
-#[derive(Debug, Default, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
+    #[serde(default)]
+    pub show_fps: bool,
     #[serde(default)]
     pub db: DBConfig,
     #[serde(default)]
     pub timer: TimerConfig,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            show_fps: false,
+            db: Default::default(),
+            timer: Default::default(),
+        }
+    }
 }
 
 impl Config {

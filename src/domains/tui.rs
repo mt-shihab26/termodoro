@@ -29,7 +29,7 @@ impl App {
 
         term::spawn(sender.clone());
 
-        let Config { timer, .. } = config;
+        let Config { show_fps, timer, .. } = config;
         let tabs: Vec<Box<dyn Tab>> = vec![Box::new(Todos::new(db)), Box::new(Timer::new(sender, timer))];
 
         Self {
@@ -37,7 +37,7 @@ impl App {
             selected: 0,
             tabs,
             events,
-            fps_widget: Some(FpsWidget::new()),
+            fps_widget: show_fps.then(FpsWidget::new),
         }
     }
 
@@ -136,13 +136,18 @@ impl App {
             .centered()
             .render(top, frame.buffer_mut());
 
-        Line::from(vec![
+        let mut hints = vec![
             Span::from("^q").fg(Color::DarkGray).bold(),
-            Span::from(" quit  ").fg(Color::DarkGray),
-            Span::from("^f").fg(Color::DarkGray).bold(),
-            Span::from(" fps").fg(Color::DarkGray),
-        ])
-        .render(left, frame.buffer_mut());
+            Span::from(" quit").fg(Color::DarkGray),
+        ];
+
+        if self.fps_widget.is_some() {
+            hints.push(Span::from("  ").fg(Color::DarkGray));
+            hints.push(Span::from("^f").fg(Color::DarkGray).bold());
+            hints.push(Span::from(" fps").fg(Color::DarkGray));
+        }
+
+        Line::from(hints).render(left, frame.buffer_mut());
 
         if let Some(fps_widget) = &mut self.fps_widget {
             fps_widget.render(right, frame.buffer_mut());
