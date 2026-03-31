@@ -35,6 +35,14 @@ pub fn connect() -> Result<DatabaseConnection> {
     })
 }
 
+pub fn reset() -> Result<()> {
+    let path = db_path();
+    if path.exists() {
+        std::fs::remove_file(path)?;
+    }
+    Ok(())
+}
+
 fn db_path() -> PathBuf {
     let home = env::var("HOME").unwrap_or_else(|_| ".".to_string());
     PathBuf::from(home)

@@ -8,7 +8,7 @@ use orivo::utils::db;
 fn main() -> Result<()> {
     match env::args().nth(1).as_deref() {
         None | Some("tui") => Box::new(Tui::new(Config::load()?, db::connect()?)).run(),
-        Some("seed") => Box::new(Seed::new(db::connect()?)).run(),
+        Some("seed") => Box::new(Seed::new()).run(),
         Some("version") | Some("--version") | Some("-V") => Box::new(Version::new()).run(),
         Some("help") | Some("--help") | Some("-h") => help(),
         Some(cmd) => unknown(cmd),
