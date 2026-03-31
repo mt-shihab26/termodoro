@@ -24,7 +24,7 @@ impl StatusWidget {
 impl Widget for StatusWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         Paragraph::new(format!(
-            "{} | {}-{} | {}/{}",
+            "Page {} • Range {}-{} • Showing {}/{} items",
             self.page,
             self.from,
             self.to,

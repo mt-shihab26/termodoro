@@ -19,18 +19,14 @@ impl Widget for TabsWidget {
             .sum::<u16>()
             + (Page::ALL.len() as u16 - 1) * 3;
 
-        let [_, center_area, _] = Layout::horizontal([
-            Constraint::Fill(1),
-            Constraint::Length(tabs_width),
-            Constraint::Fill(1),
-        ])
-        .areas(area);
+        let [area, _] =
+            Layout::horizontal([Constraint::Length(tabs_width), Constraint::Fill(1)]).areas(area);
 
         Tabs::new(tab_titles)
             .select(self.page.index())
             .style(Style::default().fg(Color::DarkGray))
             .highlight_style(Style::default().fg(self.color).bold())
             .divider(" | ")
-            .render(center_area, buf);
+            .render(area, buf);
     }
 }
