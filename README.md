@@ -19,6 +19,7 @@ Config file location: `~/.config/orivo/config.toml`
 
 show_fps = false # show the FPS counter in the TUI header on startup
 
+
 # Database connection — Orivo uses Turso (libSQL/SQLite) for syncing todos across machines.
 [db]
 url   = "libsql://your-db-name.turso.io"   # libSQL URL from: turso db show orivo --url
