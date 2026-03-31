@@ -43,7 +43,7 @@ impl Todo {
         }
     }
 
-    pub fn list_by_page(db: &DatabaseConnection, page: Page) -> Vec<Todo> {
+    pub fn list(db: &DatabaseConnection, page: Page) -> Vec<Todo> {
         let today = format_date(OffsetDateTime::now_utc().date());
 
         let query = match page {
@@ -93,7 +93,9 @@ impl Todo {
         if next.save(db) { Some(next) } else { None }
     }
 
-    fn to_active_model(&self) -> ActiveModel {
+    // -----------------------------------------------
+
+    fn to_model(&self) -> ActiveModel {
         let due_date = self.due_date.map(format_date);
         let repeat = self.repeat.as_ref().map(|r| r.to_db_str().to_string());
         match self.id {
@@ -117,7 +119,7 @@ impl Todo {
     pub fn save(&mut self, db: &DatabaseConnection) -> bool {
         match self.id {
             Some(_) => self.update(db),
-            None => match rt().block_on(async { self.to_active_model().insert(db).await.map_err(io_err) }) {
+            None => match rt().block_on(async { self.to_model().insert(db).await.map_err(io_err) }) {
                 Ok(model) => {
                     *self = model.into();
                     true
@@ -131,7 +133,7 @@ impl Todo {
     }
 
     pub fn update(&mut self, db: &DatabaseConnection) -> bool {
-        match rt().block_on(async { self.to_active_model().update(db).await.map_err(io_err) }) {
+        match rt().block_on(async { self.to_model().update(db).await.map_err(io_err) }) {
             Ok(model) => {
                 *self = model.into();
                 true

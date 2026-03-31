@@ -49,10 +49,9 @@ impl Todos {
         {
             let mut cache = self.cache.borrow_mut();
             if cache.is_none() {
-                *cache = Some(Todo::list_by_page(&self.db, self.page));
+                *cache = Some(Todo::list(&self.db, self.page));
             }
         }
-
         self.cache.borrow().as_deref().unwrap_or(&[]).to_vec()
     }
 
@@ -82,6 +81,114 @@ impl Todos {
         };
         self.list_state.borrow_mut().select(selected);
     }
+
+    fn next_page(&mut self) {
+        self.page = self.page.next();
+        self.selected = 0;
+        self.invalidate_cache();
+    }
+
+    fn prev_page(&mut self) {
+        self.page = self.page.prev();
+        self.selected = 0;
+        self.invalidate_cache();
+    }
+
+    fn toggle_selected(&mut self) {
+        if let Some(mut todo) = self.selected_item() {
+            todo.toggle(&self.db);
+            self.invalidate_cache();
+            self.clamp_selected();
+        }
+    }
+
+    fn select_next(&mut self) {
+        let len = self.current_items().len();
+        if len > 0 {
+            self.selected = (self.selected + 1).min(len - 1);
+        }
+    }
+
+    fn select_prev(&mut self) {
+        self.selected = self.selected.saturating_sub(1);
+    }
+
+    fn delete_selected(&mut self) {
+        if matches!(self.page, Page::History) {
+            return;
+        }
+
+        if let Some(todo) = self.selected_item() {
+            if todo.done {
+                return;
+            }
+            todo.delete(&self.db);
+            self.invalidate_cache();
+            self.clamp_selected();
+        }
+    }
+
+    fn start_adding(&mut self) {
+        if matches!(self.page, Page::History) {
+            return;
+        }
+
+        self.ui_mode = UiMode::Adding;
+        self.input_widget = Some(InputWidget::new(None, None, None));
+    }
+
+    fn start_editing(&mut self) {
+        if matches!(self.page, Page::History) {
+            return;
+        }
+
+        if let Some(todo) = self.selected_item() {
+            self.ui_mode = UiMode::Editing;
+            self.input_widget = Some(InputWidget::new(Some(&todo.text), todo.due_date, todo.repeat.as_ref()));
+        }
+    }
+
+    fn select_page(&mut self, key: char) {
+        if !Page::ALL.iter().any(|p| p.key() == key) {
+            return;
+        }
+
+        self.page = match key {
+            '1' => Page::Due,
+            '2' => Page::Today,
+            '3' => Page::Index,
+            '4' => Page::History,
+            _ => self.page,
+        };
+        self.selected = 0;
+        self.invalidate_cache();
+    }
+
+    fn cancel_input(&mut self) {
+        self.input_widget = None;
+        self.ui_mode = UiMode::Normal;
+    }
+
+    fn confirm_add(&mut self, text: String, date: Option<time::Date>, repeat: Option<Repeat>) {
+        let mut todo = Todo::new(text, date, repeat);
+        if todo.save(&self.db) {
+            self.invalidate_cache();
+            self.clamp_selected();
+        }
+        self.cancel_input();
+    }
+
+    fn confirm_edit(&mut self, text: String, date: Option<time::Date>, repeat: Option<Repeat>) {
+        if let Some(mut todo) = self.selected_item() {
+            todo.text = text;
+            todo.due_date = date;
+            todo.repeat = repeat;
+            todo.update(&self.db);
+            self.invalidate_cache();
+            self.clamp_selected();
+        }
+        self.cancel_input();
+    }
 }
 
 impl Tab for Todos {
@@ -96,87 +203,22 @@ impl Tab for Todos {
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
         match self.ui_mode {
             UiMode::Normal => match key.code {
-                KeyCode::Char(']') => {
-                    self.page = self.page.next();
-                    self.selected = 0;
-                    self.invalidate_cache();
-                }
-                KeyCode::Char('[') => {
-                    self.page = self.page.prev();
-                    self.selected = 0;
-                    self.invalidate_cache();
-                }
-                KeyCode::Char(' ') | KeyCode::Enter => {
-                    if let Some(mut todo) = self.selected_item() {
-                        todo.toggle(&self.db);
-                        self.invalidate_cache();
-                        self.clamp_selected();
-                    }
-                }
-                KeyCode::Char('j') | KeyCode::Down => {
-                    let len = self.current_items().len();
-                    if len > 0 {
-                        self.selected = (self.selected + 1).min(len - 1);
-                    }
-                }
-                KeyCode::Char('k') | KeyCode::Up => {
-                    self.selected = self.selected.saturating_sub(1);
-                }
-                KeyCode::Char('d') => {
-                    if !matches!(self.page, Page::History) {
-                        if let Some(todo) = self.selected_item() {
-                            todo.delete(&self.db);
-                            self.invalidate_cache();
-                            self.clamp_selected();
-                        }
-                    }
-                }
-                KeyCode::Char('a') => {
-                    if !matches!(self.page, Page::History) {
-                        self.ui_mode = UiMode::Adding;
-                        self.input_widget = Some(InputWidget::new(None, None, None));
-                    }
-                }
-                KeyCode::Char('e') => {
-                    if !matches!(self.page, Page::History) {
-                        if let Some(todo) = self.selected_item() {
-                            self.ui_mode = UiMode::Editing;
-                            self.input_widget =
-                                Some(InputWidget::new(Some(&todo.text), todo.due_date, todo.repeat.as_ref()));
-                        }
-                    }
-                }
-                KeyCode::Char(c) => {
-                    if Page::ALL.iter().any(|p| p.key() == c) {
-                        self.page = match c {
-                            '1' => Page::Due,
-                            '2' => Page::Today,
-                            '3' => Page::Index,
-                            '4' => Page::History,
-                            _ => self.page.next().prev(),
-                        };
-                        self.selected = 0;
-                        self.invalidate_cache();
-                    }
-                }
+                KeyCode::Char(']') => self.next_page(),
+                KeyCode::Char('[') => self.prev_page(),
+                KeyCode::Char(' ') | KeyCode::Enter => self.toggle_selected(),
+                KeyCode::Char('j') | KeyCode::Down => self.select_next(),
+                KeyCode::Char('k') | KeyCode::Up => self.select_prev(),
+                KeyCode::Char('d') => self.delete_selected(),
+                KeyCode::Char('a') => self.start_adding(),
+                KeyCode::Char('e') => self.start_editing(),
+                KeyCode::Char(c) => self.select_page(c),
                 _ => {}
             },
             UiMode::Adding => {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
-                        InputAction::Confirm { text, date, repeat } => {
-                            let mut todo = Todo::new(text, date, repeat);
-                            if todo.save(&self.db) {
-                                self.invalidate_cache();
-                                self.clamp_selected();
-                            }
-                            self.input_widget = None;
-                            self.ui_mode = UiMode::Normal;
-                        }
-                        InputAction::Escape => {
-                            self.input_widget = None;
-                            self.ui_mode = UiMode::Normal;
-                        }
+                        InputAction::Confirm { text, date, repeat } => self.confirm_add(text, date, repeat),
+                        InputAction::Escape => self.cancel_input(),
                         InputAction::None => {}
                     }
                 }
@@ -184,22 +226,8 @@ impl Tab for Todos {
             UiMode::Editing => {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
-                        InputAction::Confirm { text, date, repeat } => {
-                            if let Some(mut todo) = self.selected_item() {
-                                todo.text = text;
-                                todo.due_date = date;
-                                todo.repeat = repeat;
-                                todo.update(&self.db);
-                                self.invalidate_cache();
-                                self.clamp_selected();
-                            }
-                            self.input_widget = None;
-                            self.ui_mode = UiMode::Normal;
-                        }
-                        InputAction::Escape => {
-                            self.input_widget = None;
-                            self.ui_mode = UiMode::Normal;
-                        }
+                        InputAction::Confirm { text, date, repeat } => self.confirm_edit(text, date, repeat),
+                        InputAction::Escape => self.cancel_input(),
                         InputAction::None => {}
                     }
                 }
