@@ -1,8 +1,8 @@
 use std::io::{Error, ErrorKind, Result};
 
 use crate::cmds::Cmd;
+use crate::config::Config;
 use crate::db::store;
-use crate::utils::config::Config;
 
 pub struct Sync {
     config: Config,
@@ -20,7 +20,7 @@ impl Cmd for Sync {
     }
 
     fn run(&self) -> Result<()> {
-        if self.config.turso.is_none() {
+        if !self.config.db.is_configured() {
             eprintln!("No Turso credentials found.");
             eprintln!("Config file: {}", Config::path().display());
             eprintln!();

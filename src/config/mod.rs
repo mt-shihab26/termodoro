@@ -13,7 +13,8 @@ use crate::config::timer::TimerConfig;
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
 pub struct Config {
-    pub db: Option<DBConfig>,
+    #[serde(default)]
+    pub db: DBConfig,
     #[serde(default)]
     pub timer: TimerConfig,
 }

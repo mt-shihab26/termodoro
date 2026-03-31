@@ -8,11 +8,10 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Paragraph, Widget};
 use ratatui::{DefaultTerminal, Frame, init, restore};
 
+use crate::config::Config;
 use crate::tabs::{Tab, timer::Timer, todos::Todos};
 use crate::widgets::fps::FpsWidget;
 use crate::{kinds::event::Event, log_error, workers::term};
-
-use crate::utils::config::Config;
 
 use super::Cmd;
 
@@ -53,7 +52,10 @@ impl App {
 
         term::spawn(sender.clone());
 
-        let tabs: Vec<Box<dyn Tab>> = vec![Box::new(Todos::new()), Box::new(Timer::new(sender, config.timer.clone()))];
+        let tabs: Vec<Box<dyn Tab>> = vec![
+            Box::new(Todos::new()),
+            Box::new(Timer::new(sender, config.timer.clone())),
+        ];
 
         Self {
             config,
