@@ -33,31 +33,4 @@ impl Config {
         let raw = fs::read_to_string(&path)?;
         toml::from_str(&raw).map_err(|e| Error::new(ErrorKind::InvalidData, e.to_string()))
     }
-
-    /// Creates a template config file if one does not already exist.
-    /// Returns the path where it was written.
-    pub fn create_template() -> Result<PathBuf> {
-        let path = Self::path();
-        if path.exists() {
-            return Ok(path);
-        }
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)?;
-        }
-        fs::write(
-            &path,
-            "# Orivo configuration\n\
-             #\n\
-             # Get your credentials:\n\
-             #   turso auth login\n\
-             #   turso db create orivo\n\
-             #   turso db show orivo --url\n\
-             #   turso db tokens create orivo\n\
-             \n\
-             [turso]\n\
-             url   = \"libsql://your-db-name.turso.io\"\n\
-             token = \"your-auth-token\"\n",
-        )?;
-        Ok(path)
-    }
 }
