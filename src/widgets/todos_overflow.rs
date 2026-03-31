@@ -9,20 +9,15 @@ pub struct TodosOverflowWidget {
 }
 
 impl TodosOverflowWidget {
-    pub fn render(self, frame: &mut Frame, area: Rect) {
-        if self.show_more_above {
-            frame.render_widget(Paragraph::new("^ more").fg(Color::DarkGray), area);
+    pub fn render(self, frame: &mut Frame, top_area: Rect, bottom_area: Rect) {
+        if self.show_more_above && top_area.height > 0 {
+            frame.render_widget(Paragraph::new("^ more").fg(Color::DarkGray), top_area);
         }
 
-        if self.show_more_below {
+        if self.show_more_below && bottom_area.height > 0 {
             frame.render_widget(
                 Paragraph::new("v more").fg(Color::DarkGray).right_aligned(),
-                Rect {
-                    x: area.x,
-                    y: area.y + area.height.saturating_sub(1),
-                    width: area.width,
-                    height: 1,
-                },
+                bottom_area,
             );
         }
     }

@@ -20,6 +20,18 @@ impl<'a> TodosDatedListWidget<'a> {
         let horizontal_padding = 2;
         let top_padding = 1;
         let bottom_padding = 1;
+        let top_indicator_area = Rect {
+            x: area.x + horizontal_padding,
+            y: area.y,
+            width: area.width.saturating_sub(horizontal_padding * 2),
+            height: top_padding,
+        };
+        let bottom_indicator_area = Rect {
+            x: area.x + horizontal_padding,
+            y: area.y + area.height.saturating_sub(bottom_padding),
+            width: area.width.saturating_sub(horizontal_padding * 2),
+            height: bottom_padding,
+        };
         let padded_area = Rect {
             x: area.x + horizontal_padding,
             y: area.y + top_padding,
@@ -43,6 +55,6 @@ impl<'a> TodosDatedListWidget<'a> {
             show_more_above: self.show_more_above,
             show_more_below: self.show_more_below,
         }
-        .render(frame, padded_area);
+        .render(frame, top_indicator_area, bottom_indicator_area);
     }
 }
