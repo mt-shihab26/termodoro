@@ -63,24 +63,13 @@ impl Tab for Todos {
                     self.state.go_to_end();
                 }
                 KeyCode::Char(' ') | KeyCode::Enter => {
-                    if let Some(mut todo) = self.selected_item().map(|todo| todo.clone()) {
-                        todo.toggle(&self.db);
+                    if self.state.toggle_selected(&self.db, self.page) {
                         self.refresh();
                     }
                 }
                 KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    if self.can_delete_selected() {
-                        if let Some(should_delete) = self.selected_item().map(|todo| {
-                            if todo.done {
-                                false
-                            } else {
-                                todo.delete(&self.db)
-                            }
-                        }) {
-                            if should_delete {
-                                self.refresh();
-                            }
-                        }
+                    if self.state.delete_selected(&self.db, self.page) {
+                        self.refresh();
                     }
                 }
                 KeyCode::Char('a') => {
@@ -91,9 +80,8 @@ impl Tab for Todos {
                 }
                 KeyCode::Char('e') => {
                     if !matches!(self.page, Page::History) {
-                        if let Some((text, due_date, repeat)) = self
-                            .selected_item()
-                            .map(|todo| (todo.text.clone(), todo.due_date, todo.repeat.clone()))
+                        if let Some((text, due_date, repeat)) =
+                            self.state.edit_values(&self.db, self.page)
                         {
                             self.mode = Mode::Editing;
                             self.input_widget =
@@ -278,11 +266,6 @@ impl Todos {
 
     fn selected_item(&self) -> Option<Ref<'_, Todo>> {
         self.state.selected_item(&self.db, self.page)
-    }
-
-    fn can_delete_selected(&self) -> bool {
-        let items = self.items();
-        self.can_delete_in_items(&items)
     }
 
     fn can_delete_in_items(&self, items: &[Todo]) -> bool {

@@ -6,6 +6,7 @@ use sea_orm::DatabaseConnection;
 
 use crate::kinds::direction::Direction;
 use crate::kinds::page::Page;
+use crate::kinds::repeat::Repeat;
 use crate::models::todo::Todo;
 
 pub struct TodosState {
@@ -250,5 +251,33 @@ impl TodosState {
         }
 
         (self.offset, self.selected) != position
+    }
+
+    pub fn toggle_selected(&mut self, db: &DatabaseConnection, page: Page) -> bool {
+        if let Some(mut todo) = self.selected_item(db, page).map(|todo| todo.clone()) {
+            todo.toggle(db);
+            return true;
+        }
+        false
+    }
+
+    pub fn delete_selected(&mut self, db: &DatabaseConnection, page: Page) -> bool {
+        if let Some(todo) = self.selected_item(db, page) {
+            if todo.done {
+                return false;
+            }
+            return todo.delete(db);
+        }
+        false
+    }
+
+    pub fn edit_values(&self, db: &DatabaseConnection, page: Page) -> Option<(String, Option<time::Date>, Option<Repeat>)> {
+        self.selected_item(db, page).map(|todo| {
+            (
+                todo.text.clone(),
+                todo.due_date,
+                todo.repeat.clone(),
+            )
+        })
     }
 }
