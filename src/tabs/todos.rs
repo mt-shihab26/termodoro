@@ -57,7 +57,16 @@ impl Tab for Todos {
                 KeyCode::Char('k') | KeyCode::Up => {
                     self.move_selection(-1);
                 }
-                KeyCode::Char('d') => self.delete_selected(),
+                KeyCode::Char('d') => {
+                    if !matches!(self.page, Page::History) {
+                        if let Some(todo) = self.selected_item() {
+                            if !todo.done {
+                                todo.delete(&self.db);
+                                self.refresh();
+                            }
+                        }
+                    }
+                }
                 KeyCode::Char('a') => self.start_adding(),
                 KeyCode::Char('e') => self.start_editing(),
                 KeyCode::Char(c) => self.select_page(c),
@@ -271,18 +280,7 @@ impl Todos {
         self.selected = self.selected.saturating_add_signed(delta).min(len - 1);
     }
 
-    fn delete_selected(&mut self) {
-        if matches!(self.page, Page::History) {
-            return;
-        }
-        if let Some(todo) = self.selected_item() {
-            if todo.done {
-                return;
-            }
-            todo.delete(&self.db);
-            self.refresh();
-        }
-    }
+    fn delete_selected(&mut self) {}
 
     fn start_adding(&mut self) {
         if matches!(self.page, Page::History) {
