@@ -1,17 +1,16 @@
 use std::io::Result;
 
-use super::{Cmd, helps};
+use super::Cmd;
 
 pub struct Help {
     lines: Vec<Vec<String>>,
 }
 
 impl Help {
-    pub fn new() -> Self {
-        let helps = helps();
+    pub fn new(helps: &[fn() -> &'static [&'static str]]) -> Self {
         let lines = helps
             .iter()
-            .map(|entries| entries.iter().map(|s| s.to_string()).collect())
+            .map(|help| help().iter().map(|s| s.to_string()).collect())
             .collect();
 
         Self { lines }
