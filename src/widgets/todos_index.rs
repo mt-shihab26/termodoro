@@ -31,7 +31,7 @@ impl<'a> TodosIndexWidget<'a> {
             return;
         }
 
-        let (rows, selected_row) = self.rows();
+        let (rows, selected_row) = self.rows(padded_area.width as usize);
         let visible_rows = padded_area.height as usize;
         let start = if rows.len() <= visible_rows {
             0
@@ -45,14 +45,14 @@ impl<'a> TodosIndexWidget<'a> {
         frame.render_widget(Paragraph::new(rows[start..end].to_vec()), padded_area);
     }
 
-    fn rows(&self) -> (Vec<Line<'static>>, usize) {
+    fn rows(&self, width: usize) -> (Vec<Line<'static>>, usize) {
         let mut rows = Vec::new();
         let mut selected_row = 0;
         let mut last_date = None;
 
         for (index, todo) in self.items.iter().enumerate() {
             if todo.due_date != last_date {
-                rows.push(section_line(todo.due_date));
+                rows.push(section_line(todo.due_date, width, self.color));
                 last_date = todo.due_date;
             }
 
@@ -67,16 +67,27 @@ impl<'a> TodosIndexWidget<'a> {
     }
 }
 
-fn section_line(date: Option<time::Date>) -> Line<'static> {
+fn section_line(date: Option<time::Date>, width: usize, color: Color) -> Line<'static> {
     let label = match date {
         Some(date) => format!(" {} ", section_label(date)),
         None => " No Date ".to_string(),
     };
+    let label_len = label.chars().count();
+    let divider_len = width.saturating_sub(label_len);
+    let left_len = divider_len / 2;
+    let right_len = divider_len.saturating_sub(left_len);
 
-    Line::from(vec![Span::styled(
-        label,
-        Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD),
-    )])
+    Line::from(vec![
+        Span::styled(
+            "─".repeat(left_len),
+            Style::default().fg(color).add_modifier(Modifier::DIM),
+        ),
+        Span::styled(label, Style::default().fg(color).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            "─".repeat(right_len),
+            Style::default().fg(color).add_modifier(Modifier::DIM),
+        ),
+    ])
 }
 
 fn section_label(date: time::Date) -> String {
