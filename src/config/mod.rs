@@ -24,7 +24,7 @@ impl Config {
         PathBuf::from(env::var("HOME").unwrap_or_else(|_| ".".to_string()))
             .join(".config")
             .join("orivo")
-            .join("config2.toml")
+            .join("config.toml")
     }
 
     pub fn load() -> Result<Self> {

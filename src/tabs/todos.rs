@@ -162,15 +162,12 @@ impl Tab for Todos {
             })
             .collect();
 
-        let max_width = labels.iter().map(|l| l.len() as u16).max().unwrap_or(0) + 2;
-        let list_width = max_width.min(list_area.width);
-        let h_offset = list_area.width.saturating_sub(list_width) / 2;
-
+        let horizontal_padding = 2;
         let top_padding = 1;
-        let centered_list_area = Rect {
-            x: list_area.x + h_offset,
+        let padded_list_area = Rect {
+            x: list_area.x + horizontal_padding,
             y: list_area.y + top_padding,
-            width: list_width,
+            width: list_area.width.saturating_sub(horizontal_padding * 2),
             height: list_area.height.saturating_sub(top_padding),
         };
 
@@ -200,7 +197,7 @@ impl Tab for Todos {
             .highlight_style(Style::default().fg(self.color()).bold())
             .highlight_symbol(">");
 
-        frame.render_stateful_widget(list, centered_list_area, &mut self.list_state.borrow_mut());
+        frame.render_stateful_widget(list, padded_list_area, &mut self.list_state.borrow_mut());
 
         let hint = match self.ui_mode {
             UiMode::Normal => match self.page {
