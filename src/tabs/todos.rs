@@ -176,7 +176,7 @@ impl Tab for Todos {
             TodosHintWidget {
                 page: self.page,
                 ui_mode: self.ui_mode,
-                can_delete: self.can_delete_selected(),
+                can_delete: self.can_delete_in_items(&items),
             },
             hint_area,
         );
@@ -248,11 +248,12 @@ impl Todos {
     }
 
     fn can_delete_selected(&self) -> bool {
-        if matches!(self.page, Page::History) {
-            return false;
-        }
+        let items = self.current_items();
+        self.can_delete_in_items(&items)
+    }
 
-        self.selected_item().is_some_and(|todo| !todo.done)
+    fn can_delete_in_items(&self, items: &[Todo]) -> bool {
+        !matches!(self.page, Page::History) && items.get(self.selected).is_some_and(|todo| !todo.done)
     }
 
     fn clamp_selected(&mut self) {
