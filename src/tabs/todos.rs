@@ -108,21 +108,8 @@ impl Tab for Todos {
                 KeyCode::Char(' ') | KeyCode::Enter => {
                     if let Some(&index) = self.filtered_indices().get(self.selected) {
                         let item = &mut self.items[index];
-                        if !item.toggle_and_save(&self.db) {
-                            return Ok(());
-                        }
-                        if !item.done {
-                            return Ok(());
-                        }
-                        if let (Some(repeat), Some(date)) = (item.repeat.as_ref(), item.due_date) {
-                            let mut next = Todo::new(
-                                item.text.clone(),
-                                Some(repeat.next_date(date)),
-                                Some(Repeat::of(repeat)),
-                            );
-                            if next.save(&self.db) {
-                                self.items.push(next);
-                            }
+                        if let Some(next) = item.toggle_and_save(&self.db) {
+                            self.items.push(next);
                         }
                     }
                 }

@@ -50,14 +50,29 @@ impl Todo {
         }
     }
 
-    pub fn toggle_and_save(&mut self, db: &DatabaseConnection) -> bool {
+    pub fn toggle_and_save(&mut self, db: &DatabaseConnection) -> Option<Todo> {
         self.done = !self.done;
-        if self.update(db) {
-            true
-        } else {
+
+        if !self.update(db) {
             self.done = !self.done;
-            false
+            return None;
         }
+
+        if !self.done {
+            return None;
+        }
+
+        let (Some(repeat), Some(date)) = (self.repeat.as_ref(), self.due_date) else {
+            return None;
+        };
+
+        let mut next = Todo::new(
+            self.text.clone(),
+            Some(repeat.next_date(date)),
+            Some(Repeat::of(repeat)),
+        );
+
+        if next.save(db) { Some(next) } else { None }
     }
 
     fn to_active_model(&self) -> ActiveModel {
