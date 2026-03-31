@@ -44,10 +44,7 @@ impl Tab for Todos {
     }
 
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
-        let mut g = false;
-        if self.pending_g {
-            g = true;
-        }
+        let peanding_g = self.pending_g;
         self.pending_g = false;
 
         match self.ui_mode {
@@ -61,7 +58,7 @@ impl Tab for Todos {
                 KeyCode::Char('j') | KeyCode::Down => self.move_selection(1),
                 KeyCode::Char('k') | KeyCode::Up => self.move_selection(-1),
                 KeyCode::Char('g') => {
-                    if g {
+                    if peanding_g {
                         self.go_to_start();
                     }
                     self.pending_g = !self.pending_g;
