@@ -10,8 +10,8 @@ use sea_orm::DatabaseConnection;
 use time::OffsetDateTime;
 
 use crate::kinds::{page::Page, repeat::Repeat};
+use crate::models::todo as db;
 use crate::models::todo::Todo;
-use crate::models::todos as db;
 use crate::widgets::input::{InputAction, InputWidget};
 use crate::{log_error, log_warn};
 

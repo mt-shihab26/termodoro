@@ -27,7 +27,7 @@ impl Todo {
         self.done = !self.done;
     }
 
-    pub fn to_active_model(&self) -> todo::ActiveModel {
+    pub fn to_active_model(&self) -> ActiveModel {
         let due_date = self.due_date.map(format_date);
         let repeat = self.repeat.as_ref().map(|r| r.to_db_str().to_string());
         match self.id {
@@ -71,4 +71,47 @@ fn parse_date(s: &str) -> Option<Date> {
     let month: u8 = parts.next()?.parse().ok()?;
     let day: u8 = parts.next()?.parse().ok()?;
     Date::from_calendar_date(year, time::Month::try_from(month).ok()?, day).ok()
+}
+
+use std::io::{Error, ErrorKind, Result};
+
+use sea_orm::{ActiveModelBehavior, DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EnumIter, PrimaryKeyTrait};
+use sea_orm::{ActiveModelTrait, DatabaseConnection};
+
+use crate::utils::db::rt;
+
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
+#[sea_orm(table_name = "todos")]
+pub struct Model {
+    #[sea_orm(primary_key, auto_increment = true)]
+    pub id: i32,
+    pub text: String,
+    pub done: bool,
+    pub due_date: Option<String>,
+    pub repeat: Option<String>,
+}
+
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {}
+
+impl ActiveModelBehavior for ActiveModel {}
+
+fn io_err(e: impl std::fmt::Display) -> Error {
+    Error::new(ErrorKind::Other, e.to_string())
+}
+
+pub fn load_all(db: &DatabaseConnection) -> Result<Vec<Model>> {
+    rt().block_on(async { TodoEntity::find().all(db).await.map_err(io_err) })
+}
+
+pub fn insert(db: &DatabaseConnection, model: ActiveModel) -> Result<Model> {
+    rt().block_on(async { model.insert(db).await.map_err(io_err) })
+}
+
+pub fn update(db: &DatabaseConnection, model: ActiveModel) -> Result<()> {
+    rt().block_on(async { model.update(db).await.map_err(io_err).map(|_| ()) })
+}
+
+pub fn delete(db: &DatabaseConnection, id: i32) -> Result<()> {
+    rt().block_on(async { TodoEntity::delete_by_id(id).exec(db).await.map_err(io_err).map(|_| ()) })
 }
