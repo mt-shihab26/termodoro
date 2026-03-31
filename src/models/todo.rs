@@ -1,5 +1,6 @@
 use std::io;
 
+use sea_orm::QueryOrder;
 use sea_orm::{ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, DatabaseConnection};
 use sea_orm::{ColumnTrait, Condition, QueryFilter};
 use sea_orm::{DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait};
@@ -52,14 +53,24 @@ impl Todo {
         let query = match page {
             Page::Due => Entity::find()
                 .filter(Column::Done.eq(false))
-                .filter(Column::DueDate.lt(today)),
-            Page::Today => Entity::find().filter(Column::DueDate.eq(today)),
-            Page::Index => Entity::find().filter(
-                Condition::any()
-                    .add(Column::DueDate.is_null())
-                    .add(Column::DueDate.gt(today)),
-            ),
-            Page::History => Entity::find().filter(Column::Done.eq(true)),
+                .filter(Column::DueDate.lt(today))
+                .order_by_asc(Column::DueDate)
+                .order_by_asc(Column::Id),
+            Page::Today => Entity::find()
+                .filter(Column::DueDate.eq(today))
+                .order_by_asc(Column::Id),
+            Page::Index => Entity::find()
+                .filter(
+                    Condition::any()
+                        .add(Column::DueDate.is_null())
+                        .add(Column::DueDate.gt(today)),
+                )
+                .order_by_asc(Column::DueDate)
+                .order_by_asc(Column::Id),
+            Page::History => Entity::find()
+                .filter(Column::Done.eq(true))
+                .order_by_desc(Column::DueDate)
+                .order_by_desc(Column::Id),
         };
 
         match rt().block_on(async { query.all(db).await.map_err(io_err) }) {

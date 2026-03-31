@@ -12,8 +12,9 @@ use crate::kinds::ui_mode::UiMode;
 use crate::kinds::{page::Page, repeat::Repeat};
 use crate::models::todo::Todo;
 use crate::widgets::input::{InputAction, InputWidget};
+use crate::widgets::todos_dated_list::TodosDatedListWidget;
 use crate::widgets::todos_hint::TodosHintWidget;
-use crate::widgets::todos_list::TodosListWidget;
+use crate::widgets::todos_index::TodosIndexWidget;
 use crate::widgets::todos_tabs::TodosTabsWidget;
 
 use super::Tab;
@@ -142,12 +143,20 @@ impl Tab for Todos {
         );
 
         let items = self.current_items();
-        TodosListWidget {
-            items: &items,
-            page: self.page,
-            color: self.color(),
+        match self.page {
+            Page::Index => TodosIndexWidget {
+                items: &items,
+                selected: self.selected,
+                color: self.color(),
+            }
+            .render(frame, list_area),
+            Page::Due | Page::Today | Page::History => TodosDatedListWidget {
+                items: &items,
+                dimmed: matches!(self.page, Page::History),
+                color: self.color(),
+            }
+            .render(frame, list_area, &mut self.list_state.borrow_mut()),
         }
-        .render(frame, list_area, &mut self.list_state.borrow_mut());
 
         frame.render_widget(
             TodosHintWidget {
