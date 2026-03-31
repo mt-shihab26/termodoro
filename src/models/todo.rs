@@ -9,9 +9,9 @@ use crate::{kinds::repeat::Repeat, utils::db::rt};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "todos")]
-pub struct Model {
+struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
-    pub id: i32,
+    id: i32,
     text: String,
     done: bool,
     due_date: Option<String>,
@@ -19,7 +19,7 @@ pub struct Model {
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
+enum Relation {}
 
 pub struct Todo {
     pub id: Option<i32>,
@@ -44,7 +44,7 @@ impl Todo {
         self.done = !self.done;
     }
 
-    pub fn to_active_model(&self) -> ActiveModel {
+    fn to_active_model(&self) -> ActiveModel {
         let due_date = self.due_date.map(format_date);
         let repeat = self.repeat.as_ref().map(|r| r.to_db_str().to_string());
         match self.id {
@@ -75,22 +75,58 @@ impl Todo {
         }
     }
 
-    pub fn update(&self, db: &DatabaseConnection) {
-        if let Err(e) = rt().block_on(async { self.to_active_model().update(db).await.map_err(io_err).map(|_| ()) }) {
-            log_error!("failed to toggle todo: {e}");
+    pub fn save(&mut self, db: &DatabaseConnection) -> bool {
+        match self.id {
+            Some(_) => self.update(db),
+            None => match rt().block_on(async { self.to_active_model().insert(db).await.map_err(io_err) }) {
+                Ok(model) => {
+                    *self = model.into();
+                    true
+                }
+                Err(e) => {
+                    log_error!("failed to insert todo: {e}");
+                    false
+                }
+            },
         }
     }
 
-    pub fn insert_model(db: &DatabaseConnection, model: ActiveModel) -> io::Result<Model> {
-        rt().block_on(async { model.insert(db).await.map_err(io_err) })
+    pub fn update(&mut self, db: &DatabaseConnection) -> bool {
+        match rt().block_on(async { self.to_active_model().update(db).await.map_err(io_err) }) {
+            Ok(model) => {
+                *self = model.into();
+                true
+            }
+            Err(e) => {
+                log_error!("failed to update todo: {e}");
+                false
+            }
+        }
     }
 
-    pub fn update_model(db: &DatabaseConnection, model: ActiveModel) -> io::Result<()> {
-        rt().block_on(async { model.update(db).await.map_err(io_err).map(|_| ()) })
+    pub fn delete(&self, db: &DatabaseConnection) -> bool {
+        let Some(id) = self.id else {
+            log_error!("failed to delete todo: missing id");
+            return false;
+        };
+
+        match rt().block_on(async { Entity::delete_by_id(id).exec(db).await.map_err(io_err).map(|_| ()) }) {
+            Ok(()) => true,
+            Err(e) => {
+                log_error!("failed to delete todo: {e}");
+                false
+            }
+        }
     }
 
-    pub fn delete_model(db: &DatabaseConnection, id: i32) -> io::Result<()> {
-        rt().block_on(async { Entity::delete_by_id(id).exec(db).await.map_err(io_err).map(|_| ()) })
+    pub fn toggle_and_save(&mut self, db: &DatabaseConnection) -> bool {
+        self.done = !self.done;
+        if self.update(db) {
+            true
+        } else {
+            self.done = !self.done;
+            false
+        }
     }
 }
 

@@ -10,9 +10,9 @@ use sea_orm::DatabaseConnection;
 use time::OffsetDateTime;
 
 use crate::kinds::{page::Page, repeat::Repeat};
+use crate::log_warn;
 use crate::models::todo::Todo;
 use crate::widgets::input::{InputAction, InputWidget};
-use crate::{log_error, log_warn};
 
 use super::Tab;
 
@@ -108,8 +108,9 @@ impl Tab for Todos {
                 KeyCode::Char(' ') | KeyCode::Enter => {
                     if let Some(&index) = self.filtered_indices().get(self.selected) {
                         let item = &mut self.items[index];
-                        item.done = !item.done;
-                        item.update(&self.db);
+                        if !item.toggle_and_save(&self.db) {
+                            return Ok(());
+                        }
                         if !item.done {
                             return Ok(());
                         }
@@ -119,11 +120,9 @@ impl Tab for Todos {
                                 Some(repeat.next_date(date)),
                                 Some(Repeat::of(repeat)),
                             );
-                            match Todo::insert_model(&self.db, next.to_active_model()) {
-                                Ok(model) => next.id = Some(model.id),
-                                Err(e) => log_error!("failed to insert repeated todo: {e}"),
+                            if next.save(&self.db) {
+                                self.items.push(next);
                             }
-                            self.items.push(next);
                         }
                     }
                 }
@@ -140,12 +139,10 @@ impl Tab for Todos {
                     if !matches!(self.page, Page::History) {
                         let indices = self.filtered_indices();
                         if let Some(&real) = indices.get(self.selected) {
-                            if let Some(id) = self.items[real].id {
-                                if let Err(e) = Todo::delete_model(&self.db, id) {
-                                    log_error!("failed to delete todo: {e}");
-                                }
-                            } else {
+                            if self.items[real].id.is_none() {
                                 log_warn!("todo has no id, skipping db delete");
+                            } else {
+                                self.items[real].delete(&self.db);
                             }
                             self.items.remove(real);
                             self.clamp_selected();
@@ -188,11 +185,9 @@ impl Tab for Todos {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
                             let mut todo = Todo::new(text, date, repeat);
-                            match Todo::insert_model(&self.db, todo.to_active_model()) {
-                                Ok(model) => todo.id = Some(model.id),
-                                Err(e) => log_error!("failed to insert todo: {e}"),
+                            if todo.save(&self.db) {
+                                self.items.push(todo);
                             }
-                            self.items.push(todo);
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
                             self.clamp_selected();
@@ -216,9 +211,7 @@ impl Tab for Todos {
                                     todo.text = text;
                                     todo.due_date = date;
                                     todo.repeat = repeat;
-                                }
-                                if let Err(e) = Todo::update_model(&self.db, self.items[real].to_active_model()) {
-                                    log_error!("failed to update todo: {e}");
+                                    todo.update(&self.db);
                                 }
                             }
                             self.input_widget = None;
