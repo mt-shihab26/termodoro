@@ -3,8 +3,10 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
+use time::Duration;
 
 use crate::models::todo::Todo;
+use crate::utils::date::today;
 
 use super::todo_item::TodoItemWidget;
 
@@ -67,7 +69,7 @@ impl<'a> TodosIndexWidget<'a> {
 
 fn section_line(date: Option<time::Date>) -> Line<'static> {
     let label = match date {
-        Some(date) => format!(" {date} "),
+        Some(date) => format!(" {} ", section_label(date)),
         None => " No Date ".to_string(),
     };
 
@@ -75,4 +77,18 @@ fn section_line(date: Option<time::Date>) -> Line<'static> {
         label,
         Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD),
     )])
+}
+
+fn section_label(date: time::Date) -> String {
+    let current = today();
+
+    if date == current {
+        format!("{date} Today")
+    } else if date == current + Duration::days(1) {
+        format!("{date} Tomorrow")
+    } else if date == current - Duration::days(1) {
+        format!("{date} Yesterday")
+    } else {
+        date.to_string()
+    }
 }
