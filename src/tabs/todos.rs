@@ -106,28 +106,25 @@ impl Tab for Todos {
                     self.selected = 0;
                 }
                 KeyCode::Char(' ') | KeyCode::Enter => {
-                    if !matches!(self.page, Page::History) {
-                        let indices = self.filtered_indices();
-                        if let Some(&real) = indices.get(self.selected) {
-                            self.items[real].toggle();
-                            if let Err(e) = Todo::update(&self.db, self.items[real].to_active_model()) {
-                                log_error!("failed to toggle todo: {e}");
-                            }
-                            if self.items[real].done {
-                                if let (Some(repeat), Some(date)) =
-                                    (self.items[real].repeat.as_ref(), self.items[real].due_date)
-                                {
-                                    let mut next = Todo::new(
-                                        self.items[real].text.clone(),
-                                        Some(repeat.next_date(date)),
-                                        Some(Repeat::of(repeat)),
-                                    );
-                                    match Todo::insert(&self.db, next.to_active_model()) {
-                                        Ok(model) => next.id = Some(model.id),
-                                        Err(e) => log_error!("failed to insert repeated todo: {e}"),
-                                    }
-                                    self.items.push(next);
+                    if let Some(&real) = self.filtered_indices().get(self.selected) {
+                        self.items[real].toggle();
+                        if let Err(e) = Todo::update(&self.db, self.items[real].to_active_model()) {
+                            log_error!("failed to toggle todo: {e}");
+                        }
+                        if self.items[real].done {
+                            if let (Some(repeat), Some(date)) =
+                                (self.items[real].repeat.as_ref(), self.items[real].due_date)
+                            {
+                                let mut next = Todo::new(
+                                    self.items[real].text.clone(),
+                                    Some(repeat.next_date(date)),
+                                    Some(Repeat::of(repeat)),
+                                );
+                                match Todo::insert(&self.db, next.to_active_model()) {
+                                    Ok(model) => next.id = Some(model.id),
+                                    Err(e) => log_error!("failed to insert repeated todo: {e}"),
                                 }
+                                self.items.push(next);
                             }
                         }
                     }
