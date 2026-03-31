@@ -13,9 +13,8 @@ use crate::kinds::{page::Page, repeat::Repeat};
 use crate::models::todo::Todo;
 use crate::widgets::input::{InputAction, InputWidget};
 use crate::widgets::todos_cache_status::TodosCacheStatusWidget;
-use crate::widgets::todos_dated_list::TodosDatedListWidget;
 use crate::widgets::todos_hint::TodosHintWidget;
-use crate::widgets::todos_index::TodosIndexWidget;
+use crate::widgets::todos_list::TodosListWidget;
 use crate::widgets::todos_tabs::TodosTabsWidget;
 
 use super::Tab;
@@ -157,24 +156,15 @@ impl Tab for Todos {
             tabs_area,
         );
 
-        match self.page {
-            Page::Index => TodosIndexWidget {
-                items: &items,
-                selected: self.selected,
-                color: self.color(),
-                show_more_above: self.offset > 0,
-                show_more_below: items.len() == self.page_size.get(),
-            }
-            .render(frame, list_area),
-            Page::Due | Page::Today | Page::History => TodosDatedListWidget {
-                items: &items,
-                dimmed: matches!(self.page, Page::History),
-                color: self.color(),
-                show_more_above: self.offset > 0,
-                show_more_below: items.len() == self.page_size.get(),
-            }
-            .render(frame, list_area, &mut self.list_state.borrow_mut()),
+        TodosListWidget {
+            items: &items,
+            page: self.page,
+            selected: self.selected,
+            color: self.color(),
+            show_more_above: self.offset > 0,
+            show_more_below: items.len() == self.page_size.get(),
         }
+        .render(frame, list_area, &mut self.list_state.borrow_mut());
 
         frame.render_widget(
             TodosHintWidget {

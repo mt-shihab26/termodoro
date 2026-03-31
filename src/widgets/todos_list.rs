@@ -2,24 +2,26 @@ use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::Paragraph;
+use ratatui::widgets::{List, ListState, Paragraph};
 use time::Duration;
 
+use crate::kinds::page::Page;
 use crate::models::todo::Todo;
 use crate::utils::date::today;
 
 use super::{todo_item::TodoItemWidget, todos_overflow::TodosOverflowWidget};
 
-pub struct TodosIndexWidget<'a> {
+pub struct TodosListWidget<'a> {
     pub items: &'a [Todo],
+    pub page: Page,
     pub selected: usize,
     pub color: Color,
     pub show_more_above: bool,
     pub show_more_below: bool,
 }
 
-impl<'a> TodosIndexWidget<'a> {
-    pub fn render(self, frame: &mut Frame, area: Rect) {
+impl<'a> TodosListWidget<'a> {
+    pub fn render(self, frame: &mut Frame, area: Rect, state: &mut ListState) {
         let horizontal_padding = 2;
         let top_padding = 1;
         let bottom_padding = 1;
@@ -46,8 +48,36 @@ impl<'a> TodosIndexWidget<'a> {
             return;
         }
 
-        let (rows, selected_row) = self.rows(padded_area.width as usize);
-        let visible_rows = padded_area.height as usize;
+        match self.page {
+            Page::Index => self.render_index(frame, padded_area),
+            Page::Due | Page::Today | Page::History => self.render_flat(frame, padded_area, state),
+        }
+
+        TodosOverflowWidget {
+            show_more_above: self.show_more_above,
+            show_more_below: self.show_more_below,
+        }
+        .render(frame, top_indicator_area, bottom_indicator_area);
+    }
+
+    fn render_flat(&self, frame: &mut Frame, area: Rect, state: &mut ListState) {
+        let dimmed = matches!(self.page, Page::History);
+        let items = self
+            .items
+            .iter()
+            .map(|todo| TodoItemWidget { todo }.list_item(dimmed))
+            .collect::<Vec<_>>();
+
+        let list = List::new(items)
+            .highlight_style(Style::default().fg(self.color).bold())
+            .highlight_symbol(">");
+
+        frame.render_stateful_widget(list, area, state);
+    }
+
+    fn render_index(&self, frame: &mut Frame, area: Rect) {
+        let (rows, selected_row) = self.index_rows(area.width as usize);
+        let visible_rows = area.height as usize;
         let start = if rows.len() <= visible_rows {
             0
         } else {
@@ -57,16 +87,10 @@ impl<'a> TodosIndexWidget<'a> {
         };
         let end = (start + visible_rows).min(rows.len());
 
-        frame.render_widget(Paragraph::new(rows[start..end].to_vec()), padded_area);
-
-        TodosOverflowWidget {
-            show_more_above: self.show_more_above,
-            show_more_below: self.show_more_below,
-        }
-        .render(frame, top_indicator_area, bottom_indicator_area);
+        frame.render_widget(Paragraph::new(rows[start..end].to_vec()), area);
     }
 
-    fn rows(&self, width: usize) -> (Vec<Line<'static>>, usize) {
+    fn index_rows(&self, width: usize) -> (Vec<Line<'static>>, usize) {
         let mut rows = Vec::new();
         let mut selected_row = 0;
         let mut last_date = None;
