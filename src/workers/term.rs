@@ -19,6 +19,12 @@ pub fn spawn(sender: Sender<Event>) {
                         }
                     }
                 }
+                Ok(TerminalEvent::Resize(width, height)) => {
+                    if sender.send(Event::Resize(width, height)).is_err() {
+                        log_error!("term worker: event channel closed, stopping");
+                        break;
+                    }
+                }
                 Ok(_) => {}
             }
         }

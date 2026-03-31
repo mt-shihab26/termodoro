@@ -121,6 +121,7 @@ impl App {
                         }
                     }
                 },
+                Ok(Event::Resize(_, _)) => {}
                 Ok(Event::Tick) => {}
             }
         }
