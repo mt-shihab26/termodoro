@@ -30,9 +30,8 @@ impl Cmd for Tui {
         &["(default)", "tui", "Launch the terminal UI"]
     }
 
-    fn run(&self) -> Result<()> {
-        let mut app = App::new(self.config.clone());
-
+    fn run(self: Box<Self>) -> Result<()> {
+        let mut app = App::new(self.config);
         app.run()
     }
 }
@@ -51,9 +50,10 @@ impl App {
 
         term::spawn(sender.clone());
 
+        let Config { timer, .. } = config;
         let tabs: Vec<Box<dyn Tab>> = vec![
             Box::new(Todos::new()),
-            Box::new(Timer::new(sender, config.timer.clone())),
+            Box::new(Timer::new(sender, timer)),
         ];
 
         Self {

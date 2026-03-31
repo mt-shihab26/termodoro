@@ -19,7 +19,7 @@ impl Cmd for Sync {
         &["sync", "Sync local database to Turso cloud"]
     }
 
-    fn run(&self) -> Result<()> {
+    fn run(self: Box<Self>) -> Result<()> {
         if !self.config.db.is_configured() {
             eprintln!("No Turso credentials found.");
             eprintln!("Config file: {}", Config::path().display());

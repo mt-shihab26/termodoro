@@ -25,11 +25,11 @@ pub struct CalendarWidget {
 }
 
 impl CalendarWidget {
-    pub fn new(date: Option<Date>, repeat: Option<Repeat>) -> Self {
+    pub fn new(date: Option<Date>, repeat: Option<&Repeat>) -> Self {
         let d = date.unwrap_or_else(today);
 
         Self {
-            repeat,
+            repeat: repeat.map(Repeat::of),
             date: d,
             repeat_picker: None,
         }

@@ -18,6 +18,16 @@ impl Repeat {
         Repeat::YearlyOnDay,
     ];
 
+    pub fn of(r: &Repeat) -> Repeat {
+        match r {
+            Repeat::Daily => Repeat::Daily,
+            Repeat::WeeklySameDay => Repeat::WeeklySameDay,
+            Repeat::WeekdaysMonFri => Repeat::WeekdaysMonFri,
+            Repeat::MonthlyOnDay => Repeat::MonthlyOnDay,
+            Repeat::YearlyOnDay => Repeat::YearlyOnDay,
+        }
+    }
+
     pub fn icon() -> &'static str {
         "⟳"
     }

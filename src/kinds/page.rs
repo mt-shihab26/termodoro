@@ -32,12 +32,20 @@ impl Page {
     }
 
     pub fn next(&self) -> Page {
-        let i = (self.index() + 1) % Self::ALL.len();
-        Self::ALL[i]
+        match self {
+            Page::Due => Page::Today,
+            Page::Today => Page::Future,
+            Page::Future => Page::History,
+            Page::History => Page::Due,
+        }
     }
 
     pub fn prev(&self) -> Page {
-        let i = (self.index() + Self::ALL.len() - 1) % Self::ALL.len();
-        Self::ALL[i]
+        match self {
+            Page::Due => Page::History,
+            Page::Today => Page::Due,
+            Page::Future => Page::Today,
+            Page::History => Page::Future,
+        }
     }
 }

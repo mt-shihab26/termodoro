@@ -15,7 +15,7 @@ impl Cmd for Version {
         &["version", "--version", "-V", "Print the current version"]
     }
 
-    fn run(&self) -> Result<()> {
+    fn run(self: Box<Self>) -> Result<()> {
         println!("{}", env!("CARGO_PKG_VERSION"));
         Ok(())
     }

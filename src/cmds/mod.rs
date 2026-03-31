@@ -6,6 +6,6 @@ pub mod version;
 use std::io::Result;
 
 pub trait Cmd {
-    fn run(&self) -> Result<()>;
+    fn run(self: Box<Self>) -> Result<()>;
     fn help(&self) -> &[&str];
 }

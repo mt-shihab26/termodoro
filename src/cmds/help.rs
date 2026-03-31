@@ -27,7 +27,7 @@ impl Cmd for Help {
         &["help", "--help", "-h", "Show help for all commands"]
     }
 
-    fn run(&self) -> Result<()> {
+    fn run(self: Box<Self>) -> Result<()> {
         println!("Usage: {} <command>\n", env!("CARGO_PKG_NAME"));
         println!("Commands:");
         for entries in &self.lines {

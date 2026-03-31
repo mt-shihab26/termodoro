@@ -18,9 +18,9 @@ pub struct RepeatWidget {
 }
 
 impl RepeatWidget {
-    pub fn new(selected: Option<Repeat>) -> Self {
+    pub fn new(selected: Option<&Repeat>) -> Self {
         let cursor = selected
-            .and_then(|r| Repeat::ALL.iter().position(|v| v == &r).map(|i| i + 1))
+            .and_then(|r| Repeat::ALL.iter().position(|v| v == r).map(|i| i + 1))
             .unwrap_or(0);
 
         Self { cursor }
@@ -39,7 +39,7 @@ impl RepeatWidget {
                 let repeat = if self.cursor == 0 {
                     None
                 } else {
-                    Some(Repeat::ALL[self.cursor - 1])
+                    Repeat::ALL.get(self.cursor - 1).map(Repeat::of)
                 };
                 return RepeatAction::Confirm(repeat);
             }
