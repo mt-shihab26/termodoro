@@ -30,6 +30,36 @@ pub struct Todos {
     input_widget: Option<InputWidget>,
 }
 
+impl Todos {
+    pub fn new(db: DatabaseConnection) -> Self {
+        Self {
+            db,
+            page: Page::Today,
+            mode: Mode::Normal,
+            state: TodosState::new(),
+            input_widget: None,
+        }
+    }
+
+    fn items(&self) -> Ref<'_, [Todo]> {
+        self.state.items(&self.db, self.page)
+    }
+
+    fn count(&self) -> usize {
+        self.state.count(&self.db, self.page)
+    }
+
+    fn set_page(&mut self, page: Page) {
+        self.page = page;
+        self.state.reset_page(&self.db, self.page);
+    }
+
+    fn cancel_input(&mut self) {
+        self.input_widget = None;
+        self.mode = Mode::Normal;
+    }
+}
+
 impl Tab for Todos {
     fn name(&self) -> &str {
         "Todos [^t]"
@@ -91,10 +121,7 @@ impl Tab for Todos {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
-                            let mut todo = Todo::new(text, date, repeat);
-                            if todo.save(&self.db) {
-                                self.state.refresh(&self.db, self.page);
-                            }
+                            self.state.add(&self.db, self.page, text, date, repeat);
                             self.cancel_input();
                         }
                         InputAction::Escape => self.cancel_input(),
@@ -106,13 +133,7 @@ impl Tab for Todos {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
-                            if let Some(mut todo) = self.selected_item().map(|todo| todo.clone()) {
-                                todo.text = text;
-                                todo.due_date = date;
-                                todo.repeat = repeat;
-                                todo.update(&self.db);
-                                self.state.refresh(&self.db, self.page);
-                            }
+                            self.state.update(&self.db, self.page, text, date, repeat);
                             self.cancel_input();
                         }
                         InputAction::Escape => self.cancel_input(),
@@ -197,7 +218,7 @@ impl Tab for Todos {
             HintWidget {
                 page: self.page,
                 ui_mode: self.mode,
-                can_delete: self.can_delete_in_items(&items),
+                can_delete: self.state.can_delete(self.page, &items),
             },
             hint_area,
         );
@@ -228,43 +249,5 @@ impl Tab for Todos {
         }
 
         Ok(())
-    }
-}
-
-impl Todos {
-    pub fn new(db: DatabaseConnection) -> Self {
-        Self {
-            db,
-            page: Page::Today,
-            mode: Mode::Normal,
-            state: TodosState::new(),
-            input_widget: None,
-        }
-    }
-
-    fn items(&self) -> Ref<'_, [Todo]> {
-        self.state.items(&self.db, self.page)
-    }
-
-    fn count(&self) -> usize {
-        self.state.count(&self.db, self.page)
-    }
-
-    fn set_page(&mut self, page: Page) {
-        self.page = page;
-        self.state.reset_page(&self.db, self.page);
-    }
-
-    fn selected_item(&self) -> Option<Ref<'_, Todo>> {
-        self.state.selected_item(&self.db, self.page)
-    }
-
-    fn can_delete_in_items(&self, items: &[Todo]) -> bool {
-        self.state.can_delete(self.page, items)
-    }
-
-    fn cancel_input(&mut self) {
-        self.input_widget = None;
-        self.mode = Mode::Normal;
     }
 }

@@ -8,6 +8,7 @@ use crate::kinds::direction::Direction;
 use crate::kinds::page::Page;
 use crate::kinds::repeat::Repeat;
 use crate::models::todo::Todo;
+use time::Date;
 
 pub struct TodosState {
     pending_g: bool,
@@ -201,6 +202,38 @@ impl TodosState {
     pub fn refresh(&mut self, db: &DatabaseConnection, page: Page) {
         self.clear_caches();
         self.clamp_selected(db, page);
+    }
+
+    pub fn add(
+        &mut self,
+        db: &DatabaseConnection,
+        page: Page,
+        text: String,
+        due_date: Option<Date>,
+        repeat: Option<Repeat>,
+    ) {
+        let mut todo = Todo::new(text, due_date, repeat);
+        if todo.save(db) {
+            self.refresh(db, page);
+        }
+    }
+
+    pub fn update(
+        &mut self,
+        db: &DatabaseConnection,
+        page: Page,
+        text: String,
+        due_date: Option<Date>,
+        repeat: Option<Repeat>,
+    ) {
+        if let Some(mut todo) = self.selected_item(db, page).map(|todo| todo.clone()) {
+            todo.text = text;
+            todo.due_date = due_date;
+            todo.repeat = repeat;
+            if todo.update(db) {
+                self.refresh(db, page);
+            }
+        }
     }
 
     pub fn move_selection(&mut self, db: &DatabaseConnection, page: Page, delta: isize) {
