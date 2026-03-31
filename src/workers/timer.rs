@@ -35,7 +35,7 @@ pub fn spawn(render_count: Arc<AtomicU8>, sender: Sender<Event>, timer_config: T
 
             if running && current_render_count != last_render_count {
                 last_render_count = current_render_count;
-                if sender.send(Event::Tick).is_err() {
+                if sender.send(Event::TimerTick).is_err() {
                     log_error!("timer worker: event channel closed, stopping");
                     break;
                 }

@@ -8,6 +8,7 @@ use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Block, ListState, Widget};
 use sea_orm::DatabaseConnection;
 
+use crate::kinds::direction::Direction;
 use crate::kinds::ui_mode::UiMode;
 use crate::kinds::{page::Page, repeat::Repeat};
 use crate::models::todo::Todo;
@@ -21,17 +22,12 @@ use super::Tab;
 
 pub const COLOR: Color = Color::Green;
 
-enum AnimationDirection {
-    Start,
-    End,
-}
-
 pub struct Todos {
     db: DatabaseConnection,
     page: Page,
     ui_mode: UiMode,
     pending_g: bool,
-    animation: Option<AnimationDirection>,
+    animation: Option<Direction>,
     selected: usize,
     offset: usize,
     page_size: Cell<usize>,
@@ -135,8 +131,8 @@ impl Tab for Todos {
             let position = (self.offset, self.selected);
 
             match direction {
-                AnimationDirection::Start => self.move_selection(-1),
-                AnimationDirection::End => self.move_selection(1),
+                Direction::Start => self.move_selection(-1),
+                Direction::End => self.move_selection(1),
             }
 
             if (self.offset, self.selected) == position {
@@ -325,7 +321,7 @@ impl Todos {
 
     fn go_to_start(&mut self, pending_g: bool) {
         if pending_g {
-            self.animation = Some(AnimationDirection::Start);
+            self.animation = Some(Direction::Start);
         } else {
             self.animation = None;
         }
@@ -333,7 +329,7 @@ impl Todos {
     }
 
     fn go_to_end(&mut self) {
-        self.animation = Some(AnimationDirection::End);
+        self.animation = Some(Direction::End);
     }
 
     fn move_selection(&mut self, delta: isize) {

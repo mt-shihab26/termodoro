@@ -9,10 +9,10 @@ use ratatui::widgets::{Block, Paragraph, Widget};
 use ratatui::{DefaultTerminal, Frame, init, restore};
 use sea_orm::DatabaseConnection;
 
-use crate::config::Config;
 use crate::tabs::{Tab, timer::Timer, todos::Todos};
-use crate::widgets::fps::FpsWidget;
-use crate::{kinds::event::Event, log_error, workers::{term, ui}};
+use crate::workers::{term, ui};
+use crate::{config::Config, kinds::event::Event};
+use crate::{log_error, widgets::fps::FpsWidget};
 
 use super::Cmd;
 
@@ -123,7 +123,8 @@ impl App {
                     }
                 },
                 Ok(Event::Resize(_, _)) => {}
-                Ok(Event::Tick) => {
+                Ok(Event::TimerTick) => {}
+                Ok(Event::NavigationTick) => {
                     if let Err(e) = self.tabs[self.selected].tick() {
                         log_error!("tab tick error: {e}");
                         return Err(e);
