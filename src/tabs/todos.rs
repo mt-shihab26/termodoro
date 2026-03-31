@@ -247,17 +247,23 @@ impl Todos {
         self.state.count(&self.db, self.page)
     }
 
-    fn invalidate_cache(&self) {
-        self.state.invalidate_items();
+    fn set_page(&mut self, page: Page) {
+        self.page = page;
+        self.state.reset_page();
+        self.invalidate_cache();
     }
 
-    fn invalidate_total_count_cache(&self) {
+    fn move_selection(&mut self, delta: isize) {
+        self.state.move_selection(&self.db, self.page, delta);
+    }
+
+    fn invalidate_cache(&self) {
+        self.state.invalidate_items();
         self.state.invalidate_count();
     }
 
     fn refresh(&mut self) {
         self.invalidate_cache();
-        self.invalidate_total_count_cache();
         self.clamp_selected();
     }
 
@@ -282,23 +288,12 @@ impl Todos {
         self.state.sync_list_state(self.items().len());
     }
 
-    fn set_page(&mut self, page: Page) {
-        self.page = page;
-        self.state.reset_page();
-        self.invalidate_cache();
-        self.invalidate_total_count_cache();
-    }
-
     fn go_to_start(&mut self, pending_g: bool) {
         self.state.go_to_start(pending_g);
     }
 
     fn go_to_end(&mut self) {
         self.state.go_to_end();
-    }
-
-    fn move_selection(&mut self, delta: isize) {
-        self.state.move_selection(&self.db, self.page, delta);
     }
 
     fn step_animation(&mut self) -> bool {
