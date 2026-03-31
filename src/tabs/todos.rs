@@ -1,4 +1,4 @@
-use std::cell::{Cell, RefCell};
+use std::cell::{Cell, Ref, RefCell};
 use std::io::Result;
 
 use ratatui::Frame;
@@ -55,16 +55,18 @@ impl Tab for Todos {
                 KeyCode::Char('j') | KeyCode::Down => self.move_selection(1),
                 KeyCode::Char('k') | KeyCode::Up => self.move_selection(-1),
                 KeyCode::Char(' ') | KeyCode::Enter => {
-                    if let Some(mut todo) = self.selected_item() {
+                    if let Some(mut todo) = self.selected_item().map(|todo| todo.clone()) {
                         todo.toggle(&self.db);
                         self.refresh();
                     }
                 }
                 KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     if !matches!(self.page, Page::History) {
-                        if let Some(todo) = self.selected_item() {
-                            if !todo.done {
-                                todo.delete(&self.db);
+                        if let Some(should_delete) = self
+                            .selected_item()
+                            .map(|todo| if todo.done { false } else { todo.delete(&self.db) })
+                        {
+                            if should_delete {
                                 self.refresh();
                             }
                         }
@@ -78,10 +80,12 @@ impl Tab for Todos {
                 }
                 KeyCode::Char('e') => {
                     if !matches!(self.page, Page::History) {
-                        if let Some(todo) = self.selected_item() {
+                        if let Some((text, due_date, repeat)) = self
+                            .selected_item()
+                            .map(|todo| (todo.text.clone(), todo.due_date, todo.repeat.clone()))
+                        {
                             self.ui_mode = UiMode::Editing;
-                            self.input_widget =
-                                Some(InputWidget::new(Some(&todo.text), todo.due_date, todo.repeat.as_ref()));
+                            self.input_widget = Some(InputWidget::new(Some(&text), due_date, repeat.as_ref()));
                         }
                     }
                 }
@@ -200,14 +204,16 @@ impl Todos {
         }
     }
 
-    fn current_items(&self) -> Vec<Todo> {
-        {
-            let mut cache = self.cache.borrow_mut();
-            if cache.is_none() {
-                *cache = Some(Todo::list(&self.db, self.page, self.offset, self.page_size.get()));
-            }
+    fn ensure_cache(&self) {
+        let mut cache = self.cache.borrow_mut();
+        if cache.is_none() {
+            *cache = Some(Todo::list(&self.db, self.page, self.offset, self.page_size.get()));
         }
-        self.cache.borrow().as_deref().unwrap_or(&[]).to_vec()
+    }
+
+    fn current_items(&self) -> Ref<'_, [Todo]> {
+        self.ensure_cache();
+        Ref::map(self.cache.borrow(), |cache| cache.as_deref().unwrap_or(&[]))
     }
 
     fn set_visible_capacity(&self, list_area: Rect) {
@@ -230,8 +236,14 @@ impl Todos {
         self.clamp_selected();
     }
 
-    fn selected_item(&self) -> Option<Todo> {
-        self.current_items().get(self.selected).cloned()
+    fn selected_item(&self) -> Option<Ref<'_, Todo>> {
+        self.ensure_cache();
+        let cache = self.cache.borrow();
+        if cache.as_ref().and_then(|items| items.get(self.selected)).is_none() {
+            return None;
+        }
+
+        Some(Ref::map(cache, |cache| &cache.as_ref().unwrap()[self.selected]))
     }
 
     fn clamp_selected(&mut self) {
@@ -304,7 +316,7 @@ impl Todos {
     }
 
     fn confirm_edit(&mut self, text: String, date: Option<time::Date>, repeat: Option<Repeat>) {
-        if let Some(mut todo) = self.selected_item() {
+        if let Some(mut todo) = self.selected_item().map(|todo| todo.clone()) {
             todo.text = text;
             todo.due_date = date;
             todo.repeat = repeat;
