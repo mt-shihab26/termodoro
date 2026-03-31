@@ -1,6 +1,6 @@
 use ratatui::Frame;
 use ratatui::layout::Rect;
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use time::Duration;
@@ -14,6 +14,8 @@ pub struct TodosIndexWidget<'a> {
     pub items: &'a [Todo],
     pub selected: usize,
     pub color: Color,
+    pub show_more_above: bool,
+    pub show_more_below: bool,
 }
 
 impl<'a> TodosIndexWidget<'a> {
@@ -32,6 +34,10 @@ impl<'a> TodosIndexWidget<'a> {
             return;
         }
 
+        if self.show_more_above {
+            frame.render_widget(Paragraph::new("^ more").fg(Color::DarkGray), padded_area);
+        }
+
         let (rows, selected_row) = self.rows(padded_area.width as usize);
         let visible_rows = padded_area.height as usize;
         let start = if rows.len() <= visible_rows {
@@ -44,6 +50,18 @@ impl<'a> TodosIndexWidget<'a> {
         let end = (start + visible_rows).min(rows.len());
 
         frame.render_widget(Paragraph::new(rows[start..end].to_vec()), padded_area);
+
+        if self.show_more_below {
+            frame.render_widget(
+                Paragraph::new("v more").fg(Color::DarkGray).right_aligned(),
+                Rect {
+                    x: padded_area.x,
+                    y: padded_area.y + padded_area.height.saturating_sub(1),
+                    width: padded_area.width,
+                    height: 1,
+                },
+            );
+        }
     }
 
     fn rows(&self, width: usize) -> (Vec<Line<'static>>, usize) {

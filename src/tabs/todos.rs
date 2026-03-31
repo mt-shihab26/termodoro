@@ -162,12 +162,16 @@ impl Tab for Todos {
                 items: &items,
                 selected: self.selected,
                 color: self.color(),
+                show_more_above: self.offset > 0,
+                show_more_below: items.len() == self.page_size.get(),
             }
             .render(frame, list_area),
             Page::Due | Page::Today | Page::History => TodosDatedListWidget {
                 items: &items,
                 dimmed: matches!(self.page, Page::History),
                 color: self.color(),
+                show_more_above: self.offset > 0,
+                show_more_below: items.len() == self.page_size.get(),
             }
             .render(frame, list_area, &mut self.list_state.borrow_mut()),
         }
