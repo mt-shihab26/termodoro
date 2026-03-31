@@ -61,7 +61,7 @@ impl Tab for Todos {
                     }
                 }
                 KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    if !matches!(self.page, Page::History) {
+                    if self.can_delete_selected() {
                         if let Some(should_delete) = self
                             .selected_item()
                             .map(|todo| if todo.done { false } else { todo.delete(&self.db) })
@@ -176,8 +176,7 @@ impl Tab for Todos {
             TodosHintWidget {
                 page: self.page,
                 ui_mode: self.ui_mode,
-                can_delete: !matches!(self.page, Page::History)
-                    && items.get(self.selected).is_some_and(|todo| !todo.done),
+                can_delete: self.can_delete_selected(),
             },
             hint_area,
         );
@@ -246,6 +245,14 @@ impl Todos {
         }
 
         Some(Ref::map(cache, |cache| &cache.as_ref().unwrap()[self.selected]))
+    }
+
+    fn can_delete_selected(&self) -> bool {
+        if matches!(self.page, Page::History) {
+            return false;
+        }
+
+        self.selected_item().is_some_and(|todo| !todo.done)
     }
 
     fn clamp_selected(&mut self) {

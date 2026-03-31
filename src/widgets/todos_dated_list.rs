@@ -17,11 +17,12 @@ impl<'a> TodosDatedListWidget<'a> {
     pub fn render(self, frame: &mut Frame, area: Rect, state: &mut ListState) {
         let horizontal_padding = 2;
         let top_padding = 1;
+        let bottom_padding = 1;
         let padded_area = Rect {
             x: area.x + horizontal_padding,
             y: area.y + top_padding,
             width: area.width.saturating_sub(horizontal_padding * 2),
-            height: area.height.saturating_sub(top_padding),
+            height: area.height.saturating_sub(top_padding + bottom_padding),
         };
 
         let items = self
