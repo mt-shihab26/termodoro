@@ -1,0 +1,6 @@
+[Unit]
+Description=Orivo database sync to Turso
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/orivo sync

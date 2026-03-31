@@ -1,0 +1,64 @@
+use std::env;
+use std::fs;
+use std::io::{Error, ErrorKind, Result};
+use std::path::PathBuf;
+use std::sync::OnceLock;
+
+use libsql::{Builder, Database};
+
+use crate::db::config::Config;
+
+static RUNTIME: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
+
+fn rt() -> &'static tokio::runtime::Runtime {
+    RUNTIME.get_or_init(|| {
+        tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .expect("failed to build tokio runtime")
+    })
+}
+
+fn io_err(e: impl std::fmt::Display) -> Error {
+    Error::new(ErrorKind::Other, e.to_string())
+}
+
+pub fn db_path() -> PathBuf {
+    let home = env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    PathBuf::from(home)
+        .join(".local")
+        .join("share")
+        .join("orivo")
+        .join("orivo.db")
+}
+
+/// Opens the database.
+/// - If Turso credentials exist in config: opens an embedded replica (local file + Turso cloud).
+/// - Otherwise: opens a plain local SQLite file.
+pub fn open() -> Result<Database> {
+    let path = db_path();
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+
+    rt().block_on(async {
+        let db = match Config::load()?.turso {
+            Some(t) => Builder::new_remote_replica(path.to_str().unwrap(), t.url, t.token)
+                .build()
+                .await
+                .map_err(io_err)?,
+            None => Builder::new_local(path.to_str().unwrap())
+                .build()
+                .await
+                .map_err(io_err)?,
+        };
+
+        Ok(db)
+    })
+}
+
+/// Syncs the embedded replica with Turso cloud.
+/// Pushes local changes up and pulls any remote changes down.
+pub fn sync(db: &Database) -> Result<()> {
+    rt().block_on(async { db.sync().await.map_err(io_err).map(|_| ()) })
+}
