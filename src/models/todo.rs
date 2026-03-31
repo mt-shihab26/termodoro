@@ -60,7 +60,11 @@ impl Todo {
                 .filter(Column::DueDate.eq(today))
                 .order_by_asc(Column::Id),
             Page::Index => Entity::find()
-                .filter(Condition::any().add(Column::DueDate.is_null()))
+                .filter(
+                    Condition::any()
+                        .add(Column::DueDate.is_null())
+                        .add(Column::DueDate.gt(today)),
+                )
                 .order_by_asc(Column::DueDate)
                 .order_by_asc(Column::Id),
             Page::History => Entity::find()
