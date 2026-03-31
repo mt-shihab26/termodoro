@@ -6,6 +6,20 @@ use time::Date;
 
 use crate::{kinds::repeat::Repeat, utils::db::rt};
 
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
+#[sea_orm(table_name = "todos")]
+pub struct Model {
+    #[sea_orm(primary_key, auto_increment = true)]
+    pub id: i32,
+    text: String,
+    done: bool,
+    due_date: Option<String>,
+    repeat: Option<String>,
+}
+
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {}
+
 pub struct Todo {
     pub id: Option<i32>,
     pub text: String,
@@ -79,6 +93,12 @@ impl From<Model> for Todo {
     }
 }
 
+impl ActiveModelBehavior for ActiveModel {}
+
+fn io_err(e: impl std::fmt::Display) -> io::Error {
+    io::Error::new(io::ErrorKind::Other, e.to_string())
+}
+
 fn format_date(date: Date) -> String {
     format!("{}-{:02}-{:02}", date.year(), date.month() as u8, date.day())
 }
@@ -89,24 +109,4 @@ fn parse_date(s: &str) -> Option<Date> {
     let month: u8 = parts.next()?.parse().ok()?;
     let day: u8 = parts.next()?.parse().ok()?;
     Date::from_calendar_date(year, time::Month::try_from(month).ok()?, day).ok()
-}
-
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
-#[sea_orm(table_name = "todos")]
-pub struct Model {
-    #[sea_orm(primary_key, auto_increment = true)]
-    pub id: i32,
-    text: String,
-    done: bool,
-    due_date: Option<String>,
-    repeat: Option<String>,
-}
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
-
-impl ActiveModelBehavior for ActiveModel {}
-
-fn io_err(e: impl std::fmt::Display) -> io::Error {
-    io::Error::new(io::ErrorKind::Other, e.to_string())
 }

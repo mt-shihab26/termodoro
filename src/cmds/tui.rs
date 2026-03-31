@@ -11,7 +11,6 @@ use sea_orm::DatabaseConnection;
 
 use crate::config::Config;
 use crate::tabs::{Tab, timer::Timer, todos::Todos};
-use crate::utils::db;
 use crate::widgets::fps::FpsWidget;
 use crate::{kinds::event::Event, log_error, workers::term};
 
@@ -19,11 +18,12 @@ use super::Cmd;
 
 pub struct Tui {
     config: Config,
+    db: DatabaseConnection,
 }
 
 impl Tui {
-    pub fn new(config: Config) -> Self {
-        Self { config }
+    pub fn new(config: Config, db: DatabaseConnection) -> Self {
+        Self { config, db }
     }
 }
 
@@ -33,8 +33,8 @@ impl Cmd for Tui {
     }
 
     fn run(self: Box<Self>) -> Result<()> {
-        let db = db::connect()?;
-        let mut app = App::new(self.config, db);
+        let mut app = App::new(self.config, self.db);
+
         app.run()
     }
 }

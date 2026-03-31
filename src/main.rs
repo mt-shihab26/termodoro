@@ -3,10 +3,11 @@ use std::io::{Error, ErrorKind, Result};
 
 use orivo::cmds::{Cmd, help::Help, tui::Tui, version::Version};
 use orivo::config::Config;
+use orivo::utils::db;
 
 fn main() -> Result<()> {
     match env::args().nth(1).as_deref() {
-        None | Some("tui") => Box::new(Tui::new(Config::load()?)).run(),
+        None | Some("tui") => Box::new(Tui::new(Config::load()?, db::connect()?)).run(),
         Some("version") | Some("--version") | Some("-V") => Box::new(Version::new()).run(),
         Some("help") | Some("--help") | Some("-h") => help(),
         Some(cmd) => unknown(cmd),
