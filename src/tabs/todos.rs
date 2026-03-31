@@ -287,25 +287,39 @@ impl Todos {
     }
 
     fn move_selection(&mut self, delta: isize) {
-        let len = self.current_items().len();
-        if len == 0 {
-            self.selected = 0;
-            return;
-        }
-
         if delta > 0 {
-            if self.selected + 1 < len {
-                self.selected += 1;
-            } else if len == self.page_size.get().max(1) {
-                self.offset += 1;
-                self.invalidate_cache();
+            for _ in 0..delta as usize {
+                let len = self.current_items().len();
+                if len == 0 {
+                    self.selected = 0;
+                    break;
+                }
+
+                if self.selected + 1 < len {
+                    self.selected += 1;
+                } else if len == self.page_size.get().max(1) {
+                    self.offset += 1;
+                    self.invalidate_cache();
+                } else {
+                    break;
+                }
             }
         } else if delta < 0 {
-            if self.selected > 0 {
-                self.selected -= 1;
-            } else if self.offset > 0 {
-                self.offset -= 1;
-                self.invalidate_cache();
+            for _ in 0..delta.unsigned_abs() {
+                let len = self.current_items().len();
+                if len == 0 {
+                    self.selected = 0;
+                    break;
+                }
+
+                if self.selected > 0 {
+                    self.selected -= 1;
+                } else if self.offset > 0 {
+                    self.offset -= 1;
+                    self.invalidate_cache();
+                } else {
+                    break;
+                }
             }
         }
     }
