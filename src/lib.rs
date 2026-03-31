@@ -1,4 +1,5 @@
 pub mod cmds;
+pub mod config;
 pub mod db;
 pub mod domains;
 pub mod kinds;
