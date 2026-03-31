@@ -45,6 +45,7 @@ impl Todo {
 
     pub fn list_by_page(db: &DatabaseConnection, page: Page) -> Vec<Todo> {
         let today = format_date(OffsetDateTime::now_utc().date());
+
         let query = match page {
             Page::Due => Entity::find()
                 .filter(Column::Done.eq(false))

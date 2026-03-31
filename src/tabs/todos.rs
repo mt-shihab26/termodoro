@@ -45,7 +45,7 @@ impl Todos {
         }
     }
 
-    fn with_items<R>(&self, f: impl FnOnce(&[Todo]) -> R) -> R {
+    fn current_items(&self) -> Vec<Todo> {
         {
             let mut cache = self.cache.borrow_mut();
             if cache.is_none() {
@@ -53,21 +53,24 @@ impl Todos {
             }
         }
 
-        let cache = self.cache.borrow();
-        let items = cache.as_deref().unwrap_or(&[]);
-        f(items)
+        self.cache.borrow().as_deref().unwrap_or(&[]).to_vec()
     }
 
     fn invalidate_cache(&self) {
         *self.cache.borrow_mut() = None;
     }
 
-    fn current_items(&self) -> Vec<Todo> {
-        self.with_items(|items| items.to_vec())
-    }
-
     fn selected_item(&self) -> Option<Todo> {
         self.current_items().get(self.selected).cloned()
+    }
+
+    fn clamp_selected(&mut self) {
+        let len = self.current_items().len();
+        if len == 0 {
+            self.selected = 0;
+        } else {
+            self.selected = self.selected.min(len - 1);
+        }
     }
 
     fn sync_list_state(&self) {
@@ -78,15 +81,6 @@ impl Todos {
             Some(self.selected.min(len - 1))
         };
         self.list_state.borrow_mut().select(selected);
-    }
-
-    fn clamp_selected(&mut self) {
-        let len = self.current_items().len();
-        if len == 0 {
-            self.selected = 0;
-        } else {
-            self.selected = self.selected.min(len - 1);
-        }
     }
 }
 
