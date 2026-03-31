@@ -8,6 +8,7 @@ use crate::kinds::{page::Page, ui_mode::UiMode};
 pub struct TodosHintWidget {
     pub page: Page,
     pub ui_mode: UiMode,
+    pub can_delete: bool,
 }
 
 impl Widget for TodosHintWidget {
@@ -15,7 +16,8 @@ impl Widget for TodosHintWidget {
         let hint = match self.ui_mode {
             UiMode::Normal => match self.page {
                 Page::History => "[[/]]Page  [j/k]Navigate",
-                _ => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^d]Delete",
+                _ if self.can_delete => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^d]Delete",
+                _ => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit",
             },
             UiMode::Adding | UiMode::Editing => "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char",
         };

@@ -176,6 +176,8 @@ impl Tab for Todos {
             TodosHintWidget {
                 page: self.page,
                 ui_mode: self.ui_mode,
+                can_delete: !matches!(self.page, Page::History)
+                    && items.get(self.selected).is_some_and(|todo| !todo.done),
             },
             hint_area,
         );
