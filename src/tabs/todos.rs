@@ -162,6 +162,7 @@ impl Tab for Todos {
 
         ListWidget {
             items: &items,
+            offset: self.offset,
             page: self.page,
             selected: self.selected,
             color: self.color(),
