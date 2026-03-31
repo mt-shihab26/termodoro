@@ -90,6 +90,10 @@ impl Todo {
             return None;
         }
 
+        if self.due_date.is_none() {
+            self.due_date = Some(today());
+        }
+
         let (Some(repeat), Some(date)) = (self.repeat.as_ref(), self.due_date) else {
             return None;
         };
