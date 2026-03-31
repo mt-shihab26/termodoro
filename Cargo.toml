@@ -10,8 +10,6 @@ time = { version = "0.3", features = ["local-offset"] }
 ratatui-textarea = "0.8.0"
 sea-orm = { version = "1", features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
 sea-orm-migration = { version = "1", features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
-libsql = { version = "0.6", features = ["replication"] }
-libsqlite3-sys = { version = "0.30", default-features = false }
 tokio = { version = "1", features = ["rt", "rt-multi-thread"] }
 serde = { version = "1", features = ["derive"] }
 toml = "0.8"

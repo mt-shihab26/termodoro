@@ -1,5 +1,4 @@
 pub mod help;
-pub mod sync;
 pub mod tui;
 pub mod version;
 
