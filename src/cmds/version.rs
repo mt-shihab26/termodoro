@@ -8,15 +8,11 @@ impl Version {
     pub fn new() -> Self {
         Self {}
     }
-
-    pub fn help() -> &'static [&'static str] {
-        &["version", "--version", "-V", "Print the current version"]
-    }
 }
 
 impl Cmd for Version {
-    fn help(&self) -> &[&str] {
-        Self::help()
+    fn help() -> &'static [&'static str] {
+        &["version", "--version", "-V", "Print the current version"]
     }
 
     fn run(self: Box<Self>) -> Result<()> {

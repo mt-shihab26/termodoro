@@ -23,15 +23,11 @@ impl Tui {
     pub fn new(config: Config) -> Self {
         Self { config }
     }
-
-    pub fn help() -> &'static [&'static str] {
-        &["(default)", "tui", "Launch the terminal UI"]
-    }
 }
 
 impl Cmd for Tui {
-    fn help(&self) -> &[&str] {
-        Self::help()
+    fn help() -> &'static [&'static str] {
+        &["(default)", "tui", "Launch the terminal UI"]
     }
 
     fn run(self: Box<Self>) -> Result<()> {
@@ -55,10 +51,7 @@ impl App {
         term::spawn(sender.clone());
 
         let Config { timer, .. } = config;
-        let tabs: Vec<Box<dyn Tab>> = vec![
-            Box::new(Todos::new()),
-            Box::new(Timer::new(sender, timer)),
-        ];
+        let tabs: Vec<Box<dyn Tab>> = vec![Box::new(Todos::new()), Box::new(Timer::new(sender, timer))];
 
         Self {
             alive: true,

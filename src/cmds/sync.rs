@@ -12,15 +12,11 @@ impl Sync {
     pub fn new(config: Config) -> Self {
         Self { config }
     }
-
-    pub fn help() -> &'static [&'static str] {
-        &["sync", "Sync local database to Turso cloud"]
-    }
 }
 
 impl Cmd for Sync {
-    fn help(&self) -> &[&str] {
-        Self::help()
+    fn help() -> &'static [&'static str] {
+        &["sync", "Sync local database to Turso cloud"]
     }
 
     fn run(self: Box<Self>) -> Result<()> {

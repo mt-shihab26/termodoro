@@ -16,10 +16,6 @@ impl Help {
         Self { lines }
     }
 
-    pub fn help() -> &'static [&'static str] {
-        &["help", "--help", "-h", "Show help for all commands"]
-    }
-
     fn format(entries: &[&str]) -> String {
         let (description, names) = entries.split_last().unwrap_or((&"", &[]));
         format!("{:<30} {}", names.join(", "), description)
@@ -27,8 +23,8 @@ impl Help {
 }
 
 impl Cmd for Help {
-    fn help(&self) -> &[&str] {
-        Self::help()
+    fn help() -> &'static [&'static str] {
+        &["help", "--help", "-h", "Show help for all commands"]
     }
 
     fn run(self: Box<Self>) -> Result<()> {

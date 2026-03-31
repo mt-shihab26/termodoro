@@ -7,5 +7,5 @@ use std::io::Result;
 
 pub trait Cmd {
     fn run(self: Box<Self>) -> Result<()>;
-    fn help(&self) -> &[&str];
+    fn help() -> &'static [&'static str];
 }
