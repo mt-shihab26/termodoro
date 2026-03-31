@@ -43,18 +43,10 @@ impl Tab for Todos {
                 KeyCode::Char('2') => self.set_page(Page::Today),
                 KeyCode::Char('3') => self.set_page(Page::Index),
                 KeyCode::Char('4') => self.set_page(Page::History),
-                KeyCode::Char(']') => {
-                    self.set_page(self.page.next());
-                }
-                KeyCode::Char('[') => {
-                    self.set_page(self.page.prev());
-                }
-                KeyCode::Char('j') | KeyCode::Down => {
-                    self.move_selection(1);
-                }
-                KeyCode::Char('k') | KeyCode::Up => {
-                    self.move_selection(-1);
-                }
+                KeyCode::Char(']') => self.set_page(self.page.next()),
+                KeyCode::Char('[') => self.set_page(self.page.prev()),
+                KeyCode::Char('j') | KeyCode::Down => self.move_selection(1),
+                KeyCode::Char('k') | KeyCode::Up => self.move_selection(-1),
                 KeyCode::Char(' ') | KeyCode::Enter => {
                     if let Some(mut todo) = self.selected_item() {
                         todo.toggle(&self.db);
