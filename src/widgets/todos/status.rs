@@ -8,45 +8,39 @@ pub struct StatusWidget {
     pub from: usize,
     pub to: usize,
     pub page: usize,
-    pub selected_id: Option<i32>,
 }
 
 impl StatusWidget {
-    pub fn new(total: usize, from: usize, to: usize, page: usize, selected_id: Option<i32>) -> Self {
+    pub fn new(total: usize, from: usize, to: usize, page: usize) -> Self {
         Self {
             total,
             from,
             to,
             page,
-            selected_id,
         }
     }
 }
 
 impl Widget for StatusWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let status = match self.selected_id {
-            Some(id) => format!(
-                " items {}-{} / {}  page {}  id {} ",
-                self.from, self.to, self.total, self.page, id
-            ),
-            None if self.total > 0 => {
-                format!(" items {}-{} / {}  page {} ", self.from, self.to, self.total, self.page)
-            }
-            None => " items 0-0 / 0  page 1 ".to_string(),
-        };
-
-        Paragraph::new(status)
-            .fg(Color::DarkGray)
-            .right_aligned()
-            .render(
-                Rect {
-                    x: area.x + 1,
-                    y: area.y,
-                    width: area.width.saturating_sub(2),
-                    height: 1,
-                },
-                buf,
-            );
+        Paragraph::new(format!(
+            "{} | {}-{} | {}/{}",
+            self.page,
+            self.from,
+            self.to,
+            self.to - self.from,
+            self.total,
+        ))
+        .fg(Color::DarkGray)
+        .right_aligned()
+        .render(
+            Rect {
+                x: area.x + 1,
+                y: area.y,
+                width: area.width.saturating_sub(2),
+                height: 1,
+            },
+            buf,
+        );
     }
 }

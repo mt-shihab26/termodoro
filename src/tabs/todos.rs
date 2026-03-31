@@ -184,16 +184,7 @@ impl Tab for Todos {
         let to = self.state.to(items.len());
         let page = self.state.page();
 
-        frame.render_widget(
-            StatusWidget::new(
-                total,
-                from,
-                to,
-                page,
-                items.get(self.state.selected()).and_then(|todo| todo.id),
-            ),
-            area,
-        );
+        frame.render_widget(StatusWidget::new(total, from, to, page), area);
 
         frame.render_widget(
             TabsWidget {
