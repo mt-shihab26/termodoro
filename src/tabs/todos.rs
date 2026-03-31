@@ -25,6 +25,7 @@ pub struct Todos {
     db: DatabaseConnection,
     page: Page,
     ui_mode: UiMode,
+    pending_g: bool,
     selected: usize,
     offset: usize,
     page_size: Cell<usize>,
@@ -43,6 +44,12 @@ impl Tab for Todos {
     }
 
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
+        let mut g = false;
+        if self.pending_g {
+            g = true;
+        }
+        self.pending_g = false;
+
         match self.ui_mode {
             UiMode::Normal => match key.code {
                 KeyCode::Char('1') => self.set_page(Page::Due),
@@ -53,6 +60,12 @@ impl Tab for Todos {
                 KeyCode::Char('[') => self.set_page(self.page.prev()),
                 KeyCode::Char('j') | KeyCode::Down => self.move_selection(1),
                 KeyCode::Char('k') | KeyCode::Up => self.move_selection(-1),
+                KeyCode::Char('g') => {
+                    if g {
+                        self.go_to_start();
+                    }
+                    self.pending_g = !self.pending_g;
+                }
                 KeyCode::Char('G') => {
                     let len = self.current_items().len();
                     self.move_selection(len.saturating_sub(1) as isize);
@@ -195,6 +208,7 @@ impl Todos {
             db,
             page: Page::Today,
             ui_mode: UiMode::Normal,
+            pending_g: false,
             selected: 0,
             offset: 0,
             page_size: Cell::new(1),
@@ -282,6 +296,13 @@ impl Todos {
 
     fn set_page(&mut self, page: Page) {
         self.page = page;
+        self.pending_g = false;
+        self.offset = 0;
+        self.selected = 0;
+        self.invalidate_cache();
+    }
+
+    fn go_to_start(&mut self) {
         self.offset = 0;
         self.selected = 0;
         self.invalidate_cache();
