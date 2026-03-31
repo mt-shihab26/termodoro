@@ -1,7 +1,8 @@
 use std::io::{Error, ErrorKind, Result};
 
 use crate::cmds::Cmd;
-use crate::db::{config::Config, store};
+use crate::db::store;
+use crate::utils::config::Config;
 
 pub struct Sync;
 

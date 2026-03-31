@@ -6,7 +6,7 @@ use std::sync::OnceLock;
 
 use libsql::{Builder, Database};
 
-use crate::db::config::Config;
+use crate::utils::config::Config;
 
 static RUNTIME: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
 

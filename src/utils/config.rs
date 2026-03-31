@@ -5,15 +5,15 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Deserialize, Serialize)]
-pub struct Config {
-    pub turso: Option<TursoConfig>,
-}
-
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct TursoConfig {
     pub url: String,
     pub token: String,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize)]
+pub struct Config {
+    pub turso: Option<TursoConfig>,
 }
 
 impl Config {
