@@ -2,7 +2,7 @@ use std::cell::{Cell, RefCell};
 use std::io::Result;
 
 use ratatui::Frame;
-use ratatui::crossterm::event::{KeyCode, KeyEvent};
+use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Block, ListState, Widget};
@@ -60,7 +60,7 @@ impl Tab for Todos {
                         self.refresh();
                     }
                 }
-                KeyCode::Char('d') => {
+                KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     if !matches!(self.page, Page::History) {
                         if let Some(todo) = self.selected_item() {
                             if !todo.done {

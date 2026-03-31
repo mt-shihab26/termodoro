@@ -19,6 +19,18 @@ pub fn shift_month(date: Date, delta: i32) -> Date {
     date
 }
 
+pub fn format_date(date: Date) -> String {
+    format!("{}-{:02}-{:02}", date.year(), date.month() as u8, date.day())
+}
+
+pub fn parse_date(s: &str) -> Option<Date> {
+    let mut parts = s.splitn(3, '-');
+    let year: i32 = parts.next()?.parse().ok()?;
+    let month: u8 = parts.next()?.parse().ok()?;
+    let day: u8 = parts.next()?.parse().ok()?;
+    Date::from_calendar_date(year, Month::try_from(month).ok()?, day).ok()
+}
+
 fn days_in_month(year: i32, month: Month) -> u8 {
     let (ny, nm) = if month == Month::December {
         (year + 1, 1u8)

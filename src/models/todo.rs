@@ -7,11 +7,9 @@ use sea_orm::{ColumnTrait, Condition, QueryFilter};
 use sea_orm::{DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait};
 use time::Date;
 
-use crate::kinds::page::Page;
-use crate::{
-    kinds::repeat::Repeat,
-    utils::{date::today, db::rt},
-};
+use crate::kinds::{page::Page, repeat::Repeat};
+use crate::utils::date::{format_date, parse_date, today};
+use crate::utils::db::rt;
 use crate::{log_error, log_warn};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
@@ -201,16 +199,4 @@ impl ActiveModelBehavior for ActiveModel {}
 
 fn io_err(e: impl std::fmt::Display) -> io::Error {
     io::Error::new(io::ErrorKind::Other, e.to_string())
-}
-
-fn format_date(date: Date) -> String {
-    format!("{}-{:02}-{:02}", date.year(), date.month() as u8, date.day())
-}
-
-fn parse_date(s: &str) -> Option<Date> {
-    let mut parts = s.splitn(3, '-');
-    let year: i32 = parts.next()?.parse().ok()?;
-    let month: u8 = parts.next()?.parse().ok()?;
-    let day: u8 = parts.next()?.parse().ok()?;
-    Date::from_calendar_date(year, time::Month::try_from(month).ok()?, day).ok()
 }

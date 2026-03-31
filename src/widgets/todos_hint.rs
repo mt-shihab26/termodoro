@@ -15,7 +15,7 @@ impl Widget for TodosHintWidget {
         let hint = match self.ui_mode {
             UiMode::Normal => match self.page {
                 Page::History => "[[/]]Page  [j/k]Navigate",
-                _ => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [d]Delete",
+                _ => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^d]Delete",
             },
             UiMode::Adding | UiMode::Editing => "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char",
         };
