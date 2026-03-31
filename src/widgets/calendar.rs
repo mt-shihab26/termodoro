@@ -65,7 +65,7 @@ impl CalendarWidget {
             KeyCode::Char('j') | KeyCode::Down => self.navigate(self.date.checked_add(Duration::weeks(1))),
             KeyCode::Char('H') => self.navigate(Some(shift_month(self.date, -1))),
             KeyCode::Char('L') => self.navigate(Some(shift_month(self.date, 1))),
-            KeyCode::Char('r') => self.repeat_picker = Some(RepeatWidget::new(self.repeat)),
+            KeyCode::Char('r') => self.repeat_picker = Some(RepeatWidget::new(self.repeat.as_ref())),
             KeyCode::Enter => {
                 return CalendarAction::Confirm {
                     date: Some(self.date),
