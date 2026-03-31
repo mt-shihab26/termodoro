@@ -1,5 +1,4 @@
-use crate::kinds::phase::Phase;
-use crate::utils::config::TimerConfig;
+use crate::{config::timer::TimerConfig, kinds::phase::Phase};
 
 use super::config::Config;
 
@@ -12,8 +11,8 @@ pub struct TimerState {
 }
 
 impl TimerState {
-    pub fn new(timer: TimerConfig) -> Self {
-        let config = Config::new(timer);
+    pub fn new(timer_config: TimerConfig) -> Self {
+        let config = Config::new(timer_config);
         let millis = config.work_duration();
         Self {
             phase: Phase::Work,

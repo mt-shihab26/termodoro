@@ -6,7 +6,7 @@ use std::sync::OnceLock;
 
 use libsql::{Builder, Database};
 
-use crate::config::Config;
+use crate::config::db::DBConfig;
 
 static RUNTIME: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
 
@@ -33,24 +33,25 @@ pub fn db_path() -> PathBuf {
 }
 
 /// Opens the database.
-/// - If Turso credentials exist in config: opens an embedded replica (local file + Turso cloud).
+/// - If Turso credentials are configured: opens an embedded replica (local file + Turso cloud).
 /// - Otherwise: opens a plain local SQLite file.
-pub fn open() -> Result<Database> {
+pub fn open(db_config: &DBConfig) -> Result<Database> {
     let path = db_path();
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
 
     rt().block_on(async {
-        let db = match Config::load()?.turso {
-            Some(t) => Builder::new_remote_replica(path.to_str().unwrap(), t.url, t.token)
+        let db = if db_config.is_configured() {
+            Builder::new_remote_replica(path.to_str().unwrap(), db_config.url.clone(), db_config.token.clone())
                 .build()
                 .await
-                .map_err(io_err)?,
-            None => Builder::new_local(path.to_str().unwrap())
+                .map_err(io_err)?
+        } else {
+            Builder::new_local(path.to_str().unwrap())
                 .build()
                 .await
-                .map_err(io_err)?,
+                .map_err(io_err)?
         };
 
         Ok(db)

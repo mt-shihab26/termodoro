@@ -1,4 +1,4 @@
-use crate::utils::config::TimerConfig;
+use crate::config::timer::TimerConfig;
 
 pub struct Config {
     inner: TimerConfig,

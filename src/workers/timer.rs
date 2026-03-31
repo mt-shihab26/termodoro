@@ -2,7 +2,9 @@ use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::{Arc, Mutex, mpsc::Sender};
 use std::{thread, time::Duration};
 
-use crate::{domains::timer::state::TimerState, kinds::event::Event, log_error, log_warn, utils::config::TimerConfig};
+use crate::config::timer::TimerConfig;
+use crate::domains::timer::state::TimerState;
+use crate::{kinds::event::Event, log_error, log_warn};
 
 pub fn spawn(render_count: Arc<AtomicU8>, sender: Sender<Event>, timer_config: TimerConfig) -> Arc<Mutex<TimerState>> {
     let state = Arc::new(Mutex::new(TimerState::new(timer_config)));

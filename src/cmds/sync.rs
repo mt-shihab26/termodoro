@@ -35,7 +35,7 @@ impl Cmd for Sync {
         }
 
         println!("Opening database...");
-        let db = store::open()?;
+        let db = store::open(&self.config.db)?;
 
         println!("Syncing to Turso...");
         store::sync(&db)?;

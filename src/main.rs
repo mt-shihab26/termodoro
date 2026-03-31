@@ -2,7 +2,7 @@ use std::env;
 use std::io::{Error, ErrorKind, Result};
 
 use orivo::cmds::{Cmd, help::Help, sync::Sync, tui::Tui, version::Version};
-use orivo::utils::config::Config;
+use orivo::config::Config;
 
 fn main() -> Result<()> {
     let config = Config::load()?;

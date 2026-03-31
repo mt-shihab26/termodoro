@@ -38,7 +38,6 @@ impl Cmd for Tui {
 }
 
 struct App {
-    config: Config,
     alive: bool,
     selected: usize,
     tabs: Vec<Box<dyn Tab>>,
@@ -58,7 +57,6 @@ impl App {
         ];
 
         Self {
-            config,
             alive: true,
             selected: 0,
             tabs,
