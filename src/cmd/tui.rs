@@ -2,7 +2,7 @@ use std::io::Result;
 
 use crate::handlers::tui::app::App;
 
-use super::Command;
+use super::Cmd;
 
 pub struct Tui;
 
@@ -12,7 +12,7 @@ impl Tui {
     }
 }
 
-impl Command for Tui {
+impl Cmd for Tui {
     fn help(&self) -> &[&str] {
         &["(default)", "tui", "Launch the terminal UI"]
     }

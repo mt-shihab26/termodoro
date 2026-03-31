@@ -1,13 +1,13 @@
 use std::io::Result;
 
-use super::Command;
+use super::Cmd;
 
 pub struct Help {
     lines: Vec<Vec<String>>,
 }
 
 impl Help {
-    pub fn new(cmds: &Vec<(&str, Box<dyn Command>)>) -> Self {
+    pub fn new(cmds: &Vec<(&str, Box<dyn Cmd>)>) -> Self {
         let lines = cmds
             .iter()
             .map(|(_, c)| c.help().iter().map(|s| s.to_string()).collect())
@@ -22,7 +22,7 @@ impl Help {
     }
 }
 
-impl Command for Help {
+impl Cmd for Help {
     fn help(&self) -> &[&str] {
         &["help", "--help", "-h", "Show help for all commands"]
     }

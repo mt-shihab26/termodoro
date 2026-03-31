@@ -5,7 +5,7 @@ pub mod version;
 
 use std::io::Result;
 
-pub trait Command {
+pub trait Cmd {
     fn run(&self) -> Result<()>;
     fn help(&self) -> &[&str];
 }

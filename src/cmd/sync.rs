@@ -1,6 +1,6 @@
 use std::io::{Error, ErrorKind, Result};
 
-use crate::commands::Command;
+use crate::cmd::Cmd;
 use crate::db::{config::Config, store};
 
 pub struct Sync;
@@ -11,7 +11,7 @@ impl Sync {
     }
 }
 
-impl Command for Sync {
+impl Cmd for Sync {
     fn help(&self) -> &[&str] {
         &["sync", "Sync local database to Turso cloud"]
     }

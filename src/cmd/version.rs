@@ -1,6 +1,6 @@
 use std::io::Result;
 
-use crate::commands::Command;
+use crate::cmd::Cmd;
 
 pub struct Version;
 
@@ -10,7 +10,7 @@ impl Version {
     }
 }
 
-impl Command for Version {
+impl Cmd for Version {
     fn help(&self) -> &[&str] {
         &["version", "--version", "-V", "Print the current version"]
     }
