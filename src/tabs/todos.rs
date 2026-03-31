@@ -9,7 +9,7 @@ use ratatui::widgets::{Block, ListState, Widget};
 use sea_orm::DatabaseConnection;
 
 use crate::kinds::direction::Direction;
-use crate::kinds::ui_mode::UiMode;
+use crate::kinds::mode::Mode;
 use crate::kinds::{page::Page, repeat::Repeat};
 use crate::models::todo::Todo;
 use crate::widgets::todos::hint::HintWidget;
@@ -25,9 +25,9 @@ pub const COLOR: Color = Color::Green;
 pub struct Todos {
     db: DatabaseConnection,
     page: Page,
-    ui_mode: UiMode,
+    mode: Mode,
     pending_g: bool,
-    animation: Option<Direction>,
+    direction: Option<Direction>,
     selected: usize,
     offset: usize,
     page_size: Cell<usize>,
@@ -49,10 +49,10 @@ impl Tab for Todos {
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
         let pending_g = self.pending_g;
         self.pending_g = false;
-        self.animation = None;
+        self.direction = None;
 
-        match self.ui_mode {
-            UiMode::Normal => match key.code {
+        match self.mode {
+            Mode::Normal => match key.code {
                 KeyCode::Char('1') => self.set_page(Page::Due),
                 KeyCode::Char('2') => self.set_page(Page::Today),
                 KeyCode::Char('3') => self.set_page(Page::Index),
@@ -86,7 +86,7 @@ impl Tab for Todos {
                 }
                 KeyCode::Char('a') => {
                     if !matches!(self.page, Page::History) {
-                        self.ui_mode = UiMode::Adding;
+                        self.mode = Mode::Adding;
                         self.input_widget = Some(InputWidget::new(None, None, None));
                     }
                 }
@@ -96,7 +96,7 @@ impl Tab for Todos {
                             .selected_item()
                             .map(|todo| (todo.text.clone(), todo.due_date, todo.repeat.clone()))
                         {
-                            self.ui_mode = UiMode::Editing;
+                            self.mode = Mode::Editing;
                             self.input_widget =
                                 Some(InputWidget::new(Some(&text), due_date, repeat.as_ref()));
                         }
@@ -104,7 +104,7 @@ impl Tab for Todos {
                 }
                 _ => {}
             },
-            UiMode::Adding => {
+            Mode::Adding => {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
@@ -115,7 +115,7 @@ impl Tab for Todos {
                     }
                 }
             }
-            UiMode::Editing => {
+            Mode::Editing => {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
@@ -140,8 +140,8 @@ impl Tab for Todos {
 
         let area = inner;
 
-        let (tabs_area, list_area, hint_area, input_area) = match self.ui_mode {
-            UiMode::Normal => {
+        let (tabs_area, list_area, hint_area, input_area) = match self.mode {
+            Mode::Normal => {
                 let [tabs, list, hint] = Layout::vertical([
                     Constraint::Length(1),
                     Constraint::Fill(1),
@@ -150,7 +150,7 @@ impl Tab for Todos {
                 .areas(area);
                 (tabs, list, hint, None)
             }
-            UiMode::Adding | UiMode::Editing => {
+            Mode::Adding | Mode::Editing => {
                 let [tabs, list, hint, input] = Layout::vertical([
                     Constraint::Length(1),
                     Constraint::Fill(1),
@@ -202,7 +202,7 @@ impl Tab for Todos {
         frame.render_widget(
             HintWidget {
                 page: self.page,
-                ui_mode: self.ui_mode,
+                ui_mode: self.mode,
                 can_delete: self.can_delete_in_items(&items),
             },
             hint_area,
@@ -217,15 +217,15 @@ impl Tab for Todos {
     }
 
     fn should_tick(&self) -> bool {
-        self.animation.is_some()
+        self.direction.is_some()
     }
 
     fn next_tick(&mut self) -> Result<()> {
-        if !matches!(self.ui_mode, UiMode::Normal) {
+        if !matches!(self.mode, Mode::Normal) {
             return Ok(());
         }
 
-        if let Some(direction) = &self.animation {
+        if let Some(direction) = &self.direction {
             let position = (self.offset, self.selected);
 
             match direction {
@@ -234,7 +234,7 @@ impl Tab for Todos {
             }
 
             if (self.offset, self.selected) == position {
-                self.animation = None;
+                self.direction = None;
             }
 
             self.sync_list_state();
@@ -249,9 +249,9 @@ impl Todos {
         Self {
             db,
             page: Page::Today,
-            ui_mode: UiMode::Normal,
+            mode: Mode::Normal,
             pending_g: false,
-            animation: None,
+            direction: None,
             selected: 0,
             offset: 0,
             page_size: Cell::new(1),
@@ -368,7 +368,7 @@ impl Todos {
     fn set_page(&mut self, page: Page) {
         self.page = page;
         self.pending_g = false;
-        self.animation = None;
+        self.direction = None;
         self.offset = 0;
         self.selected = 0;
         self.invalidate_cache();
@@ -377,15 +377,15 @@ impl Todos {
 
     fn go_to_start(&mut self, pending_g: bool) {
         if pending_g {
-            self.animation = Some(Direction::Start);
+            self.direction = Some(Direction::Start);
         } else {
-            self.animation = None;
+            self.direction = None;
         }
         self.pending_g = !pending_g;
     }
 
     fn go_to_end(&mut self) {
-        self.animation = Some(Direction::End);
+        self.direction = Some(Direction::End);
     }
 
     fn move_selection(&mut self, delta: isize) {
@@ -428,7 +428,7 @@ impl Todos {
 
     fn cancel_input(&mut self) {
         self.input_widget = None;
-        self.ui_mode = UiMode::Normal;
+        self.mode = Mode::Normal;
     }
 
     fn confirm_add(&mut self, text: String, date: Option<time::Date>, repeat: Option<Repeat>) {

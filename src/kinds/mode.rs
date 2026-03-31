@@ -1,5 +1,5 @@
 #[derive(Clone, Copy)]
-pub enum UiMode {
+pub enum Mode {
     Normal,
     Adding,
     Editing,
