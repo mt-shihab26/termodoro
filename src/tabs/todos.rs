@@ -21,11 +21,17 @@ use super::Tab;
 
 pub const COLOR: Color = Color::Green;
 
+enum AnimationDirection {
+    Start,
+    End,
+}
+
 pub struct Todos {
     db: DatabaseConnection,
     page: Page,
     ui_mode: UiMode,
     pending_g: bool,
+    animation: Option<AnimationDirection>,
     selected: usize,
     offset: usize,
     page_size: Cell<usize>,
@@ -46,6 +52,7 @@ impl Tab for Todos {
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
         let pending_g = self.pending_g;
         self.pending_g = false;
+        self.animation = None;
 
         match self.ui_mode {
             UiMode::Normal => match key.code {
@@ -116,6 +123,29 @@ impl Tab for Todos {
             }
         }
         self.sync_list_state();
+        Ok(())
+    }
+
+    fn tick(&mut self) -> Result<()> {
+        if !matches!(self.ui_mode, UiMode::Normal) {
+            return Ok(());
+        }
+
+        if let Some(direction) = &self.animation {
+            let position = (self.offset, self.selected);
+
+            match direction {
+                AnimationDirection::Start => self.move_selection(-1),
+                AnimationDirection::End => self.move_selection(1),
+            }
+
+            if (self.offset, self.selected) == position {
+                self.animation = None;
+            }
+
+            self.sync_list_state();
+        }
+
         Ok(())
     }
 
@@ -198,6 +228,7 @@ impl Todos {
             page: Page::Today,
             ui_mode: UiMode::Normal,
             pending_g: false,
+            animation: None,
             selected: 0,
             offset: 0,
             page_size: Cell::new(1),
@@ -286,6 +317,7 @@ impl Todos {
     fn set_page(&mut self, page: Page) {
         self.page = page;
         self.pending_g = false;
+        self.animation = None;
         self.offset = 0;
         self.selected = 0;
         self.invalidate_cache();
@@ -293,22 +325,15 @@ impl Todos {
 
     fn go_to_start(&mut self, pending_g: bool) {
         if pending_g {
-            self.offset = 0;
-            self.selected = 0;
-            self.invalidate_cache();
+            self.animation = Some(AnimationDirection::Start);
+        } else {
+            self.animation = None;
         }
-        self.pending_g = !self.pending_g;
+        self.pending_g = !pending_g;
     }
 
     fn go_to_end(&mut self) {
-        loop {
-            let position = (self.offset, self.selected);
-            self.move_selection(1);
-
-            if (self.offset, self.selected) == position {
-                break;
-            }
-        }
+        self.animation = Some(AnimationDirection::End);
     }
 
     fn move_selection(&mut self, delta: isize) {

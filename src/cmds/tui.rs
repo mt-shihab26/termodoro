@@ -12,7 +12,7 @@ use sea_orm::DatabaseConnection;
 use crate::config::Config;
 use crate::tabs::{Tab, timer::Timer, todos::Todos};
 use crate::widgets::fps::FpsWidget;
-use crate::{kinds::event::Event, log_error, workers::term};
+use crate::{kinds::event::Event, log_error, workers::{term, ui}};
 
 use super::Cmd;
 
@@ -52,6 +52,7 @@ impl App {
         let (sender, events) = mpsc::channel::<Event>();
 
         term::spawn(sender.clone());
+        ui::spawn(sender.clone());
 
         let Config { timer, .. } = config;
         let tabs: Vec<Box<dyn Tab>> = vec![Box::new(Todos::new(db)), Box::new(Timer::new(sender, timer))];
@@ -122,7 +123,12 @@ impl App {
                     }
                 },
                 Ok(Event::Resize(_, _)) => {}
-                Ok(Event::Tick) => {}
+                Ok(Event::Tick) => {
+                    if let Err(e) = self.tabs[self.selected].tick() {
+                        log_error!("tab tick error: {e}");
+                        return Err(e);
+                    }
+                }
             }
         }
 
