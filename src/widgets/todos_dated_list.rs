@@ -1,12 +1,11 @@
 use ratatui::Frame;
 use ratatui::layout::Rect;
-use ratatui::style::{Color, Style, Stylize};
-use ratatui::widgets::Paragraph;
+use ratatui::style::{Color, Style};
 use ratatui::widgets::{List, ListState};
 
 use crate::models::todo::Todo;
 
-use super::todo_item::TodoItemWidget;
+use super::{todo_item::TodoItemWidget, todos_overflow::TodosOverflowWidget};
 
 pub struct TodosDatedListWidget<'a> {
     pub items: &'a [Todo],
@@ -28,21 +27,11 @@ impl<'a> TodosDatedListWidget<'a> {
             height: area.height.saturating_sub(top_padding + bottom_padding),
         };
 
-        if self.show_more_above {
-            frame.render_widget(Paragraph::new("^ more").fg(Color::DarkGray), padded_area);
+        TodosOverflowWidget {
+            show_more_above: self.show_more_above,
+            show_more_below: self.show_more_below,
         }
-
-        if self.show_more_below {
-            frame.render_widget(
-                Paragraph::new("v more").fg(Color::DarkGray).right_aligned(),
-                Rect {
-                    x: padded_area.x,
-                    y: padded_area.y + padded_area.height.saturating_sub(1),
-                    width: padded_area.width,
-                    height: 1,
-                },
-            );
-        }
+        .render(frame, padded_area);
 
         let items = self
             .items
