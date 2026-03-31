@@ -17,6 +17,7 @@ Config file location: `~/.config/orivo/config.toml`
 ```toml
 # Orivo configuration
 
+
 show_fps = false # show the FPS counter in the TUI header on startup
 
 
