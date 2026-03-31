@@ -105,12 +105,13 @@ impl Tab for Todos {
                         if let Some(&real) = indices.get(self.selected) {
                             self.items[real].toggle();
                             if self.items[real].done {
-                                if let (Some(repeat), Some(date)) = (self.items[real].repeat, self.items[real].due_date)
+                                if let (Some(repeat), Some(date)) =
+                                    (self.items[real].repeat.as_ref(), self.items[real].due_date)
                                 {
                                     let next = Todo::new(
                                         self.items[real].text.clone(),
                                         Some(repeat.next_date(date)),
-                                        Some(repeat),
+                                        Some(Repeat::of(repeat)),
                                     );
                                     self.items.push(next);
                                 }
@@ -148,13 +149,20 @@ impl Tab for Todos {
                         if let Some(&real) = indices.get(self.selected) {
                             self.ui_mode = UiMode::Editing;
                             let todo = &self.items[real];
-                            self.input_widget = Some(InputWidget::new(Some(&todo.text), todo.due_date, todo.repeat));
+                            self.input_widget =
+                                Some(InputWidget::new(Some(&todo.text), todo.due_date, todo.repeat.as_ref()));
                         }
                     }
                 }
                 KeyCode::Char(c) => {
-                    if let Some(&page) = Page::ALL.iter().find(|p| p.key() == c) {
-                        self.page = page;
+                    if Page::ALL.iter().any(|p| p.key() == c) {
+                        self.page = match c {
+                            '1' => Page::Due,
+                            '2' => Page::Today,
+                            '3' => Page::Future,
+                            '4' => Page::History,
+                            _ => self.page.next().prev(),
+                        };
                         self.selected = 0;
                     }
                 }

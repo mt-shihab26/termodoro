@@ -34,6 +34,7 @@ impl Cmd for Help {
             let strs: Vec<&str> = entries.iter().map(|s| s.as_str()).collect();
             println!("  {}", Self::format(&strs));
         }
+        println!("  {}", Self::format(self.help()));
         Ok(())
     }
 }

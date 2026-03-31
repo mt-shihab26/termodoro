@@ -30,7 +30,7 @@ pub struct InputWidget {
 }
 
 impl InputWidget {
-    pub fn new(text: Option<&str>, date: Option<Date>, repeat: Option<Repeat>) -> Self {
+    pub fn new(text: Option<&str>, date: Option<Date>, repeat: Option<&Repeat>) -> Self {
         let mut textarea = TextArea::default();
         if let Some(t) = text {
             textarea.insert_str(t);
@@ -40,7 +40,7 @@ impl InputWidget {
         Self {
             textarea,
             date,
-            repeat,
+            repeat: repeat.map(Repeat::of),
             calendar_widget: None,
         }
     }
@@ -66,13 +66,13 @@ impl InputWidget {
                     return InputAction::Confirm {
                         text,
                         date: self.date,
-                        repeat: self.repeat,
+                        repeat: self.repeat.as_ref().map(Repeat::of),
                     };
                 }
             }
             KeyCode::Esc => return InputAction::Escape,
             KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                self.calendar_widget = Some(CalendarWidget::new(self.date, self.repeat));
+                self.calendar_widget = Some(CalendarWidget::new(self.date, self.repeat.as_ref()));
             }
             _ => {
                 self.textarea.input(key);

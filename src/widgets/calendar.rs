@@ -43,7 +43,7 @@ impl CalendarWidget {
                     self.repeat = repeat;
                     return CalendarAction::Confirm {
                         date: Some(self.date),
-                        repeat: repeat,
+                        repeat: self.repeat.as_ref().map(Repeat::of),
                     };
                 }
                 RepeatAction::Cancel => {
