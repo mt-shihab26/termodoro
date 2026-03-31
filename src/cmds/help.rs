@@ -11,6 +11,10 @@ impl Help {
         Self { lines: helps.clone() }
     }
 
+    pub fn help() -> &'static [&'static str] {
+        &["help", "--help", "-h", "Show help for all commands"]
+    }
+
     fn format(entries: &[&str]) -> String {
         let (description, names) = entries.split_last().unwrap_or((&"", &[]));
         format!("{:<30} {}", names.join(", "), description)
@@ -19,7 +23,7 @@ impl Help {
 
 impl Cmd for Help {
     fn help(&self) -> &[&str] {
-        &["help", "--help", "-h", "Show help for all commands"]
+        Self::help()
     }
 
     fn run(self: Box<Self>) -> Result<()> {

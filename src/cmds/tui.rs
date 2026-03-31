@@ -23,11 +23,15 @@ impl Tui {
     pub fn new(config: Config) -> Self {
         Self { config }
     }
+
+    pub fn help() -> &'static [&'static str] {
+        &["(default)", "tui", "Launch the terminal UI"]
+    }
 }
 
 impl Cmd for Tui {
     fn help(&self) -> &[&str] {
-        &["(default)", "tui", "Launch the terminal UI"]
+        Self::help()
     }
 
     fn run(self: Box<Self>) -> Result<()> {

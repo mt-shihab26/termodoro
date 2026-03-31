@@ -6,18 +6,10 @@ use orivo::config::Config;
 
 fn help_lines() -> Vec<Vec<String>> {
     vec![
-        Tui::new(Config::default())
-            .help()
-            .iter()
-            .map(|s| s.to_string())
-            .collect(),
-        Sync::new(Config::default())
-            .help()
-            .iter()
-            .map(|s| s.to_string())
-            .collect(),
-        Version::new().help().iter().map(|s| s.to_string()).collect(),
-        Help::new(&vec![]).help().iter().map(|s| s.to_string()).collect(),
+        Tui::help(),
+        Sync::help()
+        Version::help(),
+        Help::help(),
     ]
 }
 
