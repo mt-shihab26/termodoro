@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct TimerConfig {
     #[serde(default = "TimerConfig::default_show_millis")]
     pub show_millis: bool,

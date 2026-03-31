@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use crate::config::db::DBConfig;
 use crate::config::timer::TimerConfig;
 
-#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Config {
     #[serde(default)]
     pub db: DBConfig,
