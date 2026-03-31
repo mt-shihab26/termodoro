@@ -9,7 +9,7 @@ use crate::{kinds::repeat::Repeat, utils::db::rt};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "todos")]
-struct Model {
+pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
     id: i32,
     text: String,
@@ -19,7 +19,7 @@ struct Model {
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-enum Relation {}
+pub enum Relation {}
 
 pub struct Todo {
     pub id: Option<i32>,
@@ -40,8 +40,24 @@ impl Todo {
         }
     }
 
-    pub fn toggle(&mut self) {
+    pub fn all(db: &DatabaseConnection) -> Vec<Todo> {
+        match rt().block_on(async { Entity::find().all(db).await.map_err(io_err) }) {
+            Ok(models) => models.into_iter().map(Todo::from).collect(),
+            Err(e) => {
+                log_error!("failed to load todos: {e}");
+                vec![]
+            }
+        }
+    }
+
+    pub fn toggle_and_save(&mut self, db: &DatabaseConnection) -> bool {
         self.done = !self.done;
+        if self.update(db) {
+            true
+        } else {
+            self.done = !self.done;
+            false
+        }
     }
 
     fn to_active_model(&self) -> ActiveModel {
@@ -62,16 +78,6 @@ impl Todo {
                 repeat: Set(repeat),
                 ..Default::default()
             },
-        }
-    }
-
-    pub fn all(db: &DatabaseConnection) -> Vec<Todo> {
-        match rt().block_on(async { Entity::find().all(db).await.map_err(io_err) }) {
-            Ok(models) => models.into_iter().map(Todo::from).collect(),
-            Err(e) => {
-                log_error!("failed to load todos: {e}");
-                vec![]
-            }
         }
     }
 
@@ -116,16 +122,6 @@ impl Todo {
                 log_error!("failed to delete todo: {e}");
                 false
             }
-        }
-    }
-
-    pub fn toggle_and_save(&mut self, db: &DatabaseConnection) -> bool {
-        self.done = !self.done;
-        if self.update(db) {
-            true
-        } else {
-            self.done = !self.done;
-            false
         }
     }
 }
