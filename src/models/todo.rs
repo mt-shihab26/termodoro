@@ -4,8 +4,7 @@ use sea_orm::{ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, DatabaseC
 use sea_orm::{DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait};
 use time::Date;
 
-use crate::kinds::repeat::Repeat;
-use crate::utils::db::rt;
+use crate::{kinds::repeat::Repeat, utils::db::rt};
 
 pub struct Todo {
     pub id: Option<i32>,
@@ -97,10 +96,10 @@ fn parse_date(s: &str) -> Option<Date> {
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
     pub id: i32,
-    pub text: String,
-    pub done: bool,
-    pub due_date: Option<String>,
-    pub repeat: Option<String>,
+    text: String,
+    done: bool,
+    due_date: Option<String>,
+    repeat: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -111,4 +110,3 @@ impl ActiveModelBehavior for ActiveModel {}
 fn io_err(e: impl std::fmt::Display) -> io::Error {
     io::Error::new(io::ErrorKind::Other, e.to_string())
 }
-
