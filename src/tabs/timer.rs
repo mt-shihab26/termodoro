@@ -11,7 +11,7 @@ use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_big_text::{BigText, PixelSize};
 
 use crate::config::timer::TimerConfig;
-use crate::domains::timer::state::TimerState;
+use crate::domains::timer::TimerState;
 use crate::kinds::{event::Event, phase::COLOR};
 use crate::{log_error, log_warn, workers::timer};
 
@@ -59,7 +59,7 @@ impl Tab for Timer {
                 s.running = !s.running;
             }
             KeyCode::Char('r') => {
-                s.millis = s.phase.duration(&s.config);
+                s.millis = s.phase.duration(&s.timer_config);
                 s.running = false;
             }
             KeyCode::Char('n') => {
@@ -106,7 +106,7 @@ impl Tab for Timer {
         Paragraph::new(format!(
             "Session {} / {}",
             s.sessions + 1,
-            s.config.long_break_interval()
+            s.timer_config.long_break_interval()
         ))
         .centered()
         .fg(Color::DarkGray)
@@ -120,7 +120,7 @@ impl Tab for Timer {
 
         let (mins, secs, ms) = s.time_parts();
 
-        let time = if s.config.show_millis() {
+        let time = if s.timer_config.show_millis() {
             format!("{:02}:{:02}.{:02}", mins, secs, ms)
         } else {
             format!("{:02}:{:02}", mins, secs)
