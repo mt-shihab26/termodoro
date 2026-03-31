@@ -75,15 +75,21 @@ impl Todo {
         }
     }
 
-    pub fn insert(db: &DatabaseConnection, model: ActiveModel) -> io::Result<Model> {
+    pub fn update(&self, db: &DatabaseConnection) {
+        if let Err(e) = rt().block_on(async { self.to_active_model().update(db).await.map_err(io_err).map(|_| ()) }) {
+            log_error!("failed to toggle todo: {e}");
+        }
+    }
+
+    pub fn insert_model(db: &DatabaseConnection, model: ActiveModel) -> io::Result<Model> {
         rt().block_on(async { model.insert(db).await.map_err(io_err) })
     }
 
-    pub fn update(db: &DatabaseConnection, model: ActiveModel) -> io::Result<()> {
+    pub fn update_model(db: &DatabaseConnection, model: ActiveModel) -> io::Result<()> {
         rt().block_on(async { model.update(db).await.map_err(io_err).map(|_| ()) })
     }
 
-    pub fn delete(db: &DatabaseConnection, id: i32) -> io::Result<()> {
+    pub fn delete_model(db: &DatabaseConnection, id: i32) -> io::Result<()> {
         rt().block_on(async { Entity::delete_by_id(id).exec(db).await.map_err(io_err).map(|_| ()) })
     }
 }

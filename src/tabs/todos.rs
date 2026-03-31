@@ -106,26 +106,24 @@ impl Tab for Todos {
                     self.selected = 0;
                 }
                 KeyCode::Char(' ') | KeyCode::Enter => {
-                    if let Some(&real) = self.filtered_indices().get(self.selected) {
-                        self.items[real].toggle();
-                        if let Err(e) = Todo::update(&self.db, self.items[real].to_active_model()) {
-                            log_error!("failed to toggle todo: {e}");
+                    if let Some(&index) = self.filtered_indices().get(self.selected) {
+                        let item = &mut self.items[index];
+                        item.done = !item.done;
+                        item.update(&self.db);
+                        if !item.done {
+                            return Ok(());
                         }
-                        if self.items[real].done {
-                            if let (Some(repeat), Some(date)) =
-                                (self.items[real].repeat.as_ref(), self.items[real].due_date)
-                            {
-                                let mut next = Todo::new(
-                                    self.items[real].text.clone(),
-                                    Some(repeat.next_date(date)),
-                                    Some(Repeat::of(repeat)),
-                                );
-                                match Todo::insert(&self.db, next.to_active_model()) {
-                                    Ok(model) => next.id = Some(model.id),
-                                    Err(e) => log_error!("failed to insert repeated todo: {e}"),
-                                }
-                                self.items.push(next);
+                        if let (Some(repeat), Some(date)) = (item.repeat.as_ref(), item.due_date) {
+                            let mut next = Todo::new(
+                                item.text.clone(),
+                                Some(repeat.next_date(date)),
+                                Some(Repeat::of(repeat)),
+                            );
+                            match Todo::insert_model(&self.db, next.to_active_model()) {
+                                Ok(model) => next.id = Some(model.id),
+                                Err(e) => log_error!("failed to insert repeated todo: {e}"),
                             }
+                            self.items.push(next);
                         }
                     }
                 }
@@ -143,7 +141,7 @@ impl Tab for Todos {
                         let indices = self.filtered_indices();
                         if let Some(&real) = indices.get(self.selected) {
                             if let Some(id) = self.items[real].id {
-                                if let Err(e) = Todo::delete(&self.db, id) {
+                                if let Err(e) = Todo::delete_model(&self.db, id) {
                                     log_error!("failed to delete todo: {e}");
                                 }
                             } else {
@@ -190,7 +188,7 @@ impl Tab for Todos {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
                             let mut todo = Todo::new(text, date, repeat);
-                            match Todo::insert(&self.db, todo.to_active_model()) {
+                            match Todo::insert_model(&self.db, todo.to_active_model()) {
                                 Ok(model) => todo.id = Some(model.id),
                                 Err(e) => log_error!("failed to insert todo: {e}"),
                             }
@@ -219,7 +217,7 @@ impl Tab for Todos {
                                     todo.due_date = date;
                                     todo.repeat = repeat;
                                 }
-                                if let Err(e) = Todo::update(&self.db, self.items[real].to_active_model()) {
+                                if let Err(e) = Todo::update_model(&self.db, self.items[real].to_active_model()) {
                                     log_error!("failed to update todo: {e}");
                                 }
                             }
