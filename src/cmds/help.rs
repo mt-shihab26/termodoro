@@ -7,13 +7,8 @@ pub struct Help {
 }
 
 impl Help {
-    pub fn new(cmds: &Vec<(&str, Box<dyn Cmd>)>) -> Self {
-        let lines = cmds
-            .iter()
-            .map(|(_, c)| c.help().iter().map(|s| s.to_string()).collect())
-            .collect();
-
-        Self { lines }
+    pub fn new(helps: &Vec<Vec<String>>) -> Self {
+        Self { lines: helps.clone() }
     }
 
     fn format(entries: &[&str]) -> String {
@@ -34,7 +29,6 @@ impl Cmd for Help {
             let strs: Vec<&str> = entries.iter().map(|s| s.as_str()).collect();
             println!("  {}", Self::format(&strs));
         }
-        println!("  {}", Self::format(self.help()));
         Ok(())
     }
 }
