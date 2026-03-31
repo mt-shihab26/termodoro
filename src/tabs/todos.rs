@@ -49,6 +49,16 @@ impl Todos {
         }
     }
 
+    fn sync_list_state(&self) {
+        let len = self.filtered_indices().len();
+        let selected = if len == 0 {
+            None
+        } else {
+            Some(self.selected.min(len - 1))
+        };
+        self.list_state.borrow_mut().select(selected);
+    }
+
     fn filtered_indices(&self) -> Vec<usize> {
         let today = OffsetDateTime::now_utc().date();
 
@@ -58,21 +68,11 @@ impl Todos {
             .filter(|(_, todo)| match self.page {
                 Page::Due => todo.due_date.map_or(false, |d| d < today) && !todo.done,
                 Page::Today => todo.due_date.map_or(false, |d| d == today),
-                Page::Future => todo.due_date.map_or(false, |d| d > today),
+                Page::Index => todo.due_date.map_or(true, |d| d > today),
                 Page::History => todo.done,
             })
             .map(|(i, _)| i)
             .collect()
-    }
-
-    fn sync_list_state(&self) {
-        let len = self.filtered_indices().len();
-        let selected = if len == 0 {
-            None
-        } else {
-            Some(self.selected.min(len - 1))
-        };
-        self.list_state.borrow_mut().select(selected);
     }
 
     fn clamp_selected(&mut self) {
@@ -179,7 +179,7 @@ impl Tab for Todos {
                         self.page = match c {
                             '1' => Page::Due,
                             '2' => Page::Today,
-                            '3' => Page::Future,
+                            '3' => Page::Index,
                             '4' => Page::History,
                             _ => self.page.next().prev(),
                         };
