@@ -1,4 +1,6 @@
 pub mod cmds;
+pub mod entities;
+pub mod migration;
 pub mod config;
 pub mod db;
 pub mod domains;

@@ -7,8 +7,10 @@ use ratatui::style::{Color, Style, Stylize};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Paragraph, Widget};
 use ratatui::{DefaultTerminal, Frame, init, restore};
+use sea_orm::DatabaseConnection;
 
 use crate::config::Config;
+use crate::db::connection;
 use crate::tabs::{Tab, timer::Timer, todos::Todos};
 use crate::widgets::fps::FpsWidget;
 use crate::{kinds::event::Event, log_error, workers::term};
@@ -31,7 +33,8 @@ impl Cmd for Tui {
     }
 
     fn run(self: Box<Self>) -> Result<()> {
-        let mut app = App::new(self.config);
+        let db = connection::connect()?;
+        let mut app = App::new(self.config, db);
         app.run()
     }
 }
@@ -45,13 +48,13 @@ struct App {
 }
 
 impl App {
-    pub fn new(config: Config) -> Self {
+    pub fn new(config: Config, db: DatabaseConnection) -> Self {
         let (sender, events) = mpsc::channel::<Event>();
 
         term::spawn(sender.clone());
 
         let Config { timer, .. } = config;
-        let tabs: Vec<Box<dyn Tab>> = vec![Box::new(Todos::new()), Box::new(Timer::new(sender, timer))];
+        let tabs: Vec<Box<dyn Tab>> = vec![Box::new(Todos::new(db)), Box::new(Timer::new(sender, timer))];
 
         Self {
             alive: true,

@@ -42,6 +42,27 @@ impl Repeat {
         }
     }
 
+    pub fn to_db_str(&self) -> &str {
+        match self {
+            Repeat::Daily => "Daily",
+            Repeat::WeeklySameDay => "WeeklySameDay",
+            Repeat::WeekdaysMonFri => "WeekdaysMonFri",
+            Repeat::MonthlyOnDay => "MonthlyOnDay",
+            Repeat::YearlyOnDay => "YearlyOnDay",
+        }
+    }
+
+    pub fn from_db_str(s: &str) -> Option<Self> {
+        match s {
+            "Daily" => Some(Repeat::Daily),
+            "WeeklySameDay" => Some(Repeat::WeeklySameDay),
+            "WeekdaysMonFri" => Some(Repeat::WeekdaysMonFri),
+            "MonthlyOnDay" => Some(Repeat::MonthlyOnDay),
+            "YearlyOnDay" => Some(Repeat::YearlyOnDay),
+            _ => None,
+        }
+    }
+
     pub fn next_date(&self, from: Date) -> Date {
         match self {
             Repeat::Daily => from + Duration::days(1),

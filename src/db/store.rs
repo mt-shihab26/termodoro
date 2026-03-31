@@ -5,12 +5,13 @@ use std::path::PathBuf;
 use std::sync::OnceLock;
 
 use libsql::{Builder, Database};
+use sea_orm::{ConnectionTrait, DatabaseConnection, Statement};
 
 use crate::config::db::DBConfig;
 
 static RUNTIME: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
 
-fn rt() -> &'static tokio::runtime::Runtime {
+pub fn rt() -> &'static tokio::runtime::Runtime {
     RUNTIME.get_or_init(|| {
         tokio::runtime::Builder::new_multi_thread()
             .enable_all()

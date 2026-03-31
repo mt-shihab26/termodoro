@@ -1,8 +1,11 @@
+use sea_orm::ActiveValue::Set;
 use time::Date;
 
+use crate::entities::todo;
 use crate::kinds::repeat::Repeat;
 
 pub struct Todo {
+    pub id: Option<i32>,
     pub text: String,
     pub done: bool,
     pub due_date: Option<Date>,
@@ -12,6 +15,7 @@ pub struct Todo {
 impl Todo {
     pub fn new(text: String, due_date: Option<Date>, repeat: Option<Repeat>) -> Self {
         Self {
+            id: None,
             text,
             done: false,
             due_date,
@@ -23,60 +27,48 @@ impl Todo {
         self.done = !self.done;
     }
 
-    pub fn fakes() -> Vec<Todo> {
-        use time::OffsetDateTime;
-
-        let today = OffsetDateTime::now_utc().date();
-        let day = time::Duration::days(1);
-
-        let mut todos = vec![
-            // -5 days
-            Todo::new("Submit quarterly report".to_string(), Some(today - day * 5), None),
-            // -4 days
-            Todo::new(
-                "Team retrospective meeting".to_string(),
-                Some(today - day * 4),
-                Some(Repeat::WeeklySameDay),
-            ),
-            // -3 days
-            Todo::new(
-                "Review pull requests".to_string(),
-                Some(today - day * 3),
-                Some(Repeat::WeekdaysMonFri),
-            ),
-            // -2 days
-            Todo::new("Update project roadmap".to_string(), Some(today - day * 2), None),
-            // -1 day (yesterday)
-            Todo::new("Call the dentist".to_string(), Some(today - day), None),
-            // today
-            Todo::new("Nothing".to_string(), Some(today), None),
-            Todo::new("Pay utility bills".to_string(), Some(today), Some(Repeat::MonthlyOnDay)),
-            Todo::new("Morning standup".to_string(), Some(today), Some(Repeat::WeekdaysMonFri)),
-            // +1 day
-            Todo::new("Grocery shopping".to_string(), Some(today + day), None),
-            // +2 days
-            Todo::new("Doctor appointment".to_string(), Some(today + day * 2), None),
-            // +3 days
-            Todo::new(
-                "Deploy new release".to_string(),
-                Some(today + day * 3),
-                Some(Repeat::Daily),
-            ),
-            // +4 days
-            Todo::new("Book flight tickets".to_string(), Some(today + day * 4), None),
-            // +5 days
-            Todo::new(
-                "Annual performance review".to_string(),
-                Some(today + day * 5),
-                Some(Repeat::YearlyOnDay),
-            ),
-        ];
-
-        // seed some fake completed todos for history
-        todos[0].done = true;
-        todos[3].done = true;
-        todos[4].done = true;
-
-        todos
+    pub fn to_active_model(&self) -> todo::ActiveModel {
+        let due_date = self.due_date.map(format_date);
+        let repeat = self.repeat.as_ref().map(|r| r.to_db_str().to_string());
+        match self.id {
+            Some(id) => todo::ActiveModel {
+                id: Set(id),
+                text: Set(self.text.clone()),
+                done: Set(self.done),
+                due_date: Set(due_date),
+                repeat: Set(repeat),
+            },
+            None => todo::ActiveModel {
+                text: Set(self.text.clone()),
+                done: Set(self.done),
+                due_date: Set(due_date),
+                repeat: Set(repeat),
+                ..Default::default()
+            },
+        }
     }
+}
+
+impl From<todo::Model> for Todo {
+    fn from(m: todo::Model) -> Self {
+        Self {
+            id: Some(m.id),
+            text: m.text,
+            done: m.done,
+            due_date: m.due_date.as_deref().and_then(parse_date),
+            repeat: m.repeat.as_deref().and_then(Repeat::from_db_str),
+        }
+    }
+}
+
+fn format_date(date: Date) -> String {
+    format!("{}-{:02}-{:02}", date.year(), date.month() as u8, date.day())
+}
+
+fn parse_date(s: &str) -> Option<Date> {
+    let mut parts = s.splitn(3, '-');
+    let year: i32 = parts.next()?.parse().ok()?;
+    let month: u8 = parts.next()?.parse().ok()?;
+    let day: u8 = parts.next()?.parse().ok()?;
+    Date::from_calendar_date(year, time::Month::try_from(month).ok()?, day).ok()
 }

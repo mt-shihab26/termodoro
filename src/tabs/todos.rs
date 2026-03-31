@@ -6,11 +6,14 @@ use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Tabs, Widget};
+use sea_orm::DatabaseConnection;
 use time::OffsetDateTime;
 
+use crate::db::todos as db;
 use crate::kinds::{page::Page, repeat::Repeat};
 use crate::models::todo::Todo;
 use crate::widgets::input::{InputAction, InputWidget};
+use crate::{log_error, log_warn};
 
 use super::Tab;
 
@@ -23,6 +26,7 @@ pub enum UiMode {
 }
 
 pub struct Todos {
+    db: DatabaseConnection,
     items: Vec<Todo>,
     page: Page,
     ui_mode: UiMode,
@@ -32,9 +36,18 @@ pub struct Todos {
 }
 
 impl Todos {
-    pub fn new() -> Self {
+    pub fn new(db: DatabaseConnection) -> Self {
+        let items = match db::load_all(&db) {
+            Ok(models) => models.into_iter().map(Todo::from).collect(),
+            Err(e) => {
+                log_error!("failed to load todos: {e}");
+                vec![]
+            }
+        };
+
         Self {
-            items: Todo::fakes(),
+            db,
+            items,
             page: Page::Today,
             ui_mode: UiMode::Normal,
             selected: 0,
@@ -104,15 +117,22 @@ impl Tab for Todos {
                         let indices = self.filtered_indices();
                         if let Some(&real) = indices.get(self.selected) {
                             self.items[real].toggle();
+                            if let Err(e) = db::update(&self.db, self.items[real].to_active_model()) {
+                                log_error!("failed to toggle todo: {e}");
+                            }
                             if self.items[real].done {
                                 if let (Some(repeat), Some(date)) =
                                     (self.items[real].repeat.as_ref(), self.items[real].due_date)
                                 {
-                                    let next = Todo::new(
+                                    let mut next = Todo::new(
                                         self.items[real].text.clone(),
                                         Some(repeat.next_date(date)),
                                         Some(Repeat::of(repeat)),
                                     );
+                                    match db::insert(&self.db, next.to_active_model()) {
+                                        Ok(model) => next.id = Some(model.id),
+                                        Err(e) => log_error!("failed to insert repeated todo: {e}"),
+                                    }
                                     self.items.push(next);
                                 }
                             }
@@ -132,6 +152,13 @@ impl Tab for Todos {
                     if !matches!(self.page, Page::History) {
                         let indices = self.filtered_indices();
                         if let Some(&real) = indices.get(self.selected) {
+                            if let Some(id) = self.items[real].id {
+                                if let Err(e) = db::delete(&self.db, id) {
+                                    log_error!("failed to delete todo: {e}");
+                                }
+                            } else {
+                                log_warn!("todo has no id, skipping db delete");
+                            }
                             self.items.remove(real);
                             self.clamp_selected();
                         }
@@ -172,7 +199,12 @@ impl Tab for Todos {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
-                            self.items.push(Todo::new(text, date, repeat));
+                            let mut todo = Todo::new(text, date, repeat);
+                            match db::insert(&self.db, todo.to_active_model()) {
+                                Ok(model) => todo.id = Some(model.id),
+                                Err(e) => log_error!("failed to insert todo: {e}"),
+                            }
+                            self.items.push(todo);
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
                             self.clamp_selected();
@@ -191,10 +223,15 @@ impl Tab for Todos {
                         InputAction::Confirm { text, date, repeat } => {
                             let indices = self.filtered_indices();
                             if let Some(&real) = indices.get(self.selected) {
-                                let todo = &mut self.items[real];
-                                todo.text = text;
-                                todo.due_date = date;
-                                todo.repeat = repeat;
+                                {
+                                    let todo = &mut self.items[real];
+                                    todo.text = text;
+                                    todo.due_date = date;
+                                    todo.repeat = repeat;
+                                }
+                                if let Err(e) = db::update(&self.db, self.items[real].to_active_model()) {
+                                    log_error!("failed to update todo: {e}");
+                                }
                             }
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
