@@ -4,11 +4,13 @@ use crate::cmds::Cmd;
 use crate::db::store;
 use crate::utils::config::Config;
 
-pub struct Sync;
+pub struct Sync {
+    config: Config,
+}
 
 impl Sync {
-    pub fn new() -> Self {
-        Self
+    pub fn new(config: Config) -> Self {
+        Self { config }
     }
 }
 
@@ -18,9 +20,7 @@ impl Cmd for Sync {
     }
 
     fn run(&self) -> Result<()> {
-        let config = Config::load()?;
-
-        if config.turso.is_none() {
+        if self.config.turso.is_none() {
             eprintln!("No Turso credentials found.");
             eprintln!("Config file: {}", Config::path().display());
             eprintln!();

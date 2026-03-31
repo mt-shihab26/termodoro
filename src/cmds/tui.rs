@@ -12,13 +12,17 @@ use crate::tabs::{Tab, timer::Timer, todos::Todos};
 use crate::widgets::fps::FpsWidget;
 use crate::{kinds::event::Event, log_error, workers::term};
 
+use crate::utils::config::Config;
+
 use super::Cmd;
 
-pub struct Tui;
+pub struct Tui {
+    config: Config,
+}
 
 impl Tui {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(config: Config) -> Self {
+        Self { config }
     }
 }
 
@@ -28,13 +32,14 @@ impl Cmd for Tui {
     }
 
     fn run(&self) -> Result<()> {
-        let mut app = App::new();
+        let mut app = App::new(self.config.clone());
 
         app.run()
     }
 }
 
 struct App {
+    config: Config,
     alive: bool,
     selected: usize,
     tabs: Vec<Box<dyn Tab>>,
@@ -43,7 +48,7 @@ struct App {
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub fn new(config: Config) -> Self {
         let (sender, events) = mpsc::channel::<Event>();
 
         term::spawn(sender.clone());
@@ -51,6 +56,7 @@ impl App {
         let tabs: Vec<Box<dyn Tab>> = vec![Box::new(Todos::new()), Box::new(Timer::new(sender))];
 
         Self {
+            config,
             alive: true,
             selected: 0,
             tabs,

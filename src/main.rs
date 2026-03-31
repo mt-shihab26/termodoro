@@ -2,11 +2,14 @@ use std::env;
 use std::io::{Error, ErrorKind, Result};
 
 use orivo::cmds::{Cmd, help::Help, sync::Sync, tui::Tui, version::Version};
+use orivo::utils::config::Config;
 
 fn main() -> Result<()> {
+    let config = Config::load()?;
+
     let cmds: Vec<(&str, Box<dyn Cmd>)> = vec![
-        ("tui", Box::new(Tui::new()) as Box<dyn Cmd>),
-        ("sync", Box::new(Sync::new()) as Box<dyn Cmd>),
+        ("tui", Box::new(Tui::new(config.clone())) as Box<dyn Cmd>),
+        ("sync", Box::new(Sync::new(config.clone())) as Box<dyn Cmd>),
         ("version", Box::new(Version::new()) as Box<dyn Cmd>),
         ("help", Box::new(Help::new(&vec![])) as Box<dyn Cmd>),
     ];
