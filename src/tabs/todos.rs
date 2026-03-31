@@ -111,8 +111,8 @@ impl Tab for Todos {
     }
 
     fn render(&self, frame: &mut Frame, area: Rect) {
-        let buf = frame.buffer_mut();
         let status = self.cache_status();
+        let buf = frame.buffer_mut();
 
         let block = Block::bordered().fg(self.color());
         let inner = block.inner(area);
@@ -222,12 +222,8 @@ impl Todos {
         *self.cache.borrow_mut() = None;
     }
 
-    fn cache_status(&self) -> &'static str {
-        if self.cache.borrow().is_none() {
-            " refresh "
-        } else {
-            " cached "
-        }
+    fn cache_status(&self) -> String {
+        format!(" loaded {} ", self.current_items().len())
     }
 
     fn refresh(&mut self) {

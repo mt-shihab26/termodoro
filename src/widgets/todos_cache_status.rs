@@ -4,7 +4,7 @@ use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Paragraph, Widget};
 
 pub struct TodosCacheStatusWidget {
-    pub status: &'static str,
+    pub status: String,
 }
 
 impl Widget for TodosCacheStatusWidget {
