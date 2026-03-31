@@ -13,6 +13,7 @@ use super::{indicator::IndicatorWidget, item::ItemWidget};
 
 pub struct ListWidget<'a> {
     pub items: &'a [Todo],
+    pub offset: usize,
     pub page: Page,
     pub selected: usize,
     pub color: Color,
@@ -62,10 +63,12 @@ impl<'a> ListWidget<'a> {
 
     fn render_flat(&self, frame: &mut Frame, area: Rect, state: &mut ListState) {
         let dimmed = matches!(self.page, Page::History);
+        let serial_width = (self.offset + self.items.len()).max(1).to_string().len();
         let items = self
             .items
             .iter()
-            .map(|todo| ItemWidget { todo }.list_item(dimmed))
+            .enumerate()
+            .map(|(index, todo)| ItemWidget { todo }.list_item(dimmed, self.offset + index + 1, serial_width))
             .collect::<Vec<_>>();
 
         let list = List::new(items)
@@ -94,6 +97,7 @@ impl<'a> ListWidget<'a> {
         let mut rows = Vec::new();
         let mut selected_row = 0;
         let mut last_date = None;
+        let serial_width = (self.offset + self.items.len()).max(1).to_string().len();
 
         for (index, todo) in self.items.iter().enumerate() {
             if todo.due_date != last_date {
@@ -105,7 +109,14 @@ impl<'a> ListWidget<'a> {
                 selected_row = rows.len();
             }
 
-            rows.push(ItemWidget { todo }.line(index == self.selected, self.color));
+            rows.push(
+                ItemWidget { todo }.line(
+                    index == self.selected,
+                    self.color,
+                    self.offset + index + 1,
+                    serial_width,
+                ),
+            );
         }
 
         (rows, selected_row)

@@ -33,11 +33,11 @@ impl<'a> ItemWidget<'a> {
         }
     }
 
-    pub fn list_item(&self, dimmed: bool) -> ListItem<'static> {
-        ListItem::new(format!(" {}", self.label())).style(self.style(dimmed))
+    pub fn list_item(&self, dimmed: bool, serial: usize, width: usize) -> ListItem<'static> {
+        ListItem::new(format!(" {serial:>width$}. {}", self.label())).style(self.style(dimmed))
     }
 
-    pub fn line(&self, selected: bool, color: Color) -> Line<'static> {
+    pub fn line(&self, selected: bool, color: Color, serial: usize, width: usize) -> Line<'static> {
         let prefix = if selected { "> " } else { "  " };
         let style = if selected {
             self.style(false).fg(color).add_modifier(Modifier::BOLD)
@@ -45,6 +45,9 @@ impl<'a> ItemWidget<'a> {
             self.style(false)
         };
 
-        Line::from(vec![Span::styled(format!("{prefix}{}", self.label()), style)])
+        Line::from(vec![Span::styled(
+            format!("{prefix}{serial:>width$}. {}", self.label()),
+            style,
+        )])
     }
 }
