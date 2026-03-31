@@ -1,13 +1,14 @@
 use std::io::Result;
 
-use super::Cmd;
+use super::{Cmd, helps};
 
 pub struct Help {
     lines: Vec<Vec<String>>,
 }
 
 impl Help {
-    pub fn new(helps: &[&[&str]]) -> Self {
+    pub fn new() -> Self {
+        let helps = helps();
         let lines = helps
             .iter()
             .map(|entries| entries.iter().map(|s| s.to_string()).collect())
