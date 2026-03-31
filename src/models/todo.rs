@@ -93,6 +93,21 @@ impl Todo {
         if next.save(db) { Some(next) } else { None }
     }
 
+    pub fn delete(&self, db: &DatabaseConnection) -> bool {
+        let Some(id) = self.id else {
+            log_warn!("todo has no id, skipping db delete");
+            return false;
+        };
+
+        match rt().block_on(async { Entity::delete_by_id(id).exec(db).await.map_err(io_err).map(|_| ()) }) {
+            Ok(()) => true,
+            Err(e) => {
+                log_error!("failed to delete todo: {e}");
+                false
+            }
+        }
+    }
+
     // -----------------------------------------------
 
     fn to_model(&self) -> ActiveModel {
@@ -140,21 +155,6 @@ impl Todo {
             }
             Err(e) => {
                 log_error!("failed to update todo: {e}");
-                false
-            }
-        }
-    }
-
-    pub fn delete(&self, db: &DatabaseConnection) -> bool {
-        let Some(id) = self.id else {
-            log_warn!("todo has no id, skipping db delete");
-            return false;
-        };
-
-        match rt().block_on(async { Entity::delete_by_id(id).exec(db).await.map_err(io_err).map(|_| ()) }) {
-            Ok(()) => true,
-            Err(e) => {
-                log_error!("failed to delete todo: {e}");
                 false
             }
         }

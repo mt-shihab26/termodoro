@@ -32,172 +32,6 @@ pub struct Todos {
     input_widget: Option<InputWidget>,
 }
 
-impl Todos {
-    pub fn new(db: DatabaseConnection) -> Self {
-        Self {
-            db,
-            page: Page::Today,
-            ui_mode: UiMode::Normal,
-            selected: 0,
-            list_state: RefCell::new(ListState::default()),
-            cache: RefCell::new(None),
-            input_widget: None,
-        }
-    }
-
-    fn current_items(&self) -> Vec<Todo> {
-        {
-            let mut cache = self.cache.borrow_mut();
-            if cache.is_none() {
-                *cache = Some(Todo::list(&self.db, self.page));
-            }
-        }
-        self.cache.borrow().as_deref().unwrap_or(&[]).to_vec()
-    }
-
-    fn invalidate_cache(&self) {
-        *self.cache.borrow_mut() = None;
-    }
-
-    fn selected_item(&self) -> Option<Todo> {
-        self.current_items().get(self.selected).cloned()
-    }
-
-    fn clamp_selected(&mut self) {
-        let len = self.current_items().len();
-        if len == 0 {
-            self.selected = 0;
-        } else {
-            self.selected = self.selected.min(len - 1);
-        }
-    }
-
-    fn sync_list_state(&self) {
-        let len = self.current_items().len();
-        let selected = if len == 0 {
-            None
-        } else {
-            Some(self.selected.min(len - 1))
-        };
-        self.list_state.borrow_mut().select(selected);
-    }
-
-    fn next_page(&mut self) {
-        self.page = self.page.next();
-        self.selected = 0;
-        self.invalidate_cache();
-    }
-
-    fn prev_page(&mut self) {
-        self.page = self.page.prev();
-        self.selected = 0;
-        self.invalidate_cache();
-    }
-
-    fn toggle_selected(&mut self) {
-        if let Some(mut todo) = self.selected_item() {
-            todo.toggle(&self.db);
-            self.invalidate_cache();
-            self.clamp_selected();
-        }
-    }
-
-    fn move_selection(&mut self, delta: isize) {
-        let len = self.current_items().len();
-        if len == 0 {
-            self.selected = 0;
-            return;
-        }
-
-        self.selected = self.selected.saturating_add_signed(delta).min(len - 1);
-    }
-
-    fn select_next(&mut self) {
-        self.move_selection(1);
-    }
-
-    fn select_prev(&mut self) {
-        self.move_selection(-1);
-    }
-
-    fn delete_selected(&mut self) {
-        if matches!(self.page, Page::History) {
-            return;
-        }
-
-        if let Some(todo) = self.selected_item() {
-            if todo.done {
-                return;
-            }
-            todo.delete(&self.db);
-            self.invalidate_cache();
-            self.clamp_selected();
-        }
-    }
-
-    fn start_adding(&mut self) {
-        if matches!(self.page, Page::History) {
-            return;
-        }
-
-        self.ui_mode = UiMode::Adding;
-        self.input_widget = Some(InputWidget::new(None, None, None));
-    }
-
-    fn start_editing(&mut self) {
-        if matches!(self.page, Page::History) {
-            return;
-        }
-
-        if let Some(todo) = self.selected_item() {
-            self.ui_mode = UiMode::Editing;
-            self.input_widget = Some(InputWidget::new(Some(&todo.text), todo.due_date, todo.repeat.as_ref()));
-        }
-    }
-
-    fn select_page(&mut self, key: char) {
-        if !Page::ALL.iter().any(|p| p.key() == key) {
-            return;
-        }
-
-        self.page = match key {
-            '1' => Page::Due,
-            '2' => Page::Today,
-            '3' => Page::Index,
-            '4' => Page::History,
-            _ => self.page,
-        };
-        self.selected = 0;
-        self.invalidate_cache();
-    }
-
-    fn cancel_input(&mut self) {
-        self.input_widget = None;
-        self.ui_mode = UiMode::Normal;
-    }
-
-    fn confirm_add(&mut self, text: String, date: Option<time::Date>, repeat: Option<Repeat>) {
-        let mut todo = Todo::new(text, date, repeat);
-        if todo.save(&self.db) {
-            self.invalidate_cache();
-            self.clamp_selected();
-        }
-        self.cancel_input();
-    }
-
-    fn confirm_edit(&mut self, text: String, date: Option<time::Date>, repeat: Option<Repeat>) {
-        if let Some(mut todo) = self.selected_item() {
-            todo.text = text;
-            todo.due_date = date;
-            todo.repeat = repeat;
-            todo.update(&self.db);
-            self.invalidate_cache();
-            self.clamp_selected();
-        }
-        self.cancel_input();
-    }
-}
-
 impl Tab for Todos {
     fn name(&self) -> &str {
         "Todos [^t]"
@@ -223,20 +57,14 @@ impl Tab for Todos {
             },
             UiMode::Adding => {
                 if let Some(input_widget) = &mut self.input_widget {
-                    match input_widget.handle(key) {
-                        InputAction::Confirm { text, date, repeat } => self.confirm_add(text, date, repeat),
-                        InputAction::Escape => self.cancel_input(),
-                        InputAction::None => {}
-                    }
+                    let action = input_widget.handle(key);
+                    self.handle_input_action(action, false);
                 }
             }
             UiMode::Editing => {
                 if let Some(input_widget) = &mut self.input_widget {
-                    match input_widget.handle(key) {
-                        InputAction::Confirm { text, date, repeat } => self.confirm_edit(text, date, repeat),
-                        InputAction::Escape => self.cancel_input(),
-                        InputAction::None => {}
-                    }
+                    let action = input_widget.handle(key);
+                    self.handle_input_action(action, true);
                 }
             }
         }
@@ -360,6 +188,190 @@ impl Tab for Todos {
                 frame.render_widget(input_area_widget, input_rect);
                 input_area_widget.render_calendar(frame, area);
             }
+        }
+    }
+}
+
+impl Todos {
+    pub fn new(db: DatabaseConnection) -> Self {
+        Self {
+            db,
+            page: Page::Today,
+            ui_mode: UiMode::Normal,
+            selected: 0,
+            list_state: RefCell::new(ListState::default()),
+            cache: RefCell::new(None),
+            input_widget: None,
+        }
+    }
+
+    fn current_items(&self) -> Vec<Todo> {
+        {
+            let mut cache = self.cache.borrow_mut();
+            if cache.is_none() {
+                *cache = Some(Todo::list(&self.db, self.page));
+            }
+        }
+        self.cache.borrow().as_deref().unwrap_or(&[]).to_vec()
+    }
+
+    fn invalidate_cache(&self) {
+        *self.cache.borrow_mut() = None;
+    }
+
+    fn refresh_after_mutation(&mut self) {
+        self.invalidate_cache();
+        self.clamp_selected();
+    }
+
+    fn selected_item(&self) -> Option<Todo> {
+        self.current_items().get(self.selected).cloned()
+    }
+
+    fn clamp_selected(&mut self) {
+        let len = self.current_items().len();
+        if len == 0 {
+            self.selected = 0;
+        } else {
+            self.selected = self.selected.min(len - 1);
+        }
+    }
+
+    fn sync_list_state(&self) {
+        let len = self.current_items().len();
+        let selected = if len == 0 {
+            None
+        } else {
+            Some(self.selected.min(len - 1))
+        };
+        self.list_state.borrow_mut().select(selected);
+    }
+
+    fn set_page(&mut self, page: Page) {
+        self.page = page;
+        self.selected = 0;
+        self.invalidate_cache();
+    }
+
+    fn next_page(&mut self) {
+        self.set_page(self.page.next());
+    }
+
+    fn prev_page(&mut self) {
+        self.set_page(self.page.prev());
+    }
+
+    fn toggle_selected(&mut self) {
+        if let Some(mut todo) = self.selected_item() {
+            todo.toggle(&self.db);
+            self.refresh_after_mutation();
+        }
+    }
+
+    fn move_selection(&mut self, delta: isize) {
+        let len = self.current_items().len();
+        if len == 0 {
+            self.selected = 0;
+            return;
+        }
+
+        self.selected = self.selected.saturating_add_signed(delta).min(len - 1);
+    }
+
+    fn select_next(&mut self) {
+        self.move_selection(1);
+    }
+
+    fn select_prev(&mut self) {
+        self.move_selection(-1);
+    }
+
+    fn delete_selected(&mut self) {
+        if matches!(self.page, Page::History) {
+            return;
+        }
+        if let Some(todo) = self.selected_item() {
+            if todo.done {
+                return;
+            }
+            todo.delete(&self.db);
+            self.refresh_after_mutation();
+        }
+    }
+
+    fn start_adding(&mut self) {
+        if matches!(self.page, Page::History) {
+            return;
+        }
+
+        self.ui_mode = UiMode::Adding;
+        self.input_widget = Some(InputWidget::new(None, None, None));
+    }
+
+    fn start_editing(&mut self) {
+        if matches!(self.page, Page::History) {
+            return;
+        }
+
+        if let Some(todo) = self.selected_item() {
+            self.ui_mode = UiMode::Editing;
+            self.input_widget = Some(InputWidget::new(Some(&todo.text), todo.due_date, todo.repeat.as_ref()));
+        }
+    }
+
+    fn select_page(&mut self, key: char) {
+        let page = match key {
+            '1' => Some(Page::Due),
+            '2' => Some(Page::Today),
+            '3' => Some(Page::Index),
+            '4' => Some(Page::History),
+            _ => None,
+        };
+
+        if let Some(page) = page {
+            self.set_page(page);
+        }
+    }
+
+    fn cancel_input(&mut self) {
+        self.input_widget = None;
+        self.ui_mode = UiMode::Normal;
+    }
+
+    fn confirm_add(&mut self, text: String, date: Option<time::Date>, repeat: Option<Repeat>) {
+        let mut todo = Todo::new(text, date, repeat);
+        if todo.save(&self.db) {
+            self.refresh_after_mutation();
+        }
+        self.cancel_input();
+    }
+
+    fn update_selected(&mut self, text: String, date: Option<time::Date>, repeat: Option<Repeat>) {
+        if let Some(mut todo) = self.selected_item() {
+            todo.text = text;
+            todo.due_date = date;
+            todo.repeat = repeat;
+            todo.update(&self.db);
+            self.refresh_after_mutation();
+        }
+    }
+
+    fn confirm_edit(&mut self, text: String, date: Option<time::Date>, repeat: Option<Repeat>) {
+        self.update_selected(text, date, repeat);
+        self.cancel_input();
+    }
+
+    fn handle_input_action(&mut self, action: InputAction, editing: bool) {
+        match action {
+            InputAction::Confirm { text, date, repeat } => {
+                if editing {
+                    self.confirm_edit(text, date, repeat);
+                } else {
+                    self.confirm_add(text, date, repeat);
+                }
+            }
+            InputAction::Escape => self.cancel_input(),
+            InputAction::None => {}
         }
     }
 }
