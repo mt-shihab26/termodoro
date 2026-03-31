@@ -2,7 +2,7 @@ use std::io::Result;
 
 use sea_orm::DatabaseConnection;
 
-use crate::{config::Config, runtime::tui::App};
+use crate::{config::Config, domains::tui::App};
 
 use super::Cmd;
 
