@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex, mpsc::Sender};
 use std::{thread, time::Duration};
 
 use crate::config::timer::TimerConfig;
-use crate::domains::timer::state::TimerState;
+use crate::domains::timer::TimerState;
 use crate::{kinds::event::Event, log_error, log_warn};
 
 pub fn spawn(render_count: Arc<AtomicU8>, sender: Sender<Event>, timer_config: TimerConfig) -> Arc<Mutex<TimerState>> {
@@ -26,10 +26,10 @@ pub fn spawn(render_count: Arc<AtomicU8>, sender: Sender<Event>, timer_config: T
 
                 state.tick();
 
-                (state.config.tick_interval(), state.running)
+                (state.timer_config.tick_interval(), state.running)
             };
 
-            thread::sleep(Duration::from_millis(interval));
+            thread::sleep(Duration::from_millis(interval as u64));
 
             let current_render_count = render_count.load(Ordering::Relaxed);
 
