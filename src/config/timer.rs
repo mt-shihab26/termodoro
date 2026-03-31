@@ -17,7 +17,7 @@ pub struct TimerConfig {
 impl Default for TimerConfig {
     fn default() -> Self {
         Self {
-            show_millis: true,
+            show_millis: false,
             work_duration: 25,
             break_duration: 5,
             long_break_duration: 15,
