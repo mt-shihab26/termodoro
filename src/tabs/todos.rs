@@ -53,6 +53,10 @@ impl Tab for Todos {
                 KeyCode::Char('[') => self.set_page(self.page.prev()),
                 KeyCode::Char('j') | KeyCode::Down => self.move_selection(1),
                 KeyCode::Char('k') | KeyCode::Up => self.move_selection(-1),
+                KeyCode::Char('G') => {
+                    let len = self.current_items().len();
+                    self.move_selection(len.saturating_sub(1) as isize);
+                }
                 KeyCode::Char(' ') | KeyCode::Enter => {
                     if let Some(mut todo) = self.selected_item().map(|todo| todo.clone()) {
                         todo.toggle(&self.db);
