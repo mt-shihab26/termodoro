@@ -5,7 +5,6 @@ use std::path::PathBuf;
 use std::sync::OnceLock;
 
 use libsql::{Builder, Database};
-use sea_orm::{ConnectionTrait, DatabaseConnection, Statement};
 
 use crate::config::db::DBConfig;
 

@@ -2,6 +2,14 @@
 
 A terminal-based Todos + Pomodoro timer written in Rust
 
+## Dependencies
+
+Orivo requires the following system libraries to be installed before building:
+
+| Dependency | Reason | Install |
+|------------|--------|---------|
+| `sqlite3`  | Required at link time by `sqlx-sqlite` (uses system SQLite instead of bundling its own, to avoid conflicts with libSQL) | `sudo pacman -S sqlite` |
+
 ## Configuration
 
 Config file location: `~/.config/orivo/config.toml`

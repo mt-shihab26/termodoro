@@ -2147,6 +2147,7 @@ name = "orivo"
 version = "0.1.0"
 dependencies = [
  "libsql",
+ "libsqlite3-sys",
  "ratatui",
  "ratatui-textarea",
  "sea-orm",
