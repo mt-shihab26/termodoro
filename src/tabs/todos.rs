@@ -44,7 +44,7 @@ impl Tab for Todos {
     }
 
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
-        let peanding_g = self.pending_g;
+        let pending_g = self.pending_g;
         self.pending_g = false;
 
         match self.ui_mode {
@@ -57,16 +57,8 @@ impl Tab for Todos {
                 KeyCode::Char('[') => self.set_page(self.page.prev()),
                 KeyCode::Char('j') | KeyCode::Down => self.move_selection(1),
                 KeyCode::Char('k') | KeyCode::Up => self.move_selection(-1),
-                KeyCode::Char('g') => {
-                    if peanding_g {
-                        self.go_to_start();
-                    }
-                    self.pending_g = !self.pending_g;
-                }
-                KeyCode::Char('G') => {
-                    let len = self.current_items().len();
-                    self.move_selection(len.saturating_sub(1) as isize);
-                }
+                KeyCode::Char('g') => self.go_to_start(pending_g),
+                KeyCode::Char('G') => self.go_to_end(),
                 KeyCode::Char(' ') | KeyCode::Enter => {
                     if let Some(mut todo) = self.selected_item().map(|todo| todo.clone()) {
                         todo.toggle(&self.db);
@@ -299,10 +291,24 @@ impl Todos {
         self.invalidate_cache();
     }
 
-    fn go_to_start(&mut self) {
-        self.offset = 0;
-        self.selected = 0;
-        self.invalidate_cache();
+    fn go_to_start(&mut self, pending_g: bool) {
+        if pending_g {
+            self.offset = 0;
+            self.selected = 0;
+            self.invalidate_cache();
+        }
+        self.pending_g = !self.pending_g;
+    }
+
+    fn go_to_end(&mut self) {
+        loop {
+            let position = (self.offset, self.selected);
+            self.move_selection(1);
+
+            if (self.offset, self.selected) == position {
+                break;
+            }
+        }
     }
 
     fn move_selection(&mut self, delta: isize) {
