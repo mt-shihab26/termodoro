@@ -81,6 +81,10 @@ impl Todo {
     pub fn toggle(&mut self, db: &DatabaseConnection) -> Option<Todo> {
         self.done = !self.done;
 
+        if self.done && self.due_date.is_none() {
+            self.due_date = Some(today());
+        }
+
         if !self.update(db) {
             self.done = !self.done;
             return None;
@@ -88,10 +92,6 @@ impl Todo {
 
         if !self.done {
             return None;
-        }
-
-        if self.due_date.is_none() {
-            self.due_date = Some(today());
         }
 
         let (Some(repeat), Some(date)) = (self.repeat.as_ref(), self.due_date) else {
