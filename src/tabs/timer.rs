@@ -12,6 +12,7 @@ use tui_big_text::{BigText, PixelSize};
 
 use crate::domains::timer::state::TimerState;
 use crate::kinds::{event::Event, phase::COLOR};
+use crate::utils::config::TimerConfig;
 use crate::{log_error, log_warn, workers::timer};
 
 use super::Tab;
@@ -22,10 +23,10 @@ pub struct Timer {
 }
 
 impl Timer {
-    pub fn new(sender: Sender<Event>) -> Self {
+    pub fn new(sender: Sender<Event>, timer_config: TimerConfig) -> Self {
         let render_count = Arc::new(AtomicU8::new(1));
 
-        let state = timer::spawn(Arc::clone(&render_count), sender);
+        let state = timer::spawn(Arc::clone(&render_count), sender, timer_config);
 
         Self { state, render_count }
     }

@@ -53,7 +53,7 @@ impl App {
 
         term::spawn(sender.clone());
 
-        let tabs: Vec<Box<dyn Tab>> = vec![Box::new(Todos::new()), Box::new(Timer::new(sender))];
+        let tabs: Vec<Box<dyn Tab>> = vec![Box::new(Todos::new()), Box::new(Timer::new(sender, config.timer.clone()))];
 
         Self {
             config,
