@@ -36,13 +36,7 @@ pub struct Todos {
 
 impl Todos {
     pub fn new(db: DatabaseConnection) -> Self {
-        let items = match Todo::load_all(&db) {
-            Ok(models) => models.into_iter().map(Todo::from).collect(),
-            Err(e) => {
-                log_error!("failed to load todos: {e}");
-                vec![]
-            }
-        };
+        let items = Todo::all(&db);
 
         Self {
             db,

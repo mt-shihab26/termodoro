@@ -4,6 +4,7 @@ use sea_orm::{ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, DatabaseC
 use sea_orm::{DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait};
 use time::Date;
 
+use crate::log_error;
 use crate::{kinds::repeat::Repeat, utils::db::rt};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
@@ -64,8 +65,14 @@ impl Todo {
         }
     }
 
-    pub fn load_all(db: &DatabaseConnection) -> io::Result<Vec<Model>> {
-        rt().block_on(async { Entity::find().all(db).await.map_err(io_err) })
+    pub fn all(db: &DatabaseConnection) -> Vec<Todo> {
+        match rt().block_on(async { Entity::find().all(db).await.map_err(io_err) }) {
+            Ok(models) => models.into_iter().map(Todo::from).collect(),
+            Err(e) => {
+                log_error!("failed to load todos: {e}");
+                vec![]
+            }
+        }
     }
 
     pub fn insert(db: &DatabaseConnection, model: ActiveModel) -> io::Result<Model> {
