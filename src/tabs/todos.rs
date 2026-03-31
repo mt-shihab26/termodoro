@@ -1,17 +1,17 @@
-use std::cell::{Cell, Ref, RefCell};
+use std::cell::Ref;
 use std::io::Result;
 
 use ratatui::Frame;
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Stylize};
-use ratatui::widgets::{Block, ListState, Widget};
+use ratatui::widgets::{Block, Widget};
 use sea_orm::DatabaseConnection;
 
-use crate::kinds::direction::Direction;
 use crate::kinds::mode::Mode;
 use crate::kinds::{page::Page, repeat::Repeat};
 use crate::models::todo::Todo;
+use crate::states::todos::TodosState;
 use crate::widgets::todos::hint::HintWidget;
 use crate::widgets::todos::input::{InputAction, InputWidget};
 use crate::widgets::todos::list::ListWidget;
@@ -26,14 +26,7 @@ pub struct Todos {
     db: DatabaseConnection,
     page: Page,
     mode: Mode,
-    pending_g: bool,
-    direction: Option<Direction>,
-    selected: usize,
-    offset: usize,
-    page_size: Cell<usize>,
-    list_state: RefCell<ListState>,
-    items_cache: RefCell<Option<Vec<Todo>>>,
-    count_cache: RefCell<Option<usize>>,
+    state: TodosState,
     input_widget: Option<InputWidget>,
 }
 
@@ -47,9 +40,7 @@ impl Tab for Todos {
     }
 
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
-        let pending_g = self.pending_g;
-        self.pending_g = false;
-        self.direction = None;
+        let pending_g = self.state.begin_input();
 
         match self.mode {
             Mode::Normal => match key.code {
@@ -162,12 +153,12 @@ impl Tab for Todos {
             }
         };
 
-        self.set_visible_capacity(list_area);
+        self.state.set_visible_capacity(list_area);
         let items = self.items();
         let total = self.count();
-        let from = if total == 0 { 0 } else { self.offset + 1 };
-        let to = self.offset + items.len();
-        let page = (self.offset / self.page_size.get().max(1)) + 1;
+        let from = self.state.from(total);
+        let to = self.state.to(items.len());
+        let page = self.state.page();
 
         frame.render_widget(
             StatusWidget::new(
@@ -175,7 +166,7 @@ impl Tab for Todos {
                 from,
                 to,
                 page,
-                items.get(self.selected).and_then(|todo| todo.id),
+                items.get(self.state.selected()).and_then(|todo| todo.id),
             ),
             area,
         );
@@ -190,14 +181,14 @@ impl Tab for Todos {
 
         ListWidget {
             items: &items,
-            offset: self.offset,
+            offset: self.state.offset(),
             page: self.page,
-            selected: self.selected,
+            selected: self.state.selected(),
             color: self.color(),
-            show_more_above: self.offset > 0,
-            show_more_below: items.len() == self.page_size.get(),
+            show_more_above: self.state.show_more_above(),
+            show_more_below: self.state.show_more_below(items.len()),
         }
-        .render(frame, list_area, &mut self.list_state.borrow_mut());
+        .render(frame, list_area, &mut self.state.list_state_mut());
 
         frame.render_widget(
             HintWidget {
@@ -217,7 +208,7 @@ impl Tab for Todos {
     }
 
     fn should_tick(&self) -> bool {
-        self.direction.is_some()
+        self.state.should_tick()
     }
 
     fn next_tick(&mut self) -> Result<()> {
@@ -225,18 +216,11 @@ impl Tab for Todos {
             return Ok(());
         }
 
-        if let Some(direction) = &self.direction {
-            let position = (self.offset, self.selected);
-
-            match direction {
-                Direction::Start => self.move_selection(-1),
-                Direction::End => self.move_selection(1),
+        if self.state.is_animating() {
+            let changed = self.step_animation();
+            if !changed {
+                self.state.stop_animation();
             }
-
-            if (self.offset, self.selected) == position {
-                self.direction = None;
-            }
-
             self.sync_list_state();
         }
 
@@ -250,58 +234,25 @@ impl Todos {
             db,
             page: Page::Today,
             mode: Mode::Normal,
-            pending_g: false,
-            direction: None,
-            selected: 0,
-            offset: 0,
-            page_size: Cell::new(1),
-            list_state: RefCell::new(ListState::default()),
-            items_cache: RefCell::new(None),
-            count_cache: RefCell::new(None),
+            state: TodosState::new(),
             input_widget: None,
         }
     }
 
     fn items(&self) -> Ref<'_, [Todo]> {
-        let mut items_cache = self.items_cache.borrow_mut();
-        if items_cache.is_none() {
-            *items_cache = Some(Todo::list(
-                &self.db,
-                self.page,
-                self.offset,
-                self.page_size.get(),
-            ));
-        }
-        Ref::map(self.items_cache.borrow(), |cache| {
-            cache.as_deref().unwrap_or(&[])
-        })
+        self.state.items(&self.db, self.page)
     }
 
     fn count(&self) -> usize {
-        let mut cache = self.count_cache.borrow_mut();
-        if cache.is_none() {
-            *cache = Some(Todo::count(&self.db, self.page));
-        }
-        cache.unwrap_or(0)
-    }
-
-    fn set_visible_capacity(&self, list_area: Rect) {
-        let top_padding = 1usize;
-        let capacity = list_area.height.saturating_sub(top_padding as u16) as usize;
-        let capacity = capacity.max(1);
-
-        if self.page_size.get() != capacity {
-            self.page_size.set(capacity);
-            self.invalidate_cache();
-        }
+        self.state.count(&self.db, self.page)
     }
 
     fn invalidate_cache(&self) {
-        *self.items_cache.borrow_mut() = None;
+        self.state.invalidate_items();
     }
 
     fn invalidate_total_count_cache(&self) {
-        *self.count_cache.borrow_mut() = None;
+        self.state.invalidate_count();
     }
 
     fn refresh(&mut self) {
@@ -311,20 +262,7 @@ impl Todos {
     }
 
     fn selected_item(&self) -> Option<Ref<'_, Todo>> {
-        self.items();
-
-        let cache = self.items_cache.borrow();
-        if cache
-            .as_ref()
-            .and_then(|items| items.get(self.selected))
-            .is_none()
-        {
-            return None;
-        }
-
-        Some(Ref::map(cache, |cache| {
-            &cache.as_ref().unwrap()[self.selected]
-        }))
+        self.state.selected_item(&self.db, self.page)
     }
 
     fn can_delete_selected(&self) -> bool {
@@ -333,94 +271,38 @@ impl Todos {
     }
 
     fn can_delete_in_items(&self, items: &[Todo]) -> bool {
-        !matches!(self.page, Page::History)
-            && items.get(self.selected).is_some_and(|todo| !todo.done)
+        self.state.can_delete(self.page, items)
     }
 
     fn clamp_selected(&mut self) {
-        let mut len = self.items().len();
-        if len == 0 && self.offset > 0 {
-            self.offset = self.offset.saturating_sub(self.page_size.get().max(1));
-            self.invalidate_cache();
-            len = self.items().len();
-        }
-
-        if len == 0 {
-            self.selected = 0;
-        } else {
-            self.selected = self.selected.min(len - 1);
-        }
+        self.state.clamp_selected(&self.db, self.page);
     }
 
     fn sync_list_state(&self) {
-        let len = self.items().len();
-        let selected = if len == 0 {
-            None
-        } else {
-            Some(self.selected.min(len - 1))
-        };
-        self.list_state.borrow_mut().select(selected);
+        self.state.sync_list_state(self.items().len());
     }
 
     fn set_page(&mut self, page: Page) {
         self.page = page;
-        self.pending_g = false;
-        self.direction = None;
-        self.offset = 0;
-        self.selected = 0;
+        self.state.reset_page();
         self.invalidate_cache();
         self.invalidate_total_count_cache();
     }
 
     fn go_to_start(&mut self, pending_g: bool) {
-        if pending_g {
-            self.direction = Some(Direction::Start);
-        } else {
-            self.direction = None;
-        }
-        self.pending_g = !pending_g;
+        self.state.go_to_start(pending_g);
     }
 
     fn go_to_end(&mut self) {
-        self.direction = Some(Direction::End);
+        self.state.go_to_end();
     }
 
     fn move_selection(&mut self, delta: isize) {
-        if delta > 0 {
-            for _ in 0..delta as usize {
-                let len = self.items().len();
-                if len == 0 {
-                    self.selected = 0;
-                    break;
-                }
+        self.state.move_selection(&self.db, self.page, delta);
+    }
 
-                if self.selected + 1 < len {
-                    self.selected += 1;
-                } else if len == self.page_size.get().max(1) {
-                    self.offset += 1;
-                    self.invalidate_cache();
-                } else {
-                    break;
-                }
-            }
-        } else if delta < 0 {
-            for _ in 0..delta.unsigned_abs() {
-                let len = self.items().len();
-                if len == 0 {
-                    self.selected = 0;
-                    break;
-                }
-
-                if self.selected > 0 {
-                    self.selected -= 1;
-                } else if self.offset > 0 {
-                    self.offset -= 1;
-                    self.invalidate_cache();
-                } else {
-                    break;
-                }
-            }
-        }
+    fn step_animation(&mut self) -> bool {
+        self.state.step_animation(&self.db, self.page)
     }
 
     fn cancel_input(&mut self) {

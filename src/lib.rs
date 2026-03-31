@@ -4,6 +4,7 @@ pub mod domains;
 pub mod kinds;
 pub mod migration;
 pub mod models;
+pub mod states;
 pub mod tabs;
 pub mod utils;
 pub mod widgets;
