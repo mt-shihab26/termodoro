@@ -8,8 +8,8 @@ use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Tabs, Widget};
 use time::OffsetDateTime;
 
-use crate::domains::todos::todo::Todo;
 use crate::kinds::{page::Page, repeat::Repeat};
+use crate::models::todo::Todo;
 use crate::widgets::input::{InputAction, InputWidget};
 
 use super::Tab;

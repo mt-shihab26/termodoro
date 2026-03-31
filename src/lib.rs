@@ -3,6 +3,7 @@ pub mod config;
 pub mod db;
 pub mod domains;
 pub mod kinds;
+pub mod models;
 pub mod tabs;
 pub mod utils;
 pub mod widgets;
