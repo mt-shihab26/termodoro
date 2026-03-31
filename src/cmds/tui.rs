@@ -1,5 +1,6 @@
 use std::io::{Error, ErrorKind, Result};
-use std::sync::mpsc::{self, Receiver};
+use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
+use std::time::Duration;
 
 use ratatui::crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::layout::{Constraint, Layout};
@@ -10,7 +11,7 @@ use ratatui::{DefaultTerminal, Frame, init, restore};
 use sea_orm::DatabaseConnection;
 
 use crate::tabs::{Tab, timer::Timer, todos::Todos};
-use crate::workers::{term, ui};
+use crate::workers::term;
 use crate::{config::Config, kinds::event::Event};
 use crate::{log_error, widgets::fps::FpsWidget};
 
@@ -52,7 +53,6 @@ impl App {
         let (sender, events) = mpsc::channel::<Event>();
 
         term::spawn(sender.clone());
-        ui::spawn(sender.clone());
 
         let Config { timer, .. } = config;
         let tabs: Vec<Box<dyn Tab>> = vec![Box::new(Todos::new(db)), Box::new(Timer::new(sender, timer))];
@@ -87,12 +87,27 @@ impl App {
                 return Err(e);
             }
 
-            match self.events.recv() {
-                Err(e) => {
-                    log_error!("event channel disconnected: {e}");
-                    return Err(Error::new(ErrorKind::BrokenPipe, e));
+            let event = if self.tabs[self.selected].should_tick() {
+                match self.events.recv_timeout(Duration::from_millis(16)) {
+                    Ok(event) => Some(event),
+                    Err(RecvTimeoutError::Timeout) => None,
+                    Err(RecvTimeoutError::Disconnected) => {
+                        log_error!("event channel disconnected");
+                        return Err(Error::new(ErrorKind::BrokenPipe, "event channel disconnected"));
+                    }
                 }
-                Ok(Event::Key(key)) => match key.code {
+            } else {
+                match self.events.recv() {
+                    Ok(event) => Some(event),
+                    Err(e) => {
+                        log_error!("event channel disconnected: {e}");
+                        return Err(Error::new(ErrorKind::BrokenPipe, e));
+                    }
+                }
+            };
+
+            match event {
+                Some(Event::Key(key)) => match key.code {
                     KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                         self.alive = false;
                     }
@@ -122,10 +137,10 @@ impl App {
                         }
                     }
                 },
-                Ok(Event::Resize(_, _)) => {}
-                Ok(Event::TimerTick) => {}
-                Ok(Event::NavigationTick) => {
-                    if let Err(e) = self.tabs[self.selected].tick() {
+                Some(Event::Resize(_, _)) => {}
+                Some(Event::TimerTick) => {}
+                None => {
+                    if let Err(e) = self.tabs[self.selected].next_tick() {
                         log_error!("tab tick error: {e}");
                         return Err(e);
                     }

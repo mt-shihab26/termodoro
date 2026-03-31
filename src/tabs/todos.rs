@@ -122,7 +122,7 @@ impl Tab for Todos {
         Ok(())
     }
 
-    fn tick(&mut self) -> Result<()> {
+    fn next_tick(&mut self) -> Result<()> {
         if !matches!(self.ui_mode, UiMode::Normal) {
             return Ok(());
         }
@@ -143,6 +143,10 @@ impl Tab for Todos {
         }
 
         Ok(())
+    }
+
+    fn should_tick(&self) -> bool {
+        self.animation.is_some()
     }
 
     fn render(&self, frame: &mut Frame, area: Rect) {
