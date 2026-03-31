@@ -9,9 +9,9 @@ use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Tabs, Widget
 use sea_orm::DatabaseConnection;
 use time::OffsetDateTime;
 
-use crate::db::todos as db;
 use crate::kinds::{page::Page, repeat::Repeat};
 use crate::models::todo::Todo;
+use crate::models::todos as db;
 use crate::widgets::input::{InputAction, InputWidget};
 use crate::{log_error, log_warn};
 

@@ -2,8 +2,8 @@ use std::io::{Error, ErrorKind, Result};
 
 use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait};
 
-use crate::db::store::rt;
 use crate::entities::todo::{self, ActiveModel, Entity as TodoEntity};
+use crate::utils::db::rt;
 
 fn io_err(e: impl std::fmt::Display) -> Error {
     Error::new(ErrorKind::Other, e.to_string())
@@ -22,7 +22,5 @@ pub fn update(db: &DatabaseConnection, model: ActiveModel) -> Result<()> {
 }
 
 pub fn delete(db: &DatabaseConnection, id: i32) -> Result<()> {
-    rt().block_on(async {
-        TodoEntity::delete_by_id(id).exec(db).await.map_err(io_err).map(|_| ())
-    })
+    rt().block_on(async { TodoEntity::delete_by_id(id).exec(db).await.map_err(io_err).map(|_| ()) })
 }

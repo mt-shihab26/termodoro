@@ -1,10 +1,9 @@
 pub mod cmds;
-pub mod entities;
-pub mod migration;
 pub mod config;
-pub mod db;
 pub mod domains;
+pub mod entities;
 pub mod kinds;
+pub mod migration;
 pub mod models;
 pub mod tabs;
 pub mod utils;

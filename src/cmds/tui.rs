@@ -10,8 +10,8 @@ use ratatui::{DefaultTerminal, Frame, init, restore};
 use sea_orm::DatabaseConnection;
 
 use crate::config::Config;
-use crate::db::connection;
 use crate::tabs::{Tab, timer::Timer, todos::Todos};
+use crate::utils::db;
 use crate::widgets::fps::FpsWidget;
 use crate::{kinds::event::Event, log_error, workers::term};
 
@@ -33,7 +33,7 @@ impl Cmd for Tui {
     }
 
     fn run(self: Box<Self>) -> Result<()> {
-        let db = connection::connect()?;
+        let db = db::connect()?;
         let mut app = App::new(self.config, db);
         app.run()
     }
