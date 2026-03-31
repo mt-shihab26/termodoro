@@ -21,8 +21,10 @@ pub struct Config {
 
 impl Config {
     pub fn path() -> PathBuf {
-        let home = env::var("HOME").unwrap_or_else(|_| ".".to_string());
-        PathBuf::from(home).join(".config").join("orivo").join("config.toml")
+        PathBuf::from(env::var("HOME").unwrap_or_else(|_| ".".to_string()))
+            .join(".config")
+            .join("orivo")
+            .join("config2.toml")
     }
 
     pub fn load() -> Result<Self> {

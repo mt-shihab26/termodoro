@@ -1,6 +1,6 @@
 use ratatui::style::Color;
 
-use crate::domains::timer::config::Config;
+use crate::config::timer::TimerConfig;
 
 pub const COLOR: Color = Color::Red;
 
@@ -27,11 +27,11 @@ impl Phase {
         }
     }
 
-    pub fn duration(&self, config: &Config) -> u64 {
+    pub fn duration(&self, timer_config: &TimerConfig) -> u32 {
         match self {
-            Phase::Work => config.work_duration(),
-            Phase::Break => config.break_duration(),
-            Phase::LongBreak => config.long_break_duration(),
+            Phase::Work => timer_config.work_duration(),
+            Phase::Break => timer_config.break_duration(),
+            Phase::LongBreak => timer_config.long_break_duration(),
         }
     }
 }

@@ -1,25 +1,21 @@
 use crate::{config::timer::TimerConfig, kinds::phase::Phase};
 
-use super::config::Config;
-
 pub struct TimerState {
     pub phase: Phase,
-    pub millis: u64,
-    pub sessions: u64,
+    pub millis: u32,
+    pub sessions: u32,
     pub running: bool,
-    pub config: Config,
+    pub timer_config: TimerConfig,
 }
 
 impl TimerState {
     pub fn new(timer_config: TimerConfig) -> Self {
-        let config = Config::new(timer_config);
-        let millis = config.work_duration();
         Self {
             phase: Phase::Work,
-            millis,
+            millis: timer_config.work_duration(),
             sessions: 0,
             running: false,
-            config,
+            timer_config,
         }
     }
 
@@ -28,7 +24,7 @@ impl TimerState {
             return;
         }
 
-        let step = self.config.tick_interval();
+        let step = self.timer_config.tick_interval();
 
         if self.millis >= step {
             self.millis -= step;
@@ -41,7 +37,7 @@ impl TimerState {
         match self.phase {
             Phase::Work => {
                 self.sessions += 1;
-                self.phase = if self.sessions % self.config.long_break_interval() == 0 {
+                self.phase = if self.sessions % self.timer_config.long_break_interval() == 0 {
                     Phase::LongBreak
                 } else {
                     Phase::Break
@@ -51,11 +47,11 @@ impl TimerState {
                 self.phase = Phase::Work;
             }
         }
-        self.millis = self.phase.duration(&self.config);
+        self.millis = self.phase.duration(&self.timer_config);
         self.running = false;
     }
 
-    pub fn time_parts(&self) -> (u64, u64, u64) {
+    pub fn time_parts(&self) -> (u32, u32, u32) {
         let mins = self.millis / 60000;
         let secs = (self.millis / 1000) % 60;
         let cs = (self.millis % 1000) / 10;
