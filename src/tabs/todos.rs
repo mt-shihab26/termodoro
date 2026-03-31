@@ -9,7 +9,7 @@ use ratatui::widgets::{Block, Widget};
 use sea_orm::DatabaseConnection;
 
 use crate::kinds::mode::Mode;
-use crate::kinds::{page::Page, repeat::Repeat};
+use crate::kinds::page::Page;
 use crate::models::todo::Todo;
 use crate::states::todos::TodosState;
 use crate::widgets::todos::hint::HintWidget;
@@ -50,10 +50,18 @@ impl Tab for Todos {
                 KeyCode::Char('4') => self.set_page(Page::History),
                 KeyCode::Char(']') => self.set_page(self.page.next()),
                 KeyCode::Char('[') => self.set_page(self.page.prev()),
-                KeyCode::Char('j') | KeyCode::Down => self.move_selection(1),
-                KeyCode::Char('k') | KeyCode::Up => self.move_selection(-1),
-                KeyCode::Char('g') => self.go_to_start(pending_g),
-                KeyCode::Char('G') => self.go_to_end(),
+                KeyCode::Char('j') | KeyCode::Down => {
+                    self.state.move_selection(&self.db, self.page, 1);
+                }
+                KeyCode::Char('k') | KeyCode::Up => {
+                    self.state.move_selection(&self.db, self.page, -1);
+                }
+                KeyCode::Char('g') => {
+                    self.state.go_to_start(pending_g);
+                }
+                KeyCode::Char('G') => {
+                    self.state.go_to_end();
+                }
                 KeyCode::Char(' ') | KeyCode::Enter => {
                     if let Some(mut todo) = self.selected_item().map(|todo| todo.clone()) {
                         todo.toggle(&self.db);
@@ -99,7 +107,11 @@ impl Tab for Todos {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
-                            self.confirm_add(text, date, repeat)
+                            let mut todo = Todo::new(text, date, repeat);
+                            if todo.save(&self.db) {
+                                self.refresh();
+                            }
+                            self.cancel_input();
                         }
                         InputAction::Escape => self.cancel_input(),
                         InputAction::None => {}
@@ -110,7 +122,14 @@ impl Tab for Todos {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
-                            self.confirm_edit(text, date, repeat)
+                            if let Some(mut todo) = self.selected_item().map(|todo| todo.clone()) {
+                                todo.text = text;
+                                todo.due_date = date;
+                                todo.repeat = repeat;
+                                todo.update(&self.db);
+                                self.refresh();
+                            }
+                            self.cancel_input();
                         }
                         InputAction::Escape => self.cancel_input(),
                         InputAction::None => {}
@@ -118,7 +137,7 @@ impl Tab for Todos {
                 }
             }
         }
-        self.sync_list_state();
+        self.state.sync_list_state(self.items().len());
         Ok(())
     }
 
@@ -217,11 +236,11 @@ impl Tab for Todos {
         }
 
         if self.state.is_animating() {
-            let changed = self.step_animation();
+            let changed = self.state.step_animation(&self.db, self.page);
             if !changed {
                 self.state.stop_animation();
             }
-            self.sync_list_state();
+            self.state.sync_list_state(self.items().len());
         }
 
         Ok(())
@@ -252,10 +271,6 @@ impl Todos {
         self.state.reset_page(&self.db, self.page);
     }
 
-    fn move_selection(&mut self, delta: isize) {
-        self.state.move_selection(&self.db, self.page, delta);
-    }
-
     fn refresh(&mut self) {
         self.state.refresh(&self.db, self.page);
         self.clamp_selected();
@@ -278,43 +293,8 @@ impl Todos {
         self.state.clamp_selected(&self.db, self.page);
     }
 
-    fn sync_list_state(&self) {
-        self.state.sync_list_state(self.items().len());
-    }
-
-    fn go_to_start(&mut self, pending_g: bool) {
-        self.state.go_to_start(pending_g);
-    }
-
-    fn go_to_end(&mut self) {
-        self.state.go_to_end();
-    }
-
-    fn step_animation(&mut self) -> bool {
-        self.state.step_animation(&self.db, self.page)
-    }
-
     fn cancel_input(&mut self) {
         self.input_widget = None;
         self.mode = Mode::Normal;
-    }
-
-    fn confirm_add(&mut self, text: String, date: Option<time::Date>, repeat: Option<Repeat>) {
-        let mut todo = Todo::new(text, date, repeat);
-        if todo.save(&self.db) {
-            self.refresh();
-        }
-        self.cancel_input();
-    }
-
-    fn confirm_edit(&mut self, text: String, date: Option<time::Date>, repeat: Option<Repeat>) {
-        if let Some(mut todo) = self.selected_item().map(|todo| todo.clone()) {
-            todo.text = text;
-            todo.due_date = date;
-            todo.repeat = repeat;
-            todo.update(&self.db);
-            self.refresh();
-        }
-        self.cancel_input();
     }
 }
