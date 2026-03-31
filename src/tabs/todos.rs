@@ -163,8 +163,8 @@ impl Tab for Todos {
         };
 
         self.set_visible_capacity(list_area);
-        let items = self.current_items();
-        let total = self.total_count();
+        let items = self.items();
+        let total = self.count();
         let from = if total == 0 { 0 } else { self.offset + 1 };
         let to = self.offset + items.len();
         let page = (self.offset / self.page_size.get().max(1)) + 1;
@@ -262,26 +262,22 @@ impl Todos {
         }
     }
 
-    fn ensure_cache(&self) {
-        let mut cache = self.items_cache.borrow_mut();
-        if cache.is_none() {
-            *cache = Some(Todo::list(
+    fn items(&self) -> Ref<'_, [Todo]> {
+        let mut items_cache = self.items_cache.borrow_mut();
+        if items_cache.is_none() {
+            *items_cache = Some(Todo::list(
                 &self.db,
                 self.page,
                 self.offset,
                 self.page_size.get(),
             ));
         }
-    }
-
-    fn current_items(&self) -> Ref<'_, [Todo]> {
-        self.ensure_cache();
         Ref::map(self.items_cache.borrow(), |cache| {
             cache.as_deref().unwrap_or(&[])
         })
     }
 
-    fn total_count(&self) -> usize {
+    fn count(&self) -> usize {
         let mut cache = self.count_cache.borrow_mut();
         if cache.is_none() {
             *cache = Some(Todo::count(&self.db, self.page));
@@ -315,7 +311,8 @@ impl Todos {
     }
 
     fn selected_item(&self) -> Option<Ref<'_, Todo>> {
-        self.ensure_cache();
+        self.items();
+
         let cache = self.items_cache.borrow();
         if cache
             .as_ref()
@@ -331,7 +328,7 @@ impl Todos {
     }
 
     fn can_delete_selected(&self) -> bool {
-        let items = self.current_items();
+        let items = self.items();
         self.can_delete_in_items(&items)
     }
 
@@ -341,11 +338,11 @@ impl Todos {
     }
 
     fn clamp_selected(&mut self) {
-        let mut len = self.current_items().len();
+        let mut len = self.items().len();
         if len == 0 && self.offset > 0 {
             self.offset = self.offset.saturating_sub(self.page_size.get().max(1));
             self.invalidate_cache();
-            len = self.current_items().len();
+            len = self.items().len();
         }
 
         if len == 0 {
@@ -356,7 +353,7 @@ impl Todos {
     }
 
     fn sync_list_state(&self) {
-        let len = self.current_items().len();
+        let len = self.items().len();
         let selected = if len == 0 {
             None
         } else {
@@ -391,7 +388,7 @@ impl Todos {
     fn move_selection(&mut self, delta: isize) {
         if delta > 0 {
             for _ in 0..delta as usize {
-                let len = self.current_items().len();
+                let len = self.items().len();
                 if len == 0 {
                     self.selected = 0;
                     break;
@@ -408,7 +405,7 @@ impl Todos {
             }
         } else if delta < 0 {
             for _ in 0..delta.unsigned_abs() {
-                let len = self.current_items().len();
+                let len = self.items().len();
                 if len == 0 {
                     self.selected = 0;
                     break;
