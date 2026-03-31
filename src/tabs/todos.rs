@@ -102,15 +102,22 @@ impl Todos {
         }
     }
 
-    fn select_next(&mut self) {
+    fn move_selection(&mut self, delta: isize) {
         let len = self.current_items().len();
-        if len > 0 {
-            self.selected = (self.selected + 1).min(len - 1);
+        if len == 0 {
+            self.selected = 0;
+            return;
         }
+
+        self.selected = self.selected.saturating_add_signed(delta).min(len - 1);
+    }
+
+    fn select_next(&mut self) {
+        self.move_selection(1);
     }
 
     fn select_prev(&mut self) {
-        self.selected = self.selected.saturating_sub(1);
+        self.move_selection(-1);
     }
 
     fn delete_selected(&mut self) {
