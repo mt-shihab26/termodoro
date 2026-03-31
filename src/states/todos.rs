@@ -126,7 +126,7 @@ impl TodosState {
 
         if self.page_size.get() != capacity {
             self.page_size.set(capacity);
-            self.invalidate_items();
+            self.clear_caches();
         }
     }
 
@@ -134,11 +134,16 @@ impl TodosState {
         self.page_size.get().max(1)
     }
 
-    pub fn invalidate_items(&self) {
+    fn clear_caches(&self) {
+        self.invalidate_items();
+        self.invalidate_count();
+    }
+
+    fn invalidate_items(&self) {
         *self.items.borrow_mut() = None;
     }
 
-    pub fn invalidate_count(&self) {
+    fn invalidate_count(&self) {
         *self.count.borrow_mut() = None;
     }
 
@@ -170,11 +175,13 @@ impl TodosState {
         self.list_state.borrow_mut().select(selected);
     }
 
-    pub fn reset_page(&mut self) {
+    pub fn reset_page(&mut self, db: &DatabaseConnection, page: Page) {
         self.pending_g = false;
         self.direction = None;
         self.offset = 0;
         self.selected = 0;
+        self.clear_caches();
+        self.clamp_selected(db, page);
     }
 
     pub fn go_to_start(&mut self, pending_g: bool) {
@@ -188,6 +195,11 @@ impl TodosState {
 
     pub fn go_to_end(&mut self) {
         self.direction = Some(Direction::End);
+    }
+
+    pub fn refresh(&mut self, db: &DatabaseConnection, page: Page) {
+        self.clear_caches();
+        self.clamp_selected(db, page);
     }
 
     pub fn move_selection(&mut self, db: &DatabaseConnection, page: Page, delta: isize) {

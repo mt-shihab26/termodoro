@@ -249,21 +249,15 @@ impl Todos {
 
     fn set_page(&mut self, page: Page) {
         self.page = page;
-        self.state.reset_page();
-        self.invalidate_cache();
+        self.state.reset_page(&self.db, self.page);
     }
 
     fn move_selection(&mut self, delta: isize) {
         self.state.move_selection(&self.db, self.page, delta);
     }
 
-    fn invalidate_cache(&self) {
-        self.state.invalidate_items();
-        self.state.invalidate_count();
-    }
-
     fn refresh(&mut self) {
-        self.invalidate_cache();
+        self.state.refresh(&self.db, self.page);
         self.clamp_selected();
     }
 
