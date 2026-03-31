@@ -27,12 +27,6 @@ impl<'a> TodosDatedListWidget<'a> {
             height: area.height.saturating_sub(top_padding + bottom_padding),
         };
 
-        TodosOverflowWidget {
-            show_more_above: self.show_more_above,
-            show_more_below: self.show_more_below,
-        }
-        .render(frame, padded_area);
-
         let items = self
             .items
             .iter()
@@ -44,5 +38,11 @@ impl<'a> TodosDatedListWidget<'a> {
             .highlight_symbol(">");
 
         frame.render_stateful_widget(list, padded_area, state);
+
+        TodosOverflowWidget {
+            show_more_above: self.show_more_above,
+            show_more_below: self.show_more_below,
+        }
+        .render(frame, padded_area);
     }
 }

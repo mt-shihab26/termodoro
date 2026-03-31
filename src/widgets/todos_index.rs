@@ -34,12 +34,6 @@ impl<'a> TodosIndexWidget<'a> {
             return;
         }
 
-        TodosOverflowWidget {
-            show_more_above: self.show_more_above,
-            show_more_below: self.show_more_below,
-        }
-        .render(frame, padded_area);
-
         let (rows, selected_row) = self.rows(padded_area.width as usize);
         let visible_rows = padded_area.height as usize;
         let start = if rows.len() <= visible_rows {
@@ -52,6 +46,12 @@ impl<'a> TodosIndexWidget<'a> {
         let end = (start + visible_rows).min(rows.len());
 
         frame.render_widget(Paragraph::new(rows[start..end].to_vec()), padded_area);
+
+        TodosOverflowWidget {
+            show_more_above: self.show_more_above,
+            show_more_below: self.show_more_below,
+        }
+        .render(frame, padded_area);
     }
 
     fn rows(&self, width: usize) -> (Vec<Line<'static>>, usize) {
