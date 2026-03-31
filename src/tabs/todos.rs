@@ -7,7 +7,6 @@ use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Tabs, Widget};
 use sea_orm::DatabaseConnection;
-use time::OffsetDateTime;
 
 use crate::kinds::{page::Page, repeat::Repeat};
 use crate::models::todo::Todo;
@@ -25,31 +24,54 @@ pub enum UiMode {
 
 pub struct Todos {
     db: DatabaseConnection,
-    items: Vec<Todo>,
     page: Page,
     ui_mode: UiMode,
     selected: usize,
     list_state: RefCell<ListState>,
+    cache: RefCell<Option<Vec<Todo>>>,
     input_widget: Option<InputWidget>,
 }
 
 impl Todos {
     pub fn new(db: DatabaseConnection) -> Self {
-        let items = Todo::all(&db);
-
         Self {
             db,
-            items,
             page: Page::Today,
             ui_mode: UiMode::Normal,
             selected: 0,
             list_state: RefCell::new(ListState::default()),
+            cache: RefCell::new(None),
             input_widget: None,
         }
     }
 
+    fn with_items<R>(&self, f: impl FnOnce(&[Todo]) -> R) -> R {
+        {
+            let mut cache = self.cache.borrow_mut();
+            if cache.is_none() {
+                *cache = Some(Todo::list_by_page(&self.db, self.page));
+            }
+        }
+
+        let cache = self.cache.borrow();
+        let items = cache.as_deref().unwrap_or(&[]);
+        f(items)
+    }
+
+    fn invalidate_cache(&self) {
+        *self.cache.borrow_mut() = None;
+    }
+
+    fn current_items(&self) -> Vec<Todo> {
+        self.with_items(|items| items.to_vec())
+    }
+
+    fn selected_item(&self) -> Option<Todo> {
+        self.current_items().get(self.selected).cloned()
+    }
+
     fn sync_list_state(&self) {
-        let len = self.filtered_indices().len();
+        let len = self.current_items().len();
         let selected = if len == 0 {
             None
         } else {
@@ -58,24 +80,8 @@ impl Todos {
         self.list_state.borrow_mut().select(selected);
     }
 
-    fn filtered_indices(&self) -> Vec<usize> {
-        let today = OffsetDateTime::now_utc().date();
-
-        self.items
-            .iter()
-            .enumerate()
-            .filter(|(_, todo)| match self.page {
-                Page::Due => todo.due_date.map_or(false, |d| d < today) && !todo.done,
-                Page::Today => todo.due_date.map_or(false, |d| d == today),
-                Page::Index => todo.due_date.map_or(true, |d| d > today),
-                Page::History => todo.done,
-            })
-            .map(|(i, _)| i)
-            .collect()
-    }
-
     fn clamp_selected(&mut self) {
-        let len = self.filtered_indices().len();
+        let len = self.current_items().len();
         if len == 0 {
             self.selected = 0;
         } else {
@@ -99,20 +105,22 @@ impl Tab for Todos {
                 KeyCode::Char(']') => {
                     self.page = self.page.next();
                     self.selected = 0;
+                    self.invalidate_cache();
                 }
                 KeyCode::Char('[') => {
                     self.page = self.page.prev();
                     self.selected = 0;
+                    self.invalidate_cache();
                 }
                 KeyCode::Char(' ') | KeyCode::Enter => {
-                    if let Some(&index) = self.filtered_indices().get(self.selected) {
-                        if let Some(next) = self.items[index].toggle(&self.db) {
-                            self.items.push(next);
-                        }
+                    if let Some(mut todo) = self.selected_item() {
+                        todo.toggle(&self.db);
+                        self.invalidate_cache();
+                        self.clamp_selected();
                     }
                 }
                 KeyCode::Char('j') | KeyCode::Down => {
-                    let len = self.filtered_indices().len();
+                    let len = self.current_items().len();
                     if len > 0 {
                         self.selected = (self.selected + 1).min(len - 1);
                     }
@@ -122,10 +130,9 @@ impl Tab for Todos {
                 }
                 KeyCode::Char('d') => {
                     if !matches!(self.page, Page::History) {
-                        let indices = self.filtered_indices();
-                        if let Some(&index) = indices.get(self.selected) {
-                            self.items[index].delete(&self.db);
-                            self.items.remove(index);
+                        if let Some(todo) = self.selected_item() {
+                            todo.delete(&self.db);
+                            self.invalidate_cache();
                             self.clamp_selected();
                         }
                     }
@@ -138,10 +145,8 @@ impl Tab for Todos {
                 }
                 KeyCode::Char('e') => {
                     if !matches!(self.page, Page::History) {
-                        let indices = self.filtered_indices();
-                        if let Some(&real) = indices.get(self.selected) {
+                        if let Some(todo) = self.selected_item() {
                             self.ui_mode = UiMode::Editing;
-                            let todo = &self.items[real];
                             self.input_widget =
                                 Some(InputWidget::new(Some(&todo.text), todo.due_date, todo.repeat.as_ref()));
                         }
@@ -157,6 +162,7 @@ impl Tab for Todos {
                             _ => self.page.next().prev(),
                         };
                         self.selected = 0;
+                        self.invalidate_cache();
                     }
                 }
                 _ => {}
@@ -167,11 +173,11 @@ impl Tab for Todos {
                         InputAction::Confirm { text, date, repeat } => {
                             let mut todo = Todo::new(text, date, repeat);
                             if todo.save(&self.db) {
-                                self.items.push(todo);
+                                self.invalidate_cache();
+                                self.clamp_selected();
                             }
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
-                            self.clamp_selected();
                         }
                         InputAction::Escape => {
                             self.input_widget = None;
@@ -185,15 +191,13 @@ impl Tab for Todos {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
-                            let indices = self.filtered_indices();
-                            if let Some(&real) = indices.get(self.selected) {
-                                {
-                                    let todo = &mut self.items[real];
-                                    todo.text = text;
-                                    todo.due_date = date;
-                                    todo.repeat = repeat;
-                                    todo.update(&self.db);
-                                }
+                            if let Some(mut todo) = self.selected_item() {
+                                todo.text = text;
+                                todo.due_date = date;
+                                todo.repeat = repeat;
+                                todo.update(&self.db);
+                                self.invalidate_cache();
+                                self.clamp_selected();
                             }
                             self.input_widget = None;
                             self.ui_mode = UiMode::Normal;
@@ -253,12 +257,11 @@ impl Tab for Todos {
             .divider(" | ");
         frame.render_widget(tabs_widget, center_area);
 
-        let indices = self.filtered_indices();
+        let items = self.current_items();
 
-        let labels: Vec<String> = indices
+        let labels: Vec<String> = items
             .iter()
-            .map(|&i| {
-                let todo = &self.items[i];
+            .map(|todo| {
                 let check = if todo.done { "[✓]" } else { "[ ]" };
                 let repeat_icon = if todo.repeat.is_some() {
                     &format!("{} ", Repeat::icon())
@@ -295,9 +298,8 @@ impl Tab for Todos {
         } else {
             labels
                 .into_iter()
-                .zip(indices.iter())
-                .map(|(label, &i)| {
-                    let todo = &self.items[i];
+                .zip(items.iter())
+                .map(|(label, todo)| {
                     let style = if todo.done {
                         Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)
                     } else {

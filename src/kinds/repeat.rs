@@ -1,6 +1,6 @@
 use time::{Date, Duration};
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Repeat {
     Daily,
     WeeklySameDay,

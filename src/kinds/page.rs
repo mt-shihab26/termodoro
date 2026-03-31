@@ -1,4 +1,4 @@
-#[derive(PartialEq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Page {
     Due,
     Today,

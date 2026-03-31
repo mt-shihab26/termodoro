@@ -1,9 +1,11 @@
 use std::io;
 
 use sea_orm::{ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, DatabaseConnection};
+use sea_orm::{ColumnTrait, Condition, QueryFilter};
 use sea_orm::{DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait};
-use time::Date;
+use time::{Date, OffsetDateTime};
 
+use crate::kinds::page::Page;
 use crate::{kinds::repeat::Repeat, utils::db::rt};
 use crate::{log_error, log_warn};
 
@@ -21,6 +23,7 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
+#[derive(Clone)]
 pub struct Todo {
     pub id: Option<i32>,
     pub text: String,
@@ -40,11 +43,25 @@ impl Todo {
         }
     }
 
-    pub fn all(db: &DatabaseConnection) -> Vec<Todo> {
-        match rt().block_on(async { Entity::find().all(db).await.map_err(io_err) }) {
+    pub fn list_by_page(db: &DatabaseConnection, page: Page) -> Vec<Todo> {
+        let today = format_date(OffsetDateTime::now_utc().date());
+        let query = match page {
+            Page::Due => Entity::find()
+                .filter(Column::Done.eq(false))
+                .filter(Column::DueDate.lt(today)),
+            Page::Today => Entity::find().filter(Column::DueDate.eq(today)),
+            Page::Index => Entity::find().filter(
+                Condition::any()
+                    .add(Column::DueDate.is_null())
+                    .add(Column::DueDate.gt(today)),
+            ),
+            Page::History => Entity::find().filter(Column::Done.eq(true)),
+        };
+
+        match rt().block_on(async { query.all(db).await.map_err(io_err) }) {
             Ok(models) => models.into_iter().map(Todo::from).collect(),
             Err(e) => {
-                log_error!("failed to load todos: {e}");
+                log_error!("failed to load todos for page {}: {e}", page.label());
                 vec![]
             }
         }
