@@ -88,7 +88,7 @@ impl App {
             }
 
             let event = if self.tabs[self.selected].should_tick() {
-                match self.events.recv_timeout(Duration::from_millis(16)) {
+                match self.events.recv_timeout(Duration::from_millis(8)) {
                     Ok(event) => Some(event),
                     Err(RecvTimeoutError::Timeout) => None,
                     Err(RecvTimeoutError::Disconnected) => {

@@ -8,8 +8,8 @@ use ratatui::{Frame, crossterm::event::KeyEvent, layout::Rect, style::Color};
 pub trait Tab {
     fn name(&self) -> &str;
     fn color(&self) -> Color;
-    fn render(&self, frame: &mut Frame, area: Rect);
     fn handle(&mut self, key: KeyEvent) -> Result<()>;
+    fn render(&self, frame: &mut Frame, area: Rect);
     fn should_tick(&self) -> bool {
         false
     }

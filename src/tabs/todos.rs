@@ -122,33 +122,6 @@ impl Tab for Todos {
         Ok(())
     }
 
-    fn next_tick(&mut self) -> Result<()> {
-        if !matches!(self.ui_mode, UiMode::Normal) {
-            return Ok(());
-        }
-
-        if let Some(direction) = &self.animation {
-            let position = (self.offset, self.selected);
-
-            match direction {
-                Direction::Start => self.move_selection(-1),
-                Direction::End => self.move_selection(1),
-            }
-
-            if (self.offset, self.selected) == position {
-                self.animation = None;
-            }
-
-            self.sync_list_state();
-        }
-
-        Ok(())
-    }
-
-    fn should_tick(&self) -> bool {
-        self.animation.is_some()
-    }
-
     fn render(&self, frame: &mut Frame, area: Rect) {
         let buf = frame.buffer_mut();
 
@@ -218,6 +191,33 @@ impl Tab for Todos {
                 input_area_widget.render_calendar(frame, area);
             }
         }
+    }
+
+    fn should_tick(&self) -> bool {
+        self.animation.is_some()
+    }
+
+    fn next_tick(&mut self) -> Result<()> {
+        if !matches!(self.ui_mode, UiMode::Normal) {
+            return Ok(());
+        }
+
+        if let Some(direction) = &self.animation {
+            let position = (self.offset, self.selected);
+
+            match direction {
+                Direction::Start => self.move_selection(-1),
+                Direction::End => self.move_selection(1),
+            }
+
+            if (self.offset, self.selected) == position {
+                self.animation = None;
+            }
+
+            self.sync_list_state();
+        }
+
+        Ok(())
     }
 }
 
