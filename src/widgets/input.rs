@@ -8,9 +8,9 @@ use ratatui::widgets::{Block, Paragraph};
 use ratatui_textarea::TextArea;
 use time::Date;
 
-use crate::handlers::tui::tabs::todos::COLOR;
-use crate::handlers::tui::widgets::calendar::{CalendarAction, CalendarWidget};
 use crate::kinds::repeat::Repeat;
+use crate::tabs::todos::COLOR;
+use crate::widgets::calendar::{CalendarAction, CalendarWidget};
 
 pub enum InputAction {
     Confirm {

@@ -4,8 +4,8 @@ use ratatui::prelude::{Buffer, Rect, Widget};
 use ratatui::style::{Color, Style, Stylize};
 use ratatui::widgets::{Block, Borders, List, ListItem, Paragraph};
 
-use crate::handlers::tui::tabs::todos::COLOR;
 use crate::kinds::repeat::Repeat;
+use crate::tabs::todos::COLOR;
 
 pub enum RepeatAction {
     Confirm(Option<Repeat>),

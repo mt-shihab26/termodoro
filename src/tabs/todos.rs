@@ -9,8 +9,8 @@ use ratatui::widgets::{Block, List, ListItem, ListState, Paragraph, Tabs, Widget
 use time::OffsetDateTime;
 
 use crate::domains::todos::todo::Todo;
-use crate::handlers::tui::widgets::input::{InputAction, InputWidget};
 use crate::kinds::{page::Page, repeat::Repeat};
+use crate::widgets::input::{InputAction, InputWidget};
 
 use super::Tab;
 
