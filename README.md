@@ -9,6 +9,7 @@ Config file location: `~/.config/orivo/config.toml`
 ```toml
 # Orivo configuration
 
+
 # Get your Turso credentials:
 #   turso auth login
 #   turso db create orivo
