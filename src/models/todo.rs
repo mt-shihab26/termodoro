@@ -1,8 +1,14 @@
+use std::io::{Error, ErrorKind, Result};
+
 use sea_orm::ActiveValue::Set;
+use sea_orm::{
+    ActiveModelBehavior, ActiveModelTrait, DatabaseConnection, DeriveEntityModel, DerivePrimaryKey, DeriveRelation,
+    EntityTrait, EnumIter, PrimaryKeyTrait,
+};
 use time::Date;
 
-use crate::entities::todo;
 use crate::kinds::repeat::Repeat;
+use crate::utils::db::rt;
 
 pub struct Todo {
     pub id: Option<i32>,
@@ -31,14 +37,14 @@ impl Todo {
         let due_date = self.due_date.map(format_date);
         let repeat = self.repeat.as_ref().map(|r| r.to_db_str().to_string());
         match self.id {
-            Some(id) => todo::ActiveModel {
+            Some(id) => ActiveModel {
                 id: Set(id),
                 text: Set(self.text.clone()),
                 done: Set(self.done),
                 due_date: Set(due_date),
                 repeat: Set(repeat),
             },
-            None => todo::ActiveModel {
+            None => ActiveModel {
                 text: Set(self.text.clone()),
                 done: Set(self.done),
                 due_date: Set(due_date),
@@ -49,8 +55,8 @@ impl Todo {
     }
 }
 
-impl From<todo::Model> for Todo {
-    fn from(m: todo::Model) -> Self {
+impl From<Model> for Todo {
+    fn from(m: Model) -> Self {
         Self {
             id: Some(m.id),
             text: m.text,
@@ -73,13 +79,6 @@ fn parse_date(s: &str) -> Option<Date> {
     Date::from_calendar_date(year, time::Month::try_from(month).ok()?, day).ok()
 }
 
-use std::io::{Error, ErrorKind, Result};
-
-use sea_orm::{ActiveModelBehavior, DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EnumIter, PrimaryKeyTrait};
-use sea_orm::{ActiveModelTrait, DatabaseConnection};
-
-use crate::utils::db::rt;
-
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "todos")]
 pub struct Model {
@@ -101,7 +100,7 @@ fn io_err(e: impl std::fmt::Display) -> Error {
 }
 
 pub fn load_all(db: &DatabaseConnection) -> Result<Vec<Model>> {
-    rt().block_on(async { TodoEntity::find().all(db).await.map_err(io_err) })
+    rt().block_on(async { Entity::find().all(db).await.map_err(io_err) })
 }
 
 pub fn insert(db: &DatabaseConnection, model: ActiveModel) -> Result<Model> {
@@ -113,5 +112,5 @@ pub fn update(db: &DatabaseConnection, model: ActiveModel) -> Result<()> {
 }
 
 pub fn delete(db: &DatabaseConnection, id: i32) -> Result<()> {
-    rt().block_on(async { TodoEntity::delete_by_id(id).exec(db).await.map_err(io_err).map(|_| ()) })
+    rt().block_on(async { Entity::delete_by_id(id).exec(db).await.map_err(io_err).map(|_| ()) })
 }
