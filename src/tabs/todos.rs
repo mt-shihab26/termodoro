@@ -32,7 +32,8 @@ pub struct Todos {
     offset: usize,
     page_size: Cell<usize>,
     list_state: RefCell<ListState>,
-    cache: RefCell<Option<Vec<Todo>>>,
+    items_cache: RefCell<Option<Vec<Todo>>>,
+    count_cache: RefCell<Option<usize>>,
     input_widget: Option<InputWidget>,
 }
 
@@ -163,10 +164,17 @@ impl Tab for Todos {
 
         self.set_visible_capacity(list_area);
         let items = self.current_items();
+        let total = self.total_count();
+        let from = if total == 0 { 0 } else { self.offset + 1 };
+        let to = self.offset + items.len();
+        let page = (self.offset / self.page_size.get().max(1)) + 1;
 
         frame.render_widget(
             StatusWidget::new(
-                items.len(),
+                total,
+                from,
+                to,
+                page,
                 items.get(self.selected).and_then(|todo| todo.id),
             ),
             area,
@@ -248,13 +256,14 @@ impl Todos {
             offset: 0,
             page_size: Cell::new(1),
             list_state: RefCell::new(ListState::default()),
-            cache: RefCell::new(None),
+            items_cache: RefCell::new(None),
+            count_cache: RefCell::new(None),
             input_widget: None,
         }
     }
 
     fn ensure_cache(&self) {
-        let mut cache = self.cache.borrow_mut();
+        let mut cache = self.items_cache.borrow_mut();
         if cache.is_none() {
             *cache = Some(Todo::list(
                 &self.db,
@@ -267,7 +276,17 @@ impl Todos {
 
     fn current_items(&self) -> Ref<'_, [Todo]> {
         self.ensure_cache();
-        Ref::map(self.cache.borrow(), |cache| cache.as_deref().unwrap_or(&[]))
+        Ref::map(self.items_cache.borrow(), |cache| {
+            cache.as_deref().unwrap_or(&[])
+        })
+    }
+
+    fn total_count(&self) -> usize {
+        let mut cache = self.count_cache.borrow_mut();
+        if cache.is_none() {
+            *cache = Some(Todo::count(&self.db, self.page));
+        }
+        cache.unwrap_or(0)
     }
 
     fn set_visible_capacity(&self, list_area: Rect) {
@@ -282,17 +301,22 @@ impl Todos {
     }
 
     fn invalidate_cache(&self) {
-        *self.cache.borrow_mut() = None;
+        *self.items_cache.borrow_mut() = None;
+    }
+
+    fn invalidate_total_count_cache(&self) {
+        *self.count_cache.borrow_mut() = None;
     }
 
     fn refresh(&mut self) {
         self.invalidate_cache();
+        self.invalidate_total_count_cache();
         self.clamp_selected();
     }
 
     fn selected_item(&self) -> Option<Ref<'_, Todo>> {
         self.ensure_cache();
-        let cache = self.cache.borrow();
+        let cache = self.items_cache.borrow();
         if cache
             .as_ref()
             .and_then(|items| items.get(self.selected))
@@ -348,6 +372,7 @@ impl Todos {
         self.offset = 0;
         self.selected = 0;
         self.invalidate_cache();
+        self.invalidate_total_count_cache();
     }
 
     fn go_to_start(&mut self, pending_g: bool) {

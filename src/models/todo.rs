@@ -1,12 +1,9 @@
 use std::io;
 
-use sea_orm::QueryOrder;
 use sea_orm::QuerySelect;
 use sea_orm::{ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, DatabaseConnection};
-use sea_orm::{ColumnTrait, Condition, QueryFilter};
-use sea_orm::{
-    DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait,
-};
+use sea_orm::{ColumnTrait, Condition, DeriveEntityModel, DerivePrimaryKey, QueryFilter};
+use sea_orm::{DeriveRelation, EntityTrait, EnumIter, PaginatorTrait, PrimaryKeyTrait, QueryOrder};
 use time::Date;
 
 use crate::kinds::{page::Page, repeat::Repeat};
@@ -53,32 +50,7 @@ impl Todo {
             return vec![];
         }
 
-        let today = format_date(today());
-
-        let query = match page {
-            Page::Due => Entity::find()
-                .filter(Column::Done.eq(false))
-                .filter(Column::DueDate.lt(today))
-                .order_by_asc(Column::DueDate)
-                .order_by_asc(Column::Id),
-            Page::Today => Entity::find()
-                .filter(Column::DueDate.eq(today))
-                .order_by_asc(Column::Id),
-            Page::Index => Entity::find()
-                .filter(
-                    Condition::any()
-                        .add(Column::DueDate.is_null())
-                        .add(Column::DueDate.gte(today)),
-                )
-                .order_by_asc(Column::DueDate)
-                .order_by_asc(Column::Id),
-            Page::History => Entity::find()
-                .filter(Column::Done.eq(true))
-                .order_by_desc(Column::DueDate)
-                .order_by_desc(Column::Id),
-        }
-        .offset(offset as u64)
-        .limit(limit as u64);
+        let query = base_query(page).offset(offset as u64).limit(limit as u64);
 
         match rt().block_on(async { query.all(db).await.map_err(io_err) }) {
             Ok(models) => models.into_iter().map(Todo::from).collect(),
@@ -90,6 +62,18 @@ impl Todo {
                     limit
                 );
                 vec![]
+            }
+        }
+    }
+
+    pub fn count(db: &DatabaseConnection, page: Page) -> usize {
+        let query = base_query(page);
+
+        match rt().block_on(async { query.count(db).await.map_err(io_err) }) {
+            Ok(count) => count as usize,
+            Err(e) => {
+                log_error!("failed to count todos for page {}: {e}", page.label());
+                0
             }
         }
     }
@@ -208,4 +192,31 @@ impl ActiveModelBehavior for ActiveModel {}
 
 fn io_err(e: impl std::fmt::Display) -> io::Error {
     io::Error::new(io::ErrorKind::Other, e.to_string())
+}
+
+fn base_query(page: Page) -> sea_orm::Select<Entity> {
+    let today = format_date(today());
+
+    match page {
+        Page::Due => Entity::find()
+            .filter(Column::Done.eq(false))
+            .filter(Column::DueDate.lt(today))
+            .order_by_asc(Column::DueDate)
+            .order_by_asc(Column::Id),
+        Page::Today => Entity::find()
+            .filter(Column::DueDate.eq(today))
+            .order_by_asc(Column::Id),
+        Page::Index => Entity::find()
+            .filter(
+                Condition::any()
+                    .add(Column::DueDate.is_null())
+                    .add(Column::DueDate.gte(today)),
+            )
+            .order_by_asc(Column::DueDate)
+            .order_by_asc(Column::Id),
+        Page::History => Entity::find()
+            .filter(Column::Done.eq(true))
+            .order_by_desc(Column::DueDate)
+            .order_by_desc(Column::Id),
+    }
 }
