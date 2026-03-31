@@ -39,11 +39,24 @@ impl Tab for Todos {
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
         match self.ui_mode {
             UiMode::Normal => match key.code {
-                KeyCode::Char(']') => self.next_page(),
-                KeyCode::Char('[') => self.prev_page(),
-                KeyCode::Char(' ') | KeyCode::Enter => self.toggle_selected(),
-                KeyCode::Char('j') | KeyCode::Down => self.select_next(),
-                KeyCode::Char('k') | KeyCode::Up => self.select_prev(),
+                KeyCode::Char(']') => {
+                    self.set_page(self.page.next());
+                }
+                KeyCode::Char('[') => {
+                    self.set_page(self.page.prev());
+                }
+                KeyCode::Char(' ') | KeyCode::Enter => {
+                    if let Some(mut todo) = self.selected_item() {
+                        todo.toggle(&self.db);
+                        self.refresh();
+                    }
+                }
+                KeyCode::Char('j') | KeyCode::Down => {
+                    self.move_selection(1);
+                }
+                KeyCode::Char('k') | KeyCode::Up => {
+                    self.move_selection(-1);
+                }
                 KeyCode::Char('d') => self.delete_selected(),
                 KeyCode::Char('a') => self.start_adding(),
                 KeyCode::Char('e') => self.start_editing(),
@@ -214,7 +227,7 @@ impl Todos {
         *self.cache.borrow_mut() = None;
     }
 
-    fn refresh_after_mutation(&mut self) {
+    fn refresh(&mut self) {
         self.invalidate_cache();
         self.clamp_selected();
     }
@@ -248,21 +261,6 @@ impl Todos {
         self.invalidate_cache();
     }
 
-    fn next_page(&mut self) {
-        self.set_page(self.page.next());
-    }
-
-    fn prev_page(&mut self) {
-        self.set_page(self.page.prev());
-    }
-
-    fn toggle_selected(&mut self) {
-        if let Some(mut todo) = self.selected_item() {
-            todo.toggle(&self.db);
-            self.refresh_after_mutation();
-        }
-    }
-
     fn move_selection(&mut self, delta: isize) {
         let len = self.current_items().len();
         if len == 0 {
@@ -271,14 +269,6 @@ impl Todos {
         }
 
         self.selected = self.selected.saturating_add_signed(delta).min(len - 1);
-    }
-
-    fn select_next(&mut self) {
-        self.move_selection(1);
-    }
-
-    fn select_prev(&mut self) {
-        self.move_selection(-1);
     }
 
     fn delete_selected(&mut self) {
@@ -290,7 +280,7 @@ impl Todos {
                 return;
             }
             todo.delete(&self.db);
-            self.refresh_after_mutation();
+            self.refresh();
         }
     }
 
@@ -336,7 +326,7 @@ impl Todos {
     fn confirm_add(&mut self, text: String, date: Option<time::Date>, repeat: Option<Repeat>) {
         let mut todo = Todo::new(text, date, repeat);
         if todo.save(&self.db) {
-            self.refresh_after_mutation();
+            self.refresh();
         }
         self.cancel_input();
     }
@@ -347,7 +337,7 @@ impl Todos {
             todo.due_date = date;
             todo.repeat = repeat;
             todo.update(&self.db);
-            self.refresh_after_mutation();
+            self.refresh();
         }
     }
 

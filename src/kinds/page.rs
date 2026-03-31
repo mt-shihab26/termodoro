@@ -18,15 +18,6 @@ impl Page {
         }
     }
 
-    pub fn key(&self) -> char {
-        match self {
-            Page::Due => '1',
-            Page::Today => '2',
-            Page::Index => '3',
-            Page::History => '4',
-        }
-    }
-
     pub fn index(&self) -> usize {
         Self::ALL.iter().position(|p| p == self).unwrap()
     }
