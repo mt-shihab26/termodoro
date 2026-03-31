@@ -7,8 +7,13 @@ pub struct Help {
 }
 
 impl Help {
-    pub fn new(helps: &Vec<Vec<String>>) -> Self {
-        Self { lines: helps.clone() }
+    pub fn new(helps: &[&[&str]]) -> Self {
+        let lines = helps
+            .iter()
+            .map(|entries| entries.iter().map(|s| s.to_string()).collect())
+            .collect();
+
+        Self { lines }
     }
 
     pub fn help() -> &'static [&'static str] {
