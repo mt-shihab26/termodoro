@@ -3,10 +3,13 @@ use std::io;
 use sea_orm::{ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, DatabaseConnection};
 use sea_orm::{ColumnTrait, Condition, QueryFilter};
 use sea_orm::{DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait};
-use time::{Date, OffsetDateTime};
+use time::Date;
 
 use crate::kinds::page::Page;
-use crate::{kinds::repeat::Repeat, utils::db::rt};
+use crate::{
+    kinds::repeat::Repeat,
+    utils::{date::today, db::rt},
+};
 use crate::{log_error, log_warn};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
@@ -44,7 +47,7 @@ impl Todo {
     }
 
     pub fn list(db: &DatabaseConnection, page: Page) -> Vec<Todo> {
-        let today = format_date(OffsetDateTime::now_utc().date());
+        let today = format_date(today());
 
         let query = match page {
             Page::Due => Entity::find()
