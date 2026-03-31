@@ -63,14 +63,10 @@ impl Tab for Todos {
                     self.state.go_to_end();
                 }
                 KeyCode::Char(' ') | KeyCode::Enter => {
-                    if self.state.toggle_selected(&self.db, self.page) {
-                        self.refresh();
-                    }
+                    self.state.toggle_selected(&self.db, self.page);
                 }
                 KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    if self.state.delete_selected(&self.db, self.page) {
-                        self.refresh();
-                    }
+                    self.state.delete_selected(&self.db, self.page);
                 }
                 KeyCode::Char('a') => {
                     if !matches!(self.page, Page::History) {
@@ -97,7 +93,7 @@ impl Tab for Todos {
                         InputAction::Confirm { text, date, repeat } => {
                             let mut todo = Todo::new(text, date, repeat);
                             if todo.save(&self.db) {
-                                self.refresh();
+                                self.state.refresh(&self.db, self.page);
                             }
                             self.cancel_input();
                         }
@@ -115,7 +111,7 @@ impl Tab for Todos {
                                 todo.due_date = date;
                                 todo.repeat = repeat;
                                 todo.update(&self.db);
-                                self.refresh();
+                                self.state.refresh(&self.db, self.page);
                             }
                             self.cancel_input();
                         }
@@ -259,21 +255,12 @@ impl Todos {
         self.state.reset_page(&self.db, self.page);
     }
 
-    fn refresh(&mut self) {
-        self.state.refresh(&self.db, self.page);
-        self.clamp_selected();
-    }
-
     fn selected_item(&self) -> Option<Ref<'_, Todo>> {
         self.state.selected_item(&self.db, self.page)
     }
 
     fn can_delete_in_items(&self, items: &[Todo]) -> bool {
         self.state.can_delete(self.page, items)
-    }
-
-    fn clamp_selected(&mut self) {
-        self.state.clamp_selected(&self.db, self.page);
     }
 
     fn cancel_input(&mut self) {

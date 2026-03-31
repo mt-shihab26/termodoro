@@ -253,31 +253,36 @@ impl TodosState {
         (self.offset, self.selected) != position
     }
 
-    pub fn toggle_selected(&mut self, db: &DatabaseConnection, page: Page) -> bool {
+    pub fn toggle_selected(&mut self, db: &DatabaseConnection, page: Page) {
         if let Some(mut todo) = self.selected_item(db, page).map(|todo| todo.clone()) {
             todo.toggle(db);
-            return true;
+            self.refresh(db, page);
         }
-        false
     }
 
-    pub fn delete_selected(&mut self, db: &DatabaseConnection, page: Page) -> bool {
-        if let Some(todo) = self.selected_item(db, page) {
+    pub fn delete_selected(&mut self, db: &DatabaseConnection, page: Page) {
+        let deleted = {
+            let todo = match self.selected_item(db, page) {
+                Some(todo) => todo,
+                None => return (),
+            };
             if todo.done {
-                return false;
+                return ();
             }
-            return todo.delete(db);
+            todo.delete(db)
+        };
+
+        if deleted {
+            self.refresh(db, page);
         }
-        false
     }
 
-    pub fn edit_values(&self, db: &DatabaseConnection, page: Page) -> Option<(String, Option<time::Date>, Option<Repeat>)> {
-        self.selected_item(db, page).map(|todo| {
-            (
-                todo.text.clone(),
-                todo.due_date,
-                todo.repeat.clone(),
-            )
-        })
+    pub fn edit_values(
+        &self,
+        db: &DatabaseConnection,
+        page: Page,
+    ) -> Option<(String, Option<time::Date>, Option<Repeat>)> {
+        self.selected_item(db, page)
+            .map(|todo| (todo.text.clone(), todo.due_date, todo.repeat.clone()))
     }
 }
