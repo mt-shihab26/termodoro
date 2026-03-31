@@ -28,7 +28,10 @@ impl Timer {
 
         let state = timer::spawn(Arc::clone(&render_count), sender, timer_config);
 
-        Self { state, render_count }
+        Self {
+            state,
+            render_count,
+        }
     }
 
     fn tick_render_count(&self) {
@@ -90,7 +93,17 @@ impl Tab for Timer {
 
         let area = inner;
 
-        let [session_row, _, phase_row, _, time_row, _, status_row, _, hint_row] = Layout::vertical([
+        let [
+            session_row,
+            _,
+            phase_row,
+            _,
+            time_row,
+            _,
+            status_row,
+            _,
+            hint_row,
+        ] = Layout::vertical([
             Constraint::Length(1),
             Constraint::Fill(1),
             Constraint::Length(1),
@@ -138,7 +151,11 @@ impl Tab for Timer {
 
         Paragraph::new(status)
             .centered()
-            .fg(if s.running { Color::Green } else { Color::DarkGray })
+            .fg(if s.running {
+                Color::Green
+            } else {
+                Color::DarkGray
+            })
             .render(status_row, buf);
 
         Paragraph::new("[Space] Toggle   [r] Reset   [n] Skip")

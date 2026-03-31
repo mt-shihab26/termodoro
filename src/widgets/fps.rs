@@ -38,8 +38,14 @@ impl FpsWidget {
 
 impl Widget for &FpsWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        Line::from(Span::from(format!("{:.0} fps  {} frames", self.per_second, self.per_lifetime)).fg(Color::DarkGray))
-            .alignment(Alignment::Right)
-            .render(area, buf);
+        Line::from(
+            Span::from(format!(
+                "{:.0} fps  {} frames",
+                self.per_second, self.per_lifetime
+            ))
+            .fg(Color::DarkGray),
+        )
+        .alignment(Alignment::Right)
+        .render(area, buf);
     }
 }

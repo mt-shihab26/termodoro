@@ -10,7 +10,10 @@ pub struct StatusWidget {
 
 impl StatusWidget {
     pub fn new(length: usize, selected_id: Option<i32>) -> Self {
-        Self { length, selected_id }
+        Self {
+            length,
+            selected_id,
+        }
     }
 }
 
@@ -21,14 +24,17 @@ impl Widget for StatusWidget {
             None => format!(" loaded {} ", self.length),
         };
 
-        Paragraph::new(status).fg(Color::DarkGray).right_aligned().render(
-            Rect {
-                x: area.x + 1,
-                y: area.y,
-                width: area.width.saturating_sub(2),
-                height: 1,
-            },
-            buf,
-        );
+        Paragraph::new(status)
+            .fg(Color::DarkGray)
+            .right_aligned()
+            .render(
+                Rect {
+                    x: area.x + 1,
+                    y: area.y,
+                    width: area.width.saturating_sub(2),
+                    height: 1,
+                },
+                buf,
+            );
     }
 }

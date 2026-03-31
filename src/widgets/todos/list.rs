@@ -68,7 +68,9 @@ impl<'a> ListWidget<'a> {
             .items
             .iter()
             .enumerate()
-            .map(|(index, todo)| ItemWidget { todo }.list_item(dimmed, self.offset + index + 1, serial_width))
+            .map(|(index, todo)| {
+                ItemWidget { todo }.list_item(dimmed, self.offset + index + 1, serial_width)
+            })
             .collect::<Vec<_>>();
 
         let list = List::new(items)
@@ -109,14 +111,12 @@ impl<'a> ListWidget<'a> {
                 selected_row = rows.len();
             }
 
-            rows.push(
-                ItemWidget { todo }.line(
-                    index == self.selected,
-                    self.color,
-                    self.offset + index + 1,
-                    serial_width,
-                ),
-            );
+            rows.push(ItemWidget { todo }.line(
+                index == self.selected,
+                self.color,
+                self.offset + index + 1,
+                serial_width,
+            ));
         }
 
         (rows, selected_row)
@@ -138,7 +138,10 @@ fn section_line(date: Option<time::Date>, width: usize, color: Color) -> Line<'s
             "─".repeat(left_len),
             Style::default().fg(color).add_modifier(Modifier::DIM),
         ),
-        Span::styled(label, Style::default().fg(color).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            label,
+            Style::default().fg(color).add_modifier(Modifier::BOLD),
+        ),
         Span::styled(
             "─".repeat(right_len),
             Style::default().fg(color).add_modifier(Modifier::DIM),

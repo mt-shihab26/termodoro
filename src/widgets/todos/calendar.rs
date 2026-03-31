@@ -13,7 +13,10 @@ use crate::utils::date::{shift_month, today};
 use super::repeat::{RepeatAction, RepeatWidget};
 
 pub enum CalendarAction {
-    Confirm { date: Option<Date>, repeat: Option<Repeat> },
+    Confirm {
+        date: Option<Date>,
+        repeat: Option<Repeat>,
+    },
     Cancel,
     None,
 }
@@ -61,11 +64,17 @@ impl CalendarWidget {
             KeyCode::Char('n') => self.navigate(today().next_day()),
             KeyCode::Char('h') | KeyCode::Left => self.navigate(self.date.previous_day()),
             KeyCode::Char('l') | KeyCode::Right => self.navigate(self.date.next_day()),
-            KeyCode::Char('k') | KeyCode::Up => self.navigate(self.date.checked_sub(Duration::weeks(1))),
-            KeyCode::Char('j') | KeyCode::Down => self.navigate(self.date.checked_add(Duration::weeks(1))),
+            KeyCode::Char('k') | KeyCode::Up => {
+                self.navigate(self.date.checked_sub(Duration::weeks(1)))
+            }
+            KeyCode::Char('j') | KeyCode::Down => {
+                self.navigate(self.date.checked_add(Duration::weeks(1)))
+            }
             KeyCode::Char('H') => self.navigate(Some(shift_month(self.date, -1))),
             KeyCode::Char('L') => self.navigate(Some(shift_month(self.date, 1))),
-            KeyCode::Char('r') => self.repeat_picker = Some(RepeatWidget::new(self.repeat.as_ref())),
+            KeyCode::Char('r') => {
+                self.repeat_picker = Some(RepeatWidget::new(self.repeat.as_ref()))
+            }
             KeyCode::Enter => {
                 return CalendarAction::Confirm {
                     date: Some(self.date),

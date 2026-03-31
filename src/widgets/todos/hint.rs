@@ -16,12 +16,19 @@ impl Widget for HintWidget {
         let hint = match self.ui_mode {
             UiMode::Normal => match self.page {
                 Page::History => "[[/]]Page  [j/k]Navigate",
-                _ if self.can_delete => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^d]Delete",
+                _ if self.can_delete => {
+                    "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^d]Delete"
+                }
                 _ => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit",
             },
-            UiMode::Adding | UiMode::Editing => "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char",
+            UiMode::Adding | UiMode::Editing => {
+                "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char"
+            }
         };
 
-        Paragraph::new(hint).centered().fg(Color::DarkGray).render(area, buf);
+        Paragraph::new(hint)
+            .centered()
+            .fg(Color::DarkGray)
+            .render(area, buf);
     }
 }

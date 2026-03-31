@@ -34,7 +34,12 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(ColumnDef::new(Todos::Text).string().not_null())
-                    .col(ColumnDef::new(Todos::Done).boolean().not_null().default(false))
+                    .col(
+                        ColumnDef::new(Todos::Done)
+                            .boolean()
+                            .not_null()
+                            .default(false),
+                    )
                     .col(ColumnDef::new(Todos::DueDate).string().null())
                     .col(ColumnDef::new(Todos::Repeat).string().null())
                     .to_owned(),
@@ -43,6 +48,8 @@ impl MigrationTrait for Migration {
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager.drop_table(Table::drop().table(Todos::Table).to_owned()).await
+        manager
+            .drop_table(Table::drop().table(Todos::Table).to_owned())
+            .await
     }
 }

@@ -6,7 +6,11 @@ use crate::config::timer::TimerConfig;
 use crate::models::timer::TimerState;
 use crate::{kinds::event::Event, log_error, log_warn};
 
-pub fn spawn(render_count: Arc<AtomicU8>, sender: Sender<Event>, timer_config: TimerConfig) -> Arc<Mutex<TimerState>> {
+pub fn spawn(
+    render_count: Arc<AtomicU8>,
+    sender: Sender<Event>,
+    timer_config: TimerConfig,
+) -> Arc<Mutex<TimerState>> {
     let state = Arc::new(Mutex::new(TimerState::new(timer_config)));
 
     let thread_state = Arc::clone(&state);

@@ -14,7 +14,10 @@ impl IndicatorWidget {
         }
 
         if self.show_more_below && bottom_area.height > 0 {
-            frame.render_widget(Paragraph::new("v more").fg(COLOR).right_aligned(), bottom_area);
+            frame.render_widget(
+                Paragraph::new("v more").fg(COLOR).right_aligned(),
+                bottom_area,
+            );
         }
     }
 }

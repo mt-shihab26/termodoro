@@ -29,8 +29,13 @@ impl App {
 
         term::spawn(sender.clone());
 
-        let Config { show_fps, timer, .. } = config;
-        let tabs: Vec<Box<dyn Tab>> = vec![Box::new(Todos::new(db)), Box::new(Timer::new(sender, timer))];
+        let Config {
+            show_fps, timer, ..
+        } = config;
+        let tabs: Vec<Box<dyn Tab>> = vec![
+            Box::new(Todos::new(db)),
+            Box::new(Timer::new(sender, timer)),
+        ];
 
         Self {
             alive: true,
@@ -68,7 +73,10 @@ impl App {
                     Err(RecvTimeoutError::Timeout) => None,
                     Err(RecvTimeoutError::Disconnected) => {
                         log_error!("event channel disconnected");
-                        return Err(Error::new(ErrorKind::BrokenPipe, "event channel disconnected"));
+                        return Err(Error::new(
+                            ErrorKind::BrokenPipe,
+                            "event channel disconnected",
+                        ));
                     }
                 }
             } else {
@@ -127,10 +135,15 @@ impl App {
     }
 
     fn render_frame(&mut self, frame: &mut Frame) {
-        let [top, tabs_area, main] =
-            Layout::vertical([Constraint::Length(1), Constraint::Length(3), Constraint::Fill(1)]).areas(frame.area());
+        let [top, tabs_area, main] = Layout::vertical([
+            Constraint::Length(1),
+            Constraint::Length(3),
+            Constraint::Fill(1),
+        ])
+        .areas(frame.area());
 
-        let [left, right] = Layout::horizontal([Constraint::Fill(1), Constraint::Fill(1)]).areas(top);
+        let [left, right] =
+            Layout::horizontal([Constraint::Fill(1), Constraint::Fill(1)]).areas(top);
 
         Paragraph::new(Span::from("Orivo").bold().fg(Color::Green))
             .centered()

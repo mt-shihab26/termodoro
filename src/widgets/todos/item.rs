@@ -27,7 +27,9 @@ impl<'a> ItemWidget<'a> {
 
     pub fn style(&self, dimmed: bool) -> Style {
         if dimmed || self.todo.done {
-            Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)
+            Style::default()
+                .fg(Color::DarkGray)
+                .add_modifier(Modifier::CROSSED_OUT)
         } else {
             Style::default().fg(Color::White)
         }

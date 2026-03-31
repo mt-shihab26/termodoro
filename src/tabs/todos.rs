@@ -70,10 +70,13 @@ impl Tab for Todos {
                 }
                 KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     if self.can_delete_selected() {
-                        if let Some(should_delete) = self
-                            .selected_item()
-                            .map(|todo| if todo.done { false } else { todo.delete(&self.db) })
-                        {
+                        if let Some(should_delete) = self.selected_item().map(|todo| {
+                            if todo.done {
+                                false
+                            } else {
+                                todo.delete(&self.db)
+                            }
+                        }) {
                             if should_delete {
                                 self.refresh();
                             }
@@ -93,7 +96,8 @@ impl Tab for Todos {
                             .map(|todo| (todo.text.clone(), todo.due_date, todo.repeat.clone()))
                         {
                             self.ui_mode = UiMode::Editing;
-                            self.input_widget = Some(InputWidget::new(Some(&text), due_date, repeat.as_ref()));
+                            self.input_widget =
+                                Some(InputWidget::new(Some(&text), due_date, repeat.as_ref()));
                         }
                     }
                 }
@@ -102,7 +106,9 @@ impl Tab for Todos {
             UiMode::Adding => {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
-                        InputAction::Confirm { text, date, repeat } => self.confirm_add(text, date, repeat),
+                        InputAction::Confirm { text, date, repeat } => {
+                            self.confirm_add(text, date, repeat)
+                        }
                         InputAction::Escape => self.cancel_input(),
                         InputAction::None => {}
                     }
@@ -111,7 +117,9 @@ impl Tab for Todos {
             UiMode::Editing => {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
-                        InputAction::Confirm { text, date, repeat } => self.confirm_edit(text, date, repeat),
+                        InputAction::Confirm { text, date, repeat } => {
+                            self.confirm_edit(text, date, repeat)
+                        }
                         InputAction::Escape => self.cancel_input(),
                         InputAction::None => {}
                     }
@@ -133,8 +141,12 @@ impl Tab for Todos {
 
         let (tabs_area, list_area, hint_area, input_area) = match self.ui_mode {
             UiMode::Normal => {
-                let [tabs, list, hint] =
-                    Layout::vertical([Constraint::Length(1), Constraint::Fill(1), Constraint::Length(1)]).areas(area);
+                let [tabs, list, hint] = Layout::vertical([
+                    Constraint::Length(1),
+                    Constraint::Fill(1),
+                    Constraint::Length(1),
+                ])
+                .areas(area);
                 (tabs, list, hint, None)
             }
             UiMode::Adding | UiMode::Editing => {
@@ -153,7 +165,10 @@ impl Tab for Todos {
         let items = self.current_items();
 
         frame.render_widget(
-            StatusWidget::new(items.len(), items.get(self.selected).and_then(|todo| todo.id)),
+            StatusWidget::new(
+                items.len(),
+                items.get(self.selected).and_then(|todo| todo.id),
+            ),
             area,
         );
 
@@ -241,7 +256,12 @@ impl Todos {
     fn ensure_cache(&self) {
         let mut cache = self.cache.borrow_mut();
         if cache.is_none() {
-            *cache = Some(Todo::list(&self.db, self.page, self.offset, self.page_size.get()));
+            *cache = Some(Todo::list(
+                &self.db,
+                self.page,
+                self.offset,
+                self.page_size.get(),
+            ));
         }
     }
 
@@ -273,11 +293,17 @@ impl Todos {
     fn selected_item(&self) -> Option<Ref<'_, Todo>> {
         self.ensure_cache();
         let cache = self.cache.borrow();
-        if cache.as_ref().and_then(|items| items.get(self.selected)).is_none() {
+        if cache
+            .as_ref()
+            .and_then(|items| items.get(self.selected))
+            .is_none()
+        {
             return None;
         }
 
-        Some(Ref::map(cache, |cache| &cache.as_ref().unwrap()[self.selected]))
+        Some(Ref::map(cache, |cache| {
+            &cache.as_ref().unwrap()[self.selected]
+        }))
     }
 
     fn can_delete_selected(&self) -> bool {
@@ -286,7 +312,8 @@ impl Todos {
     }
 
     fn can_delete_in_items(&self, items: &[Todo]) -> bool {
-        !matches!(self.page, Page::History) && items.get(self.selected).is_some_and(|todo| !todo.done)
+        !matches!(self.page, Page::History)
+            && items.get(self.selected).is_some_and(|todo| !todo.done)
     }
 
     fn clamp_selected(&mut self) {
