@@ -5,12 +5,12 @@ use ratatui::widgets::{Tabs, Widget};
 
 use crate::kinds::page::Page;
 
-pub struct TodosTabsWidget {
+pub struct TabsWidget {
     pub page: Page,
     pub color: Color,
 }
 
-impl Widget for TodosTabsWidget {
+impl Widget for TabsWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let tab_titles: Vec<&str> = Page::ALL.iter().map(|p| p.label()).collect();
         let tabs_width: u16 =

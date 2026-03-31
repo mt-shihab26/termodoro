@@ -10,7 +10,8 @@ use time::Date;
 
 use crate::kinds::repeat::Repeat;
 use crate::tabs::todos::COLOR;
-use crate::widgets::calendar::{CalendarAction, CalendarWidget};
+
+use super::calendar::{CalendarAction, CalendarWidget};
 
 pub enum InputAction {
     Confirm {

@@ -3,18 +3,18 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Paragraph, Widget};
 
-pub struct TodosCacheStatusWidget {
+pub struct StatusWidget {
     pub length: usize,
     pub selected_id: Option<i32>,
 }
 
-impl TodosCacheStatusWidget {
+impl StatusWidget {
     pub fn new(length: usize, selected_id: Option<i32>) -> Self {
         Self { length, selected_id }
     }
 }
 
-impl Widget for TodosCacheStatusWidget {
+impl Widget for StatusWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let status = match self.selected_id {
             Some(id) => format!(" loaded {}  id {} ", self.length, id),

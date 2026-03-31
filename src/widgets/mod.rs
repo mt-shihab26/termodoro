@@ -1,10 +1,2 @@
-pub mod calendar;
 pub mod fps;
-pub mod input;
-pub mod repeat;
-pub mod todo_item;
-pub mod todos_cache_status;
-pub mod todos_hint;
-pub mod todos_list;
-pub mod todos_overflow;
-pub mod todos_tabs;
+pub mod todos;

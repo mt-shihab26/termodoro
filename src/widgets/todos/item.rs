@@ -5,11 +5,11 @@ use ratatui::widgets::ListItem;
 use crate::kinds::repeat::Repeat;
 use crate::models::todo::Todo;
 
-pub struct TodoItemWidget<'a> {
+pub struct ItemWidget<'a> {
     pub todo: &'a Todo,
 }
 
-impl<'a> TodoItemWidget<'a> {
+impl<'a> ItemWidget<'a> {
     pub fn label(&self) -> String {
         let check = if self.todo.done { "[✓]" } else { "[ ]" };
         let repeat_icon = if self.todo.repeat.is_some() {

@@ -11,11 +11,11 @@ use sea_orm::DatabaseConnection;
 use crate::kinds::ui_mode::UiMode;
 use crate::kinds::{page::Page, repeat::Repeat};
 use crate::models::todo::Todo;
-use crate::widgets::input::{InputAction, InputWidget};
-use crate::widgets::todos_cache_status::TodosCacheStatusWidget;
-use crate::widgets::todos_hint::TodosHintWidget;
-use crate::widgets::todos_list::TodosListWidget;
-use crate::widgets::todos_tabs::TodosTabsWidget;
+use crate::widgets::todos::hint::HintWidget;
+use crate::widgets::todos::input::{InputAction, InputWidget};
+use crate::widgets::todos::list::ListWidget;
+use crate::widgets::todos::status::StatusWidget;
+use crate::widgets::todos::tabs::TabsWidget;
 
 use super::Tab;
 
@@ -144,19 +144,19 @@ impl Tab for Todos {
         let items = self.current_items();
 
         frame.render_widget(
-            TodosCacheStatusWidget::new(items.len(), items.get(self.selected).and_then(|todo| todo.id)),
+            StatusWidget::new(items.len(), items.get(self.selected).and_then(|todo| todo.id)),
             area,
         );
 
         frame.render_widget(
-            TodosTabsWidget {
+            TabsWidget {
                 page: self.page,
                 color: self.color(),
             },
             tabs_area,
         );
 
-        TodosListWidget {
+        ListWidget {
             items: &items,
             page: self.page,
             selected: self.selected,
@@ -167,7 +167,7 @@ impl Tab for Todos {
         .render(frame, list_area, &mut self.list_state.borrow_mut());
 
         frame.render_widget(
-            TodosHintWidget {
+            HintWidget {
                 page: self.page,
                 ui_mode: self.ui_mode,
                 can_delete: self.can_delete_in_items(&items),

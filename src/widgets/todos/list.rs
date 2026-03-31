@@ -9,9 +9,9 @@ use crate::kinds::page::Page;
 use crate::models::todo::Todo;
 use crate::utils::date::today;
 
-use super::{todo_item::TodoItemWidget, todos_overflow::TodosOverflowWidget};
+use super::{indicator::IndicatorWidget, item::ItemWidget};
 
-pub struct TodosListWidget<'a> {
+pub struct ListWidget<'a> {
     pub items: &'a [Todo],
     pub page: Page,
     pub selected: usize,
@@ -20,7 +20,7 @@ pub struct TodosListWidget<'a> {
     pub show_more_below: bool,
 }
 
-impl<'a> TodosListWidget<'a> {
+impl<'a> ListWidget<'a> {
     pub fn render(self, frame: &mut Frame, area: Rect, state: &mut ListState) {
         let horizontal_padding = 2;
         let top_padding = 1;
@@ -53,7 +53,7 @@ impl<'a> TodosListWidget<'a> {
             Page::Due | Page::Today | Page::History => self.render_flat(frame, padded_area, state),
         }
 
-        TodosOverflowWidget {
+        IndicatorWidget {
             show_more_above: self.show_more_above,
             show_more_below: self.show_more_below,
         }
@@ -65,7 +65,7 @@ impl<'a> TodosListWidget<'a> {
         let items = self
             .items
             .iter()
-            .map(|todo| TodoItemWidget { todo }.list_item(dimmed))
+            .map(|todo| ItemWidget { todo }.list_item(dimmed))
             .collect::<Vec<_>>();
 
         let list = List::new(items)
@@ -105,7 +105,7 @@ impl<'a> TodosListWidget<'a> {
                 selected_row = rows.len();
             }
 
-            rows.push(TodoItemWidget { todo }.line(index == self.selected, self.color));
+            rows.push(ItemWidget { todo }.line(index == self.selected, self.color));
         }
 
         (rows, selected_row)

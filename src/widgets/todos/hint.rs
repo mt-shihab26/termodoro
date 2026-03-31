@@ -5,13 +5,13 @@ use ratatui::widgets::{Paragraph, Widget};
 
 use crate::kinds::{page::Page, ui_mode::UiMode};
 
-pub struct TodosHintWidget {
+pub struct HintWidget {
     pub page: Page,
     pub ui_mode: UiMode,
     pub can_delete: bool,
 }
 
-impl Widget for TodosHintWidget {
+impl Widget for HintWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let hint = match self.ui_mode {
             UiMode::Normal => match self.page {
