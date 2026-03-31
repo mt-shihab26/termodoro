@@ -1,4 +1,4 @@
-use std::io::{Error, ErrorKind, Result};
+use std::io;
 
 use sea_orm::ActiveValue::Set;
 use sea_orm::{
@@ -95,22 +95,22 @@ pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
-fn io_err(e: impl std::fmt::Display) -> Error {
-    Error::new(ErrorKind::Other, e.to_string())
+fn io_err(e: impl std::fmt::Display) -> io::Error {
+    io::Error::new(io::ErrorKind::Other, e.to_string())
 }
 
-pub fn load_all(db: &DatabaseConnection) -> Result<Vec<Model>> {
+pub fn load_all(db: &DatabaseConnection) -> io::Result<Vec<Model>> {
     rt().block_on(async { Entity::find().all(db).await.map_err(io_err) })
 }
 
-pub fn insert(db: &DatabaseConnection, model: ActiveModel) -> Result<Model> {
+pub fn insert(db: &DatabaseConnection, model: ActiveModel) -> io::Result<Model> {
     rt().block_on(async { model.insert(db).await.map_err(io_err) })
 }
 
-pub fn update(db: &DatabaseConnection, model: ActiveModel) -> Result<()> {
+pub fn update(db: &DatabaseConnection, model: ActiveModel) -> io::Result<()> {
     rt().block_on(async { model.update(db).await.map_err(io_err).map(|_| ()) })
 }
 
-pub fn delete(db: &DatabaseConnection, id: i32) -> Result<()> {
+pub fn delete(db: &DatabaseConnection, id: i32) -> io::Result<()> {
     rt().block_on(async { Entity::delete_by_id(id).exec(db).await.map_err(io_err).map(|_| ()) })
 }
