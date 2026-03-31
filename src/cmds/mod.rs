@@ -1,4 +1,5 @@
 pub mod help;
+pub mod seed;
 pub mod tui;
 pub mod version;
 
