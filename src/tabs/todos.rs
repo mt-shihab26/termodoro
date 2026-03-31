@@ -82,20 +82,24 @@ impl Tab for Todos {
             },
             UiMode::Adding => {
                 if let Some(input_widget) = &mut self.input_widget {
-                    let action = input_widget.handle(key);
-                    self.handle_input_action(action, false);
+                    match input_widget.handle(key) {
+                        InputAction::Confirm { text, date, repeat } => self.confirm_add(text, date, repeat),
+                        InputAction::Escape => self.cancel_input(),
+                        InputAction::None => {}
+                    }
                 }
             }
             UiMode::Editing => {
                 if let Some(input_widget) = &mut self.input_widget {
-                    let action = input_widget.handle(key);
-                    self.handle_input_action(action, true);
+                    match input_widget.handle(key) {
+                        InputAction::Confirm { text, date, repeat } => self.confirm_edit(text, date, repeat),
+                        InputAction::Escape => self.cancel_input(),
+                        InputAction::None => {}
+                    }
                 }
             }
         }
-
         self.sync_list_state();
-
         Ok(())
     }
 
@@ -301,7 +305,7 @@ impl Todos {
         self.cancel_input();
     }
 
-    fn update_selected(&mut self, text: String, date: Option<time::Date>, repeat: Option<Repeat>) {
+    fn confirm_edit(&mut self, text: String, date: Option<time::Date>, repeat: Option<Repeat>) {
         if let Some(mut todo) = self.selected_item() {
             todo.text = text;
             todo.due_date = date;
@@ -309,24 +313,6 @@ impl Todos {
             todo.update(&self.db);
             self.refresh();
         }
-    }
-
-    fn confirm_edit(&mut self, text: String, date: Option<time::Date>, repeat: Option<Repeat>) {
-        self.update_selected(text, date, repeat);
         self.cancel_input();
-    }
-
-    fn handle_input_action(&mut self, action: InputAction, editing: bool) {
-        match action {
-            InputAction::Confirm { text, date, repeat } => {
-                if editing {
-                    self.confirm_edit(text, date, repeat);
-                } else {
-                    self.confirm_add(text, date, repeat);
-                }
-            }
-            InputAction::Escape => self.cancel_input(),
-            InputAction::None => {}
-        }
     }
 }
