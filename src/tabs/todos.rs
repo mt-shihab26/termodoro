@@ -111,13 +111,13 @@ impl Tab for Todos {
     }
 
     fn render(&self, frame: &mut Frame, area: Rect) {
-        let status = self.cache_status();
         let buf = frame.buffer_mut();
 
         let block = Block::bordered().fg(self.color());
         let inner = block.inner(area);
         block.render(area, buf);
-        frame.render_widget(TodosCacheStatusWidget { status }, area);
+
+        frame.render_widget(TodosCacheStatusWidget::new(self.current_items().len()), area);
 
         let area = inner;
 
@@ -222,9 +222,9 @@ impl Todos {
         *self.cache.borrow_mut() = None;
     }
 
-    fn cache_status(&self) -> String {
-        format!(" loaded {} ", self.current_items().len())
-    }
+    // fn cache_status(&self) -> String {
+    //     format!(" loaded {} ", self.current_items().len())
+    // }
 
     fn refresh(&mut self) {
         self.invalidate_cache();
