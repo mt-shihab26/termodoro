@@ -1,10 +1,7 @@
 use std::io;
 
-use sea_orm::ActiveValue::Set;
-use sea_orm::{
-    ActiveModelBehavior, ActiveModelTrait, DatabaseConnection, DeriveEntityModel, DerivePrimaryKey, DeriveRelation,
-    EntityTrait, EnumIter, PrimaryKeyTrait,
-};
+use sea_orm::{ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, DatabaseConnection};
+use sea_orm::{DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait};
 use time::Date;
 
 use crate::kinds::repeat::Repeat;
