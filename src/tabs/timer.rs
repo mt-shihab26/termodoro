@@ -88,16 +88,6 @@ impl TimerTab {
         self.picker = Some(TodoPickerState::new(todos));
     }
 
-    fn selected_todo_info(&self) -> (Option<Todo>, Option<Stat>) {
-        let Some(id) = self.todo_id else { return (None, None) };
-        let Ok(mut cache) = self.cache.lock() else {
-            return (None, None);
-        };
-        let todo = cache.get_todo(id).cloned();
-        let stat = cache.get_stat(id).cloned();
-        (todo, stat)
-    }
-
     fn set_selected_todo(&mut self, todo: Option<(i32, String)>) {
         self.todo_id = todo.map(|(id, _)| id);
         if let Ok(mut cache) = self.cache.lock() {
@@ -106,6 +96,18 @@ impl TimerTab {
         if let Ok(mut s) = self.state.lock() {
             s.selected_todo_id = self.todo_id;
         }
+    }
+
+    fn todo_info(&self) -> (Option<Todo>, Option<Stat>) {
+        let Some(id) = self.todo_id else {
+            return (None, None);
+        };
+        let Ok(mut cache) = self.cache.lock() else {
+            return (None, None);
+        };
+        let todo = cache.get_todo(id).cloned();
+        let stat = cache.get_stat(id).cloned();
+        (todo, stat)
     }
 }
 
@@ -181,8 +183,6 @@ impl Tab for TimerTab {
 
         drop(state);
 
-        let (todo, stat) = self.selected_todo_info();
-
         let buf = frame.buffer_mut();
 
         let inner = BorderWidget::new(&BorderProps::new(self.color()), area).render(area, buf);
@@ -206,6 +206,8 @@ impl Tab for TimerTab {
         StatusWidget::new(&StatusProps::new(running)).render(status_row, buf);
 
         let [todo_row, hint_row] = Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).areas(bottom);
+
+        let (todo, stat) = self.todo_info();
 
         TodoShowWidget::new(&TodoShowProps::new(todo.as_ref(), stat.as_ref())).render(todo_row, buf);
         HintWidget::new(&HintProps::new(self.picker.is_some())).render(hint_row, buf);
