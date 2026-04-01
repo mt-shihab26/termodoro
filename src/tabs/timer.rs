@@ -25,7 +25,7 @@ use crate::{
     widgets::timer::{
         clock::{ClockProps, ClockWidget},
         hint::HintWidget,
-        phase::PhaseWidget,
+        phase::{PhaseProps, PhaseWidget},
         session::{SessionProps, SessionWidget},
         status::StatusWidget,
         todo::TodoWidget,
@@ -204,17 +204,7 @@ impl Tab for TimerTab {
         let inner = block.inner(area);
         block.render(area, buf);
 
-        let [
-            session_row,
-            _,
-            phase_row,
-            _,
-            time_row,
-            _,
-            status_row,
-            _,
-            bottom,
-        ] = Layout::vertical([
+        let [session_row, _, phase_row, _, time_row, _, status_row, _, bottom] = Layout::vertical([
             Constraint::Length(1),
             Constraint::Fill(1),
             Constraint::Length(1),
@@ -227,15 +217,8 @@ impl Tab for TimerTab {
         ])
         .areas(inner);
 
-        SessionWidget::new(&SessionProps::new(sessions, long_break_interval))
-            .render(session_row, buf);
-
-        let phase_w = PhaseWidget {
-            label: phase_label,
-            color,
-        };
-        (&phase_w).render(phase_row, buf);
-
+        SessionWidget::new(&SessionProps::new(sessions, long_break_interval)).render(session_row, buf);
+        PhaseWidget::new(&PhaseProps::new(phase_label, color)).render(phase_row, buf);
         ClockWidget::new(&ClockProps::new(show_millis, time_millis, color)).render(time_row, buf);
 
         (&status_w).render(status_row, buf);

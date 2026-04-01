@@ -12,12 +12,7 @@ pub struct StatusWidget {
 
 impl StatusWidget {
     pub fn new(total: usize, from: usize, to: usize, page: usize) -> Self {
-        Self {
-            total,
-            from,
-            to,
-            page,
-        }
+        Self { total, from, to, page }
     }
 }
 

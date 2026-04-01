@@ -131,17 +131,11 @@ impl TodosState {
         self.items(page);
 
         let cache = self.items.borrow();
-        if cache
-            .as_ref()
-            .and_then(|items| items.get(self.selected))
-            .is_none()
-        {
+        if cache.as_ref().and_then(|items| items.get(self.selected)).is_none() {
             return None;
         }
 
-        Some(Ref::map(cache, |cache| {
-            &cache.as_ref().unwrap()[self.selected]
-        }))
+        Some(Ref::map(cache, |cache| &cache.as_ref().unwrap()[self.selected]))
     }
 
     pub fn set_visible_capacity(&self, list_area: Rect) {
@@ -234,26 +228,14 @@ impl TodosState {
         self.clamp_selected(page);
     }
 
-    pub fn add(
-        &mut self,
-        page: Page,
-        text: String,
-        due_date: Option<Date>,
-        repeat: Option<Repeat>,
-    ) {
+    pub fn add(&mut self, page: Page, text: String, due_date: Option<Date>, repeat: Option<Repeat>) {
         let mut todo = Todo::new(text, due_date, repeat);
         if todo.save(&self.db) {
             self.refresh(page);
         }
     }
 
-    pub fn update(
-        &mut self,
-        page: Page,
-        text: String,
-        due_date: Option<Date>,
-        repeat: Option<Repeat>,
-    ) {
+    pub fn update(&mut self, page: Page, text: String, due_date: Option<Date>, repeat: Option<Repeat>) {
         if let Some(mut todo) = self.selected_item(page).map(|todo| todo.clone()) {
             todo.text = text;
             todo.due_date = due_date;

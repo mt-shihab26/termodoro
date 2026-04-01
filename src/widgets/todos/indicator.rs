@@ -32,7 +32,10 @@ impl Widget for &IndicatorWidget {
                 width: inner_width,
                 height: 1,
             };
-            Paragraph::new("v more").fg(COLOR).right_aligned().render(bottom_area, buf);
+            Paragraph::new("v more")
+                .fg(COLOR)
+                .right_aligned()
+                .render(bottom_area, buf);
         }
     }
 }

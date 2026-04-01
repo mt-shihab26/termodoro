@@ -1,7 +1,7 @@
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
-use ratatui::style::{Color, Style};
 use ratatui::style::Stylize;
+use ratatui::style::{Color, Style};
 use ratatui::widgets::{List, ListItem, Paragraph, Widget};
 
 pub struct TodoPickerWidget<'a> {
@@ -19,10 +19,7 @@ impl Widget for &TodoPickerWidget<'_> {
             return;
         }
 
-        let start = self
-            .cursor
-            .saturating_sub(2)
-            .min(self.todos.len().saturating_sub(5));
+        let start = self.cursor.saturating_sub(2).min(self.todos.len().saturating_sub(5));
 
         let items: Vec<ListItem> = self
             .todos

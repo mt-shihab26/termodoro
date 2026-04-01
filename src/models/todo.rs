@@ -113,13 +113,7 @@ impl Todo {
             return false;
         };
 
-        match rt().block_on(async {
-            Entity::delete_by_id(id)
-                .exec(db)
-                .await
-                .map_err(io_err)
-                .map(|_| ())
-        }) {
+        match rt().block_on(async { Entity::delete_by_id(id).exec(db).await.map_err(io_err).map(|_| ()) }) {
             Ok(()) => true,
             Err(e) => {
                 log_error!("failed to delete todo: {e}");
@@ -131,8 +125,7 @@ impl Todo {
     pub fn save(&mut self, db: &DatabaseConnection) -> bool {
         match self.id {
             Some(_) => self.update(db),
-            None => match rt().block_on(async { self.to_model().insert(db).await.map_err(io_err) })
-            {
+            None => match rt().block_on(async { self.to_model().insert(db).await.map_err(io_err) }) {
                 Ok(model) => {
                     *self = model.into();
                     true

@@ -37,10 +37,7 @@ fn test_log_format_has_timestamp() {
     log_error!("timestamp format check");
     // expect somewhere in the file: [YYYY-MM-DDTHH:MM:SSZ] ERROR: timestamp format check
     let contents = read_log();
-    assert!(
-        contents.contains("ERROR: timestamp format check"),
-        "entry missing"
-    );
+    assert!(contents.contains("ERROR: timestamp format check"), "entry missing");
     assert!(contents.contains('T'), "timestamp missing T separator");
     assert!(contents.contains('Z'), "timestamp missing Z suffix");
     assert!(contents.contains('['), "timestamp missing opening bracket");

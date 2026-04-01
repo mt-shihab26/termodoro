@@ -133,10 +133,7 @@ fn section_line(date: Option<time::Date>, width: usize, color: Color) -> Line<'s
             "─".repeat(left_len),
             Style::default().fg(color).add_modifier(Modifier::DIM),
         ),
-        Span::styled(
-            label,
-            Style::default().fg(color).add_modifier(Modifier::BOLD),
-        ),
+        Span::styled(label, Style::default().fg(color).add_modifier(Modifier::BOLD)),
         Span::styled(
             "─".repeat(right_len),
             Style::default().fg(color).add_modifier(Modifier::DIM),

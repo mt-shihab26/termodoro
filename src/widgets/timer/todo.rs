@@ -20,9 +20,6 @@ impl Widget for &TodoWidget<'_> {
             },
             None => "No todo selected  [t] pick".to_string(),
         };
-        Paragraph::new(text)
-            .centered()
-            .fg(Color::DarkGray)
-            .render(area, buf);
+        Paragraph::new(text).centered().fg(Color::DarkGray).render(area, buf);
     }
 }

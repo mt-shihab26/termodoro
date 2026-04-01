@@ -96,19 +96,14 @@ impl App {
         let area = frame.area();
         let buf = frame.buffer_mut();
 
-        let [top, tabs_header, tab_content] = Layout::vertical([
-            Constraint::Length(1),
-            Constraint::Length(3),
-            Constraint::Fill(1),
-        ])
-        .areas(area);
+        let [top, tabs_header, tab_content] =
+            Layout::vertical([Constraint::Length(1), Constraint::Length(3), Constraint::Fill(1)]).areas(area);
 
         Paragraph::new(Span::from(self.get_app_name()).bold().fg(Color::Green))
             .centered()
             .render(top, buf);
 
-        let [top_left, top_right] =
-            Layout::horizontal([Constraint::Fill(1), Constraint::Fill(1)]).areas(top);
+        let [top_left, top_right] = Layout::horizontal([Constraint::Fill(1), Constraint::Fill(1)]).areas(top);
 
         Line::from(self.get_hints()).render(top_left, buf);
 
@@ -116,8 +111,7 @@ impl App {
             FpsWidget::new(fps_state.props()).render(top_right, buf);
         }
 
-        let tab_areas =
-            Layout::horizontal(vec![Constraint::Fill(1); self.tabs.len()]).split(tabs_header);
+        let tab_areas = Layout::horizontal(vec![Constraint::Fill(1); self.tabs.len()]).split(tabs_header);
 
         for index in 0..self.tabs.len() {
             let color = self.get_tab_color(index);
@@ -169,10 +163,7 @@ impl App {
                 Err(RecvTimeoutError::Timeout) => None,
                 Err(RecvTimeoutError::Disconnected) => {
                     log_error!("event channel disconnected");
-                    return Err(Error::new(
-                        ErrorKind::BrokenPipe,
-                        "event channel disconnected",
-                    ));
+                    return Err(Error::new(ErrorKind::BrokenPipe, "event channel disconnected"));
                 }
             }
         } else {
@@ -189,9 +180,7 @@ impl App {
     }
 
     fn handle_event(&mut self, event: Option<Event>) -> Result<()> {
-        let ctrl = |key: &ratatui::crossterm::event::KeyEvent| {
-            key.modifiers.contains(KeyModifiers::CONTROL)
-        };
+        let ctrl = |key: &ratatui::crossterm::event::KeyEvent| key.modifiers.contains(KeyModifiers::CONTROL);
 
         match event {
             Some(Event::Key(key)) => match key.code {

@@ -15,9 +15,6 @@ impl Widget for &HintWidget {
         } else {
             "[Space] Toggle   [r] Reset   [n] Skip   [t] Todo   [T] Clear todo"
         };
-        Paragraph::new(text)
-            .centered()
-            .fg(Color::DarkGray)
-            .render(area, buf);
+        Paragraph::new(text).centered().fg(Color::DarkGray).render(area, buf);
     }
 }

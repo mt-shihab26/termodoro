@@ -94,8 +94,7 @@ impl Tab for TodosTab {
                     if !matches!(self.page, Page::History) {
                         if let Some((text, due_date, repeat)) = self.state.edit_values(self.page) {
                             self.mode = TodosMode::Editing;
-                            self.input_widget =
-                                Some(InputWidget::new(Some(&text), due_date, repeat.as_ref()));
+                            self.input_widget = Some(InputWidget::new(Some(&text), due_date, repeat.as_ref()));
                         }
                     }
                 }
@@ -141,12 +140,8 @@ impl Tab for TodosTab {
 
         let (tabs_area, list_area, hint_area, input_area) = match self.mode {
             TodosMode::Normal => {
-                let [tabs, list, hint] = Layout::vertical([
-                    Constraint::Length(1),
-                    Constraint::Fill(1),
-                    Constraint::Length(1),
-                ])
-                .areas(area);
+                let [tabs, list, hint] =
+                    Layout::vertical([Constraint::Length(1), Constraint::Fill(1), Constraint::Length(1)]).areas(area);
                 (tabs, list, hint, None)
             }
             TodosMode::Adding | TodosMode::Editing => {

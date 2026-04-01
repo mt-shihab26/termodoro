@@ -20,12 +20,7 @@ pub fn shift_month(date: Date, delta: i32) -> Date {
 }
 
 pub fn format_date(date: Date) -> String {
-    format!(
-        "{}-{:02}-{:02}",
-        date.year(),
-        date.month() as u8,
-        date.day()
-    )
+    format!("{}-{:02}-{:02}", date.year(), date.month() as u8, date.day())
 }
 
 pub fn parse_date(s: &str) -> Option<Date> {

@@ -16,19 +16,12 @@ impl Widget for &HintWidget {
         let hint = match self.ui_mode {
             TodosMode::Normal => match self.page {
                 Page::History => "[[/]]Page  [j/k]Navigate",
-                _ if self.can_delete => {
-                    "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^d]Delete"
-                }
+                _ if self.can_delete => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^d]Delete",
                 _ => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit",
             },
-            TodosMode::Adding | TodosMode::Editing => {
-                "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char"
-            }
+            TodosMode::Adding | TodosMode::Editing => "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char",
         };
 
-        Paragraph::new(hint)
-            .centered()
-            .fg(Color::DarkGray)
-            .render(area, buf);
+        Paragraph::new(hint).centered().fg(Color::DarkGray).render(area, buf);
     }
 }

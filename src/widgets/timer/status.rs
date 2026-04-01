@@ -15,9 +15,6 @@ impl Widget for &StatusWidget {
         } else {
             ("Paused", Color::DarkGray)
         };
-        Paragraph::new(label)
-            .centered()
-            .fg(color)
-            .render(area, buf);
+        Paragraph::new(label).centered().fg(color).render(area, buf);
     }
 }

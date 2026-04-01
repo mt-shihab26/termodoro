@@ -71,24 +71,9 @@ pub fn seed_todos() -> Vec<Todo> {
 fn focused_examples(base: Date) -> Vec<Todo> {
     vec![
         make("Today: pay electricity bill", Some(base), None, false),
-        make(
-            "Today: call mom",
-            Some(base),
-            Some(Repeat::WeeklySameDay),
-            false,
-        ),
-        make(
-            "Overdue: renew passport",
-            Some(base - Duration::days(2)),
-            None,
-            false,
-        ),
-        make(
-            "Upcoming: draft Q2 plan",
-            Some(base + Duration::days(3)),
-            None,
-            false,
-        ),
+        make("Today: call mom", Some(base), Some(Repeat::WeeklySameDay), false),
+        make("Overdue: renew passport", Some(base - Duration::days(2)), None, false),
+        make("Upcoming: draft Q2 plan", Some(base + Duration::days(3)), None, false),
         make(
             "Upcoming: yearly health check",
             Some(base + Duration::days(30)),
