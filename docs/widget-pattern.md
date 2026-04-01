@@ -10,9 +10,9 @@ Every UI component follows a three-part split: **Props → State → Widget**.
 
 ### Props
 
-Holds the data a widget needs to render one frame. It is a plain struct
-with no behaviour — just fields. The widget borrows `&Props`, it never
-owns or mutates it.
+Holds the data a widget needs to render one frame. 
+It is a plain struct with no behaviour — just fields.
+The widget borrows `&Props`, it never owns or mutates it.
 
 ```rust
 pub struct MyProps {
@@ -24,8 +24,7 @@ pub struct MyProps {
 
 Owns the runtime data that changes over time.
 Lives in the caller (a parent component) — never inside the widget.
-Exposes a `props()` getter so the caller can hand `&props` to the
-widget at render time without cloning.
+Exposes a `props()` getter so the caller can hand `&props` to the widget at render time without cloning.
 
 ```rust
 pub struct MyState {
@@ -41,8 +40,9 @@ impl MyState {
 
 ### Widget
 
-A stateless view. Created inline at render time, never stored. Borrows
-`&Props` for the duration of one render call, then is dropped.
+A stateless view.
+Created inline at render time, never stored.
+Borrows `&Props` for the duration of one render call, then is dropped.
 
 ```rust
 pub struct MyWidget<'a> {
@@ -69,8 +69,8 @@ my_state: MyState,
 // 2. Update it before drawing
 self.my_state.tick();
 
-// 3. Pass props by reference into the widget at render time
-MyWidget::new(&self.my_state.props).render(area, buf);
+// 3. Pass props via getter into the widget at render time
+MyWidget::new(self.my_state.props()).render(area, buf);
 ```
 
 ---
@@ -79,17 +79,8 @@ MyWidget::new(&self.my_state.props).render(area, buf);
 
 - **State is never passed to the widget** — only `&props`.
 - **Widgets are never stored** — created and dropped each frame.
-- **Visibility is the caller's concern** — wrap the render call in an
-  `if` instead of adding a flag inside the widget.
-- **Implement `Widget for &MyWidget`** (shared ref) unless the widget
-  must mutate itself during render, in which case use `&mut MyWidget`.
+- **Visibility is the caller's concern** — wrap the render call in an `if` instead of adding a flag inside the widget.
+- **Implement `Widget for &MyWidget`** (shared ref) unless the widget must mutate itself during render, in which case use `&mut MyWidget`.
 
 ---
 
-## When to simplify
-
-| Situation | Simplification |
-|---|---|
-| No changing state | Skip `State`, build `Props` inline in the caller |
-| All fields are `Copy` | Derive `Copy` on `Props`, pass by value, no lifetime needed |
-| Single render-time value | Pass the field directly, skip a `Props` struct entirely |
