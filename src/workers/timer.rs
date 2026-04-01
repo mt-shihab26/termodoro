@@ -33,7 +33,7 @@ pub fn spawn(
 
                 state.tick();
 
-                (state.timer_config.tick_interval(), state.running)
+                (state.config.tick_interval(), state.running)
             };
 
             thread::sleep(Duration::from_millis(interval as u64));

@@ -23,8 +23,13 @@ use crate::{
     log_error, log_warn,
     states::{timer::TimerState, timer_cache::TimerCache},
     widgets::timer::{
-        clock::ClockWidget, hint::HintWidget, phase::PhaseWidget, session::SessionWidget,
-        status::StatusWidget, todo::TodoWidget, todo_picker::TodoPickerWidget,
+        clock::{ClockProps, ClockWidget},
+        hint::HintWidget,
+        phase::PhaseWidget,
+        session::SessionWidget,
+        status::StatusWidget,
+        todo::TodoWidget,
+        todo_picker::TodoPickerWidget,
     },
     workers::timer::spawn,
 };
@@ -121,7 +126,7 @@ impl Tab for TimerTab {
                         s.running = !s.running;
                     }
                     KeyCode::Char('r') => {
-                        s.millis = s.phase.duration(&s.timer_config);
+                        s.millis = s.phase.duration(&s.config);
                         s.running = false;
                     }
                     KeyCode::Char('n') => {
@@ -179,19 +184,12 @@ impl Tab for TimerTab {
         let color = s.phase.color();
         let sessions = s.sessions;
         let running = s.running;
-        let show_millis = s.timer_config.show_millis();
-        let long_break_interval = s.timer_config.long_break_interval();
-        let (mins, secs, ms) = s.time_parts();
+        let long_break_interval = s.config.long_break_interval();
         let phase_label = s.phase.label().to_string();
+
         drop(s);
 
         self.refresh_stats_if_needed(sessions);
-
-        let time = if show_millis {
-            format!("{:02}:{:02}.{:02}", mins, secs, ms)
-        } else {
-            format!("{:02}:{:02}", mins, secs)
-        };
 
         let session_w = SessionWidget {
             session: sessions + 1,
@@ -201,7 +199,7 @@ impl Tab for TimerTab {
             label: phase_label,
             color,
         };
-        let clock_w = ClockWidget { time, color };
+
         let status_w = StatusWidget { running };
         let hint_w = HintWidget {
             selecting_todo: matches!(self.mode, TimerMode::SelectingTodo),
@@ -249,7 +247,10 @@ impl Tab for TimerTab {
 
                 (&session_w).render(session_row, buf);
                 (&phase_w).render(phase_row, buf);
-                (&clock_w).render(time_row, buf);
+
+                ClockWidget::new(&ClockProps::new(s.config.show_millis(), s.millis, color))
+                    .render(time_row, buf);
+
                 (&status_w).render(status_row, buf);
                 (&todo_w).render(todo_row, buf);
                 (&hint_w).render(hint_row, buf);
@@ -292,7 +293,10 @@ impl Tab for TimerTab {
 
                 (&session_w).render(session_row, buf);
                 (&phase_w).render(phase_row, buf);
-                (&clock_w).render(time_row, buf);
+
+                ClockWidget::new(&ClockProps::new(s.config.show_millis(), s.millis, color))
+                    .render(time_row, buf);
+
                 (&status_w).render(status_row, buf);
                 ratatui::widgets::Paragraph::new("Select a todo")
                     .centered()

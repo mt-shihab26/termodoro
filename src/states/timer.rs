@@ -8,7 +8,7 @@ pub struct TimerState {
     pub millis: u32,
     pub sessions: u32,
     pub running: bool,
-    pub timer_config: TimerConfig,
+    pub config: TimerConfig,
     pub selected_todo_id: Option<i32>,
 }
 
@@ -19,7 +19,7 @@ impl TimerState {
             millis: timer_config.work_duration(),
             sessions: 0,
             running: false,
-            timer_config,
+            config: timer_config,
             db,
             selected_todo_id: None,
         }
@@ -30,7 +30,7 @@ impl TimerState {
             return;
         }
 
-        let step = self.timer_config.tick_interval();
+        let step = self.config.tick_interval();
 
         if self.millis >= step {
             self.millis -= step;
@@ -40,13 +40,19 @@ impl TimerState {
     }
 
     pub fn advance(&mut self, completed: bool) {
-        let duration = self.phase.duration(&self.timer_config);
-        Session::record(&self.db, &self.phase, duration, self.selected_todo_id, completed);
+        let duration = self.phase.duration(&self.config);
+        Session::record(
+            &self.db,
+            &self.phase,
+            duration,
+            self.selected_todo_id,
+            completed,
+        );
 
         match self.phase {
             Phase::Work => {
                 self.sessions += 1;
-                self.phase = if self.sessions % self.timer_config.long_break_interval() == 0 {
+                self.phase = if self.sessions % self.config.long_break_interval() == 0 {
                     Phase::LongBreak
                 } else {
                     Phase::Break
@@ -56,14 +62,7 @@ impl TimerState {
                 self.phase = Phase::Work;
             }
         }
-        self.millis = self.phase.duration(&self.timer_config);
+        self.millis = self.phase.duration(&self.config);
         self.running = false;
-    }
-
-    pub fn time_parts(&self) -> (u32, u32, u32) {
-        let mins = self.millis / 60000;
-        let secs = (self.millis / 1000) % 60;
-        let cs = (self.millis % 1000) / 10;
-        (mins, secs, cs)
     }
 }
