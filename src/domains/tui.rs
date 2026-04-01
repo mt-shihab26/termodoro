@@ -57,14 +57,8 @@ impl App {
 
     fn event_loop(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
         while self.alive {
-            if let Some(fps_state) = &mut self.fps_state {
-                fps_state.tick();
-            }
-
-            if let Err(e) = terminal.draw(|frame| self.render_frame(frame)) {
-                log_error!("terminal draw failed: {e}");
-                return Err(e);
-            }
+            self.tick_fps();
+            self.terminal_draw(terminal)?;
 
             let event = if self.tabs[self.selected].should_tick() {
                 match self.events.recv_timeout(Duration::from_millis(8)) {
@@ -130,6 +124,20 @@ impl App {
             }
         }
 
+        Ok(())
+    }
+
+    fn tick_fps(&mut self) {
+        if let Some(fps_state) = &mut self.fps_state {
+            fps_state.tick();
+        }
+    }
+
+    fn terminal_draw(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
+        if let Err(e) = terminal.draw(|frame| self.render_frame(frame)) {
+            log_error!("terminal draw failed: {e}");
+            return Err(e);
+        }
         Ok(())
     }
 
