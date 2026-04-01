@@ -5,19 +5,26 @@ use crate::{
     models::{session::Session, todo::Todo},
 };
 
+/// Session statistics for a single todo.
 #[derive(Clone)]
 pub struct Stat {
+    /// Number of completed pomodoro sessions.
     pub sessions: u32,
+    /// Total time spent in seconds across all sessions.
     pub secs: u32,
 }
 
+/// Per-tab cache for today's todos and their session stats.
 pub struct TimerCache {
     db: DatabaseConnection,
+    /// Cached list of today's todos, `None` until first fetch.
     todos: Option<Vec<Todo>>,
+    /// Cached stats parallel to `todos`, `None` until first fetch.
     stats: Option<Vec<Stat>>,
 }
 
 impl TimerCache {
+    /// Creates a new empty cache backed by the given database connection.
     pub fn new(db: DatabaseConnection) -> Self {
         Self {
             db,

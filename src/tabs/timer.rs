@@ -43,8 +43,8 @@ use super::Tab;
 
 pub struct TimerTab {
     count: Arc<AtomicU8>,
-    state: Arc<Mutex<TimerState>>,
     cache: Arc<Mutex<TimerCache>>,
+    state: Arc<Mutex<TimerState>>,
     picker: Option<TodoPickerState>,
 }
 
@@ -60,8 +60,8 @@ impl TimerTab {
 
         Self {
             count,
-            state,
             cache,
+            state,
             picker: None,
         }
     }
@@ -83,20 +83,20 @@ impl TimerTab {
 
     fn toggle_running(&self) {
         if let Ok(mut s) = self.state.lock() {
-            s.running = !s.running;
+            s.is_running = !s.is_running;
         }
     }
 
     fn reset_timer(&self) {
         if let Ok(mut s) = self.state.lock() {
-            s.time_millis = s.phase.duration(&s.config);
-            s.running = false;
+            s.time_millis = s.cycle_phase.duration(&s.config);
+            s.is_running = false;
         }
     }
 
     fn skip_session(&self) {
         if let Ok(mut s) = self.state.lock() {
-            s.advance(false);
+            s.advance();
         }
     }
 
@@ -173,11 +173,11 @@ impl Tab for TimerTab {
             }
         };
 
-        let color = state.phase.color();
-        let sessions = state.sessions;
-        let running = state.running;
+        let color = state.cycle_phase.color();
+        let sessions = state.sessions_count;
+        let running = state.is_running;
         let long_break_interval = state.config.long_break_interval();
-        let phase_label = state.phase.label().to_string();
+        let phase_label = state.cycle_phase.label().to_string();
         let show_millis = state.config.show_millis();
         let time_millis = state.time_millis;
 

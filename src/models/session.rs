@@ -57,6 +57,7 @@ impl Session {
         }
     }
 
+    // TODO: Work on logic
     pub fn record(db: &DatabaseConnection, phase: &Phase, duration_millis: u32, todo_id: Option<i32>, completed: bool) {
         Self::new(phase, duration_millis, todo_id, completed).save(db);
     }
