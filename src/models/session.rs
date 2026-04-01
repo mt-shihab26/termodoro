@@ -48,6 +48,7 @@ impl Session {
         } else {
             None
         };
+
         Self {
             id: None,
             phase: phase.to_db_str().to_string(),
@@ -57,12 +58,22 @@ impl Session {
         }
     }
 
+    pub fn stats_for_todo(db: &DatabaseConnection, todo_id: i32) -> (u32, u32) {
+        let sessions: Vec<_> = Self::list_for_todo(db, todo_id)
+            .into_iter()
+            .filter(|s| s.completed_at.is_some())
+            .collect();
+        let count = sessions.len() as u32;
+        let total_secs: u32 = sessions.iter().map(|s| s.duration_secs).sum();
+        (count, total_secs)
+    }
+
     // TODO: Work on logic
     pub fn record(db: &DatabaseConnection, phase: &Phase, duration_millis: u32, todo_id: Option<i32>, completed: bool) {
         Self::new(phase, duration_millis, todo_id, completed).save(db);
     }
 
-    pub fn list_for_todo(db: &DatabaseConnection, todo_id: i32) -> Vec<Session> {
+    fn list_for_todo(db: &DatabaseConnection, todo_id: i32) -> Vec<Session> {
         match rt().block_on(async {
             Entity::find()
                 .filter(Column::TodoId.eq(todo_id))
@@ -77,16 +88,6 @@ impl Session {
                 vec![]
             }
         }
-    }
-
-    pub fn stats_for_todo(db: &DatabaseConnection, todo_id: i32) -> (u32, u32) {
-        let sessions: Vec<_> = Self::list_for_todo(db, todo_id)
-            .into_iter()
-            .filter(|s| s.completed_at.is_some())
-            .collect();
-        let count = sessions.len() as u32;
-        let total_secs: u32 = sessions.iter().map(|s| s.duration_secs).sum();
-        (count, total_secs)
     }
 
     fn save(&mut self, db: &DatabaseConnection) -> bool {
