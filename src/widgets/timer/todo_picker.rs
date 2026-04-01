@@ -118,8 +118,8 @@ impl Widget for &TodoPickerWidget<'_> {
             .skip(start)
             .take(5)
             .map(|(i, (todo, stat))| {
-                let label = if stat.sessions > 0 {
-                    format!("{}  ·  {} sessions", todo.text, stat.sessions)
+                let label = if stat.completed_sessions > 0 {
+                    format!("{}  ·  {} sessions", todo.text, stat.completed_sessions)
                 } else {
                     todo.text.clone()
                 };

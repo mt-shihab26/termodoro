@@ -9,9 +9,9 @@ use crate::{
 #[derive(Clone)]
 pub struct Stat {
     /// Number of completed pomodoro sessions.
-    pub sessions: u32,
+    pub completed_sessions: u32,
     /// Total time spent in seconds across all sessions.
-    pub secs: u32,
+    pub completed_secs: u32,
 }
 
 /// Per-tab cache for today's todos and their session stats.
@@ -24,7 +24,6 @@ pub struct TimerCache {
 }
 
 impl TimerCache {
-    /// Creates a new empty cache backed by the given database connection.
     pub fn new(db: DatabaseConnection) -> Self {
         Self {
             db,
@@ -55,7 +54,10 @@ impl TimerCache {
                 .into_iter()
                 .map(|id| {
                     let (sessions, secs) = id.map(|id| Session::stats_for_todo(&self.db, id)).unwrap_or((0, 0));
-                    Stat { sessions, secs }
+                    Stat {
+                        completed_sessions: sessions,
+                        completed_secs: secs,
+                    }
                 })
                 .collect();
             self.stats = Some(stats);

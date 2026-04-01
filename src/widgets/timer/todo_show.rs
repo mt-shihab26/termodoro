@@ -34,8 +34,8 @@ impl Widget for &TodoShowWidget<'_> {
                     format!(
                         "{}  ·  {} sessions  ·  {} min",
                         todo.text,
-                        stat.sessions,
-                        stat.secs / 60
+                        stat.completed_sessions,
+                        stat.completed_secs / 60
                     )
                 }
                 None => todo.text.clone(),
