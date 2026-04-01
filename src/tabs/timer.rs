@@ -101,7 +101,11 @@ impl TimerTab {
     }
 
     fn open_picker(&mut self) {
-        self.picker = Some(TodoPickerState::new(todos));
+        if let Ok(mut c) = self.cache.lock() {
+            let todos = c.get_todos().to_vec();
+            let stats = c.get_stats().to_vec();
+            self.picker = Some(TodoPickerState::new(todos, stats));
+        }
     }
 
     fn clear_todo(&mut self) {
