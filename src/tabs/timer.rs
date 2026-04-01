@@ -14,7 +14,7 @@ use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Layout, Rect},
     style::{Color, Stylize},
-    widgets::{Block, Widget},
+    widgets::{Block, Paragraph, Widget},
 };
 
 use crate::{
@@ -250,11 +250,12 @@ impl Tab for TimerTab {
                     cursor: self.cursor,
                 };
 
-                ratatui::widgets::Paragraph::new("Select a todo")
+                Paragraph::new("Select a todo")
                     .centered()
                     .bold()
                     .fg(Color::Yellow)
                     .render(picker_header, buf);
+
                 (&picker_w).render(picker_list, buf);
                 (&hint_w).render(hint_row, buf);
             }
