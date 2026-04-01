@@ -4,17 +4,15 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use ratatui::crossterm::event::{KeyCode, KeyModifiers};
-use ratatui::layout::{Constraint, Layout};
-use ratatui::style::Color;
-use ratatui::widgets::Widget;
+use ratatui::prelude::{Color, Constraint, Layout, Line, Span, Stylize, Widget};
+use ratatui::widgets::Paragraph;
 use ratatui::{DefaultTerminal, Frame, init, restore};
 use sea_orm::DatabaseConnection;
 
 use crate::log_error;
 use crate::states::timer_cache::TimerCache;
 use crate::tabs::{Tab, timer::TimerTab, todos::TodosTab};
-use crate::widgets::layout::fps::FpsState;
-use crate::widgets::layout::header::{HeaderProps, HeaderWidget};
+use crate::widgets::layout::fps::{FpsState, FpsWidget};
 use crate::widgets::layout::tabs_bar::{TabEntry, TabsBarWidget};
 use crate::workers::term;
 use crate::{config::Config, kinds::event::Event};
@@ -136,17 +134,39 @@ impl App {
     }
 
     fn render_frame(&mut self, frame: &mut Frame) {
-        let [top, tabs_header, main] = Layout::vertical([
+        let area = frame.area();
+        let buf = frame.buffer_mut();
+
+        let [top, tabs_header, tab_content] = Layout::vertical([
             Constraint::Length(1),
             Constraint::Length(3),
             Constraint::Fill(1),
         ])
-        .areas(frame.area());
+        .areas(area);
 
-        HeaderWidget::new(&HeaderProps::new(
-            self.fps_state.as_ref().map(|s| s.props()),
-        ))
-        .render(top, frame.buffer_mut());
+        Paragraph::new(Span::from("Orivo").bold().fg(Color::Green))
+            .centered()
+            .render(top, buf);
+
+        let [left, right] =
+            Layout::horizontal([Constraint::Fill(1), Constraint::Fill(1)]).areas(top);
+
+        let mut hints = vec![
+            Span::from("^q").fg(Color::DarkGray).bold(),
+            Span::from(" quit").fg(Color::DarkGray),
+        ];
+
+        if self.fps_state.is_some() {
+            hints.push(Span::from("  ").fg(Color::DarkGray));
+            hints.push(Span::from("^f").fg(Color::DarkGray).bold());
+            hints.push(Span::from(" fps").fg(Color::DarkGray));
+        }
+
+        Line::from(hints).render(left, buf);
+
+        if let Some(fps_state) = &self.fps_state {
+            FpsWidget::new(fps_state.props()).render(right, buf);
+        }
 
         let tab_entries: Vec<TabEntry> = self
             .tabs
@@ -163,6 +183,6 @@ impl App {
             .collect();
         (&TabsBarWidget { tabs: &tab_entries }).render(tabs_header, frame.buffer_mut());
 
-        self.tabs[self.selected].render(frame, main);
+        self.tabs[self.selected].render(frame, tab_content);
     }
 }
