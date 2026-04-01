@@ -20,7 +20,8 @@ pub enum TodoPickerAction {
 }
 
 pub struct TodoPickerState {
-    todos: Vec<(Todo, Stat)>,
+    todos: Vec<Todo>,
+    stats: Vec<Stat>,
     cursor: usize,
 }
 

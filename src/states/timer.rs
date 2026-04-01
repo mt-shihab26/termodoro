@@ -39,6 +39,7 @@ impl TimerState {
         }
     }
 
+    /// TODO 1: work on logic
     pub fn advance(&mut self, completed: bool) {
         let duration = self.phase.duration(&self.config);
         Session::record(&self.db, &self.phase, duration, self.todo_id, completed);

@@ -87,28 +87,20 @@ impl TimerTab {
         }
     }
 
-    fn reset(&self) {
+    fn reset_timer(&self) {
         if let Ok(mut s) = self.state.lock() {
             s.time_millis = s.phase.duration(&s.config);
             s.running = false;
         }
     }
 
-    fn skip(&self) {
+    fn skip_session(&self) {
         if let Ok(mut s) = self.state.lock() {
             s.advance(false);
         }
     }
 
     fn open_picker(&mut self) {
-        let todos = self
-            .cache
-            .lock()
-            .map(|mut c| {
-                let stats = c.get_stats().to_vec();
-                c.get_todos().iter().zip(stats).map(|(t, s)| (t.clone(), s)).collect()
-            })
-            .unwrap_or_default();
         self.picker = Some(TodoPickerState::new(todos));
     }
 
@@ -123,7 +115,7 @@ impl TimerTab {
     }
 
     fn todo_info(&self) -> (Option<Todo>, Option<Stat>) {
-        let Some(id) = self.todo_id else {
+        let Some(id) = self.state.lock().ok().and_then(|s| s.todo_id) else {
             return (None, None);
         };
         let Ok(mut cache) = self.cache.lock() else {
@@ -156,8 +148,8 @@ impl Tab for TimerTab {
 
         match key.code {
             KeyCode::Char(' ') => self.toggle_running(),
-            KeyCode::Char('r') => self.reset(),
-            KeyCode::Char('n') => self.skip(),
+            KeyCode::Char('r') => self.reset_timer(),
+            KeyCode::Char('n') => self.skip_session(),
             KeyCode::Char('t') => self.open_picker(),
             KeyCode::Char('T') => self.clear_todo(),
             _ => {}
