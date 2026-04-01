@@ -16,24 +16,25 @@ owns or mutates it.
 
 ```rust
 pub struct MyProps {
-    pub value: u64,
+    value: u64,
 }
 ```
 
 ### State
 
-Owns the runtime data that changes over time. Lives in the caller
-(a tab, `App`, or a parent component) — never inside the widget.
-Exposes a `props` field so the caller can hand `&state.props` to the
+Owns the runtime data that changes over time.
+Lives in the caller (a parent component) — never inside the widget.
+Exposes a `props()` getter so the caller can hand `&props` to the
 widget at render time without cloning.
 
 ```rust
 pub struct MyState {
-    pub props: MyProps,
+    props: MyProps,           // private
     // private tracking fields ...
 }
 
 impl MyState {
+    pub fn props(&self) -> &MyProps { &self.props }
     pub fn tick(&mut self) { /* update props */ }
 }
 ```
