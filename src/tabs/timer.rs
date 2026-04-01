@@ -14,12 +14,12 @@ use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Layout, Rect},
     style::{Color, Stylize},
-    widgets::{Block, Paragraph, Widget},
+    widgets::{Block, Widget},
 };
 
 use crate::{
     config::timer::TimerConfig,
-    kinds::{event::Event, phase::COLOR, timer_mode::TimerMode},
+    kinds::{event::Event, phase::COLOR},
     log_error, log_warn,
     states::{timer::TimerState, timer_cache::TimerCache},
     widgets::timer::{
@@ -29,7 +29,7 @@ use crate::{
         session::{SessionProps, SessionWidget},
         status::{StatusProps, StatusWidget},
         todo::TodoWidget,
-        todo_picker::TodoPickerWidget,
+        todo_picker::{TodoPickerAction, TodoPickerState, TodoPickerWidget},
     },
     workers::timer::spawn,
 };
@@ -38,12 +38,9 @@ use super::Tab;
 
 pub struct TimerTab {
     count: Arc<AtomicU8>,
-    mode: TimerMode,
     state: Arc<Mutex<TimerState>>,
     cache: Arc<Mutex<TimerCache>>,
-    // ---
-    todos: Vec<(i32, String)>,
-    cursor: usize,
+    picker: Option<TodoPickerState>,
     selected: Option<(i32, String)>,
 }
 
@@ -59,11 +56,9 @@ impl TimerTab {
 
         Self {
             count,
-            mode: TimerMode::Normal,
             state,
             cache,
-            todos: vec![],
-            cursor: 0,
+            picker: None,
             selected: None,
         }
     }
@@ -74,13 +69,9 @@ impl TimerTab {
         self.count.store(next, Ordering::Relaxed);
     }
 
-    fn load_todos(&mut self) {
-        if let Ok(mut cache) = self.cache.lock() {
-            self.todos = cache.todos().to_vec();
-        }
-        if !self.todos.is_empty() && self.cursor >= self.todos.len() {
-            self.cursor = self.todos.len() - 1;
-        }
+    fn open_picker(&mut self) {
+        let todos = self.cache.lock().map(|mut c| c.todos().to_vec()).unwrap_or_default();
+        self.picker = Some(TodoPickerState::new(todos));
     }
 
     fn set_selected_todo(&mut self, todo: Option<(i32, String)>) {
@@ -113,60 +104,44 @@ impl Tab for TimerTab {
     }
 
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
-        match self.mode {
-            TimerMode::Normal => {
-                let mut s = self.state.lock().map_err(|e| {
-                    let err = Error::new(ErrorKind::Other, e.to_string());
-                    log_error!("timer state mutex poisoned in handle: {err}");
-                    err
-                })?;
-
-                match key.code {
-                    KeyCode::Char(' ') => {
-                        s.running = !s.running;
-                    }
-                    KeyCode::Char('r') => {
-                        s.time_millis = s.phase.duration(&s.config);
-                        s.running = false;
-                    }
-                    KeyCode::Char('n') => {
-                        s.advance(false);
-                    }
-                    KeyCode::Char('t') => {
-                        drop(s);
-                        self.load_todos();
-                        self.mode = TimerMode::SelectingTodo;
-                        return Ok(());
-                    }
-                    KeyCode::Char('T') => {
-                        drop(s);
-                        self.set_selected_todo(None);
-                        return Ok(());
-                    }
-                    _ => {}
+        if let Some(picker) = &mut self.picker {
+            match picker.handle(key) {
+                TodoPickerAction::Select(todo) => {
+                    self.set_selected_todo(Some(todo));
+                    self.picker = None;
                 }
+                TodoPickerAction::Cancel => {
+                    self.picker = None;
+                }
+                TodoPickerAction::None => {}
             }
-            TimerMode::SelectingTodo => match key.code {
-                KeyCode::Char('j') | KeyCode::Down => {
-                    if !self.todos.is_empty() {
-                        self.cursor = (self.cursor + 1).min(self.todos.len() - 1);
-                    }
-                }
-                KeyCode::Char('k') | KeyCode::Up => {
-                    self.cursor = self.cursor.saturating_sub(1);
-                }
-                KeyCode::Enter => {
-                    if let Some(todo) = self.todos.get(self.cursor).cloned() {
-                        self.set_selected_todo(Some(todo));
-                    }
-                    self.mode = TimerMode::Normal;
-                }
-                KeyCode::Esc => {
-                    self.mode = TimerMode::Normal;
-                }
-                _ => {}
-            },
+            return Ok(());
         }
+
+        let mut s = self.state.lock().map_err(|e| {
+            let err = Error::new(ErrorKind::Other, e.to_string());
+            log_error!("timer state mutex poisoned in handle: {err}");
+            err
+        })?;
+
+        match key.code {
+            KeyCode::Char(' ') => s.running = !s.running,
+            KeyCode::Char('r') => {
+                s.time_millis = s.phase.duration(&s.config);
+                s.running = false;
+            }
+            KeyCode::Char('n') => s.advance(false),
+            KeyCode::Char('t') => {
+                drop(s);
+                self.open_picker();
+            }
+            KeyCode::Char('T') => {
+                drop(s);
+                self.set_selected_todo(None);
+            }
+            _ => {}
+        }
+
         Ok(())
     }
 
@@ -194,7 +169,7 @@ impl Tab for TimerTab {
         self.refresh_stats_if_needed(sessions);
 
         let hint_w = HintWidget {
-            selecting_todo: matches!(self.mode, TimerMode::SelectingTodo),
+            selecting_todo: self.picker.is_some(),
         };
 
         let buf = frame.buffer_mut();
@@ -221,44 +196,20 @@ impl Tab for TimerTab {
         ClockWidget::new(&ClockProps::new(show_millis, time_millis, color)).render(time_row, buf);
         StatusWidget::new(&StatusProps::new(running)).render(status_row, buf);
 
-        match self.mode {
-            TimerMode::Normal => {
-                let [todo_row, hint_row] =
-                    Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).areas(bottom);
+        let [todo_row, hint_row] = Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).areas(bottom);
 
-                let stats = self.cache.lock().ok().and_then(|c| c.stats());
-                let todo_w = TodoWidget {
-                    selected: self.selected.as_ref().map(|(_, t)| t.as_str()),
-                    stats,
-                };
+        let stats = self.cache.lock().ok().and_then(|c| c.stats());
+        let todo_w = TodoWidget {
+            selected: self.selected.as_ref().map(|(_, t)| t.as_str()),
+            stats,
+        };
 
-                (&todo_w).render(todo_row, buf);
-                (&hint_w).render(hint_row, buf);
-            }
+        (&todo_w).render(todo_row, buf);
+        (&hint_w).render(hint_row, buf);
 
-            TimerMode::SelectingTodo => {
-                let list_height = (self.todos.len().min(5) as u16).max(1);
-                let [picker_header, picker_list, hint_row] = Layout::vertical([
-                    Constraint::Length(1),
-                    Constraint::Length(list_height),
-                    Constraint::Length(1),
-                ])
-                .areas(bottom);
-
-                let picker_w = TodoPickerWidget {
-                    todos: &self.todos,
-                    cursor: self.cursor,
-                };
-
-                Paragraph::new("Select a todo")
-                    .centered()
-                    .bold()
-                    .fg(Color::Yellow)
-                    .render(picker_header, buf);
-
-                (&picker_w).render(picker_list, buf);
-                (&hint_w).render(hint_row, buf);
-            }
+        if let Some(picker) = &self.picker {
+            let props = picker.props();
+            TodoPickerWidget::new(&props).render(inner, buf);
         }
     }
 }
