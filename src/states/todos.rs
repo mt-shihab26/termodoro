@@ -1,16 +1,14 @@
 use std::cell::{Cell, Ref, RefCell, RefMut};
 
-use ratatui::layout::Rect;
-use ratatui::widgets::ListState;
+use ratatui::{layout::Rect, widgets::ListState};
 use sea_orm::DatabaseConnection;
-
-use crate::kinds::direction::Direction;
-use crate::kinds::page::Page;
-use crate::kinds::repeat::Repeat;
-use crate::models::todo::Todo;
 use time::Date;
 
+use crate::kinds::{direction::Direction, page::Page, repeat::Repeat};
+use crate::models::todo::Todo;
+
 pub struct TodosState {
+    db: DatabaseConnection,
     pending_g: bool,
     direction: Option<Direction>,
     selected: usize,
@@ -22,8 +20,9 @@ pub struct TodosState {
 }
 
 impl TodosState {
-    pub fn new() -> Self {
+    pub fn new(db: DatabaseConnection) -> Self {
         Self {
+            db,
             pending_g: false,
             direction: None,
             selected: 0,
@@ -86,26 +85,26 @@ impl TodosState {
         self.direction = None;
     }
 
-    pub fn items(&self, db: &DatabaseConnection, page: Page) -> Ref<'_, [Todo]> {
+    pub fn items(&self, page: Page) -> Ref<'_, [Todo]> {
         let mut items = self.items.borrow_mut();
         if items.is_none() {
-            *items = Some(Todo::list(db, page, self.offset, self.page_size()));
+            *items = Some(Todo::list(&self.db, page, self.offset, self.page_size()));
         }
         drop(items);
 
         Ref::map(self.items.borrow(), |cache| cache.as_deref().unwrap_or(&[]))
     }
 
-    pub fn count(&self, db: &DatabaseConnection, page: Page) -> usize {
+    pub fn count(&self, page: Page) -> usize {
         let mut count = self.count.borrow_mut();
         if count.is_none() {
-            *count = Some(Todo::count(db, page));
+            *count = Some(Todo::count(&self.db, page));
         }
         count.unwrap_or(0)
     }
 
-    pub fn selected_item(&self, db: &DatabaseConnection, page: Page) -> Option<Ref<'_, Todo>> {
-        self.items(db, page);
+    pub fn selected_item(&self, page: Page) -> Option<Ref<'_, Todo>> {
+        self.items(page);
 
         let cache = self.items.borrow();
         if cache
@@ -153,12 +152,12 @@ impl TodosState {
         !matches!(page, Page::History) && items.get(self.selected).is_some_and(|todo| !todo.done)
     }
 
-    pub fn clamp_selected(&mut self, db: &DatabaseConnection, page: Page) {
-        let mut len = self.items(db, page).len();
+    pub fn clamp_selected(&mut self, page: Page) {
+        let mut len = self.items(page).len();
         if len == 0 && self.offset > 0 {
             self.offset = self.offset.saturating_sub(self.page_size());
             self.invalidate_items();
-            len = self.items(db, page).len();
+            len = self.items(page).len();
         }
 
         if len == 0 {
@@ -177,13 +176,13 @@ impl TodosState {
         self.list_state.borrow_mut().select(selected);
     }
 
-    pub fn reset_page(&mut self, db: &DatabaseConnection, page: Page) {
+    pub fn reset_page(&mut self, page: Page) {
         self.pending_g = false;
         self.direction = None;
         self.offset = 0;
         self.selected = 0;
         self.clear_caches();
-        self.clamp_selected(db, page);
+        self.clamp_selected(page);
     }
 
     pub fn go_to_start(&mut self, pending_g: bool) {
@@ -199,47 +198,45 @@ impl TodosState {
         self.direction = Some(Direction::End);
     }
 
-    pub fn refresh(&mut self, db: &DatabaseConnection, page: Page) {
+    pub fn refresh(&mut self, page: Page) {
         self.clear_caches();
-        self.clamp_selected(db, page);
+        self.clamp_selected(page);
     }
 
     pub fn add(
         &mut self,
-        db: &DatabaseConnection,
         page: Page,
         text: String,
         due_date: Option<Date>,
         repeat: Option<Repeat>,
     ) {
         let mut todo = Todo::new(text, due_date, repeat);
-        if todo.save(db) {
-            self.refresh(db, page);
+        if todo.save(&self.db) {
+            self.refresh(page);
         }
     }
 
     pub fn update(
         &mut self,
-        db: &DatabaseConnection,
         page: Page,
         text: String,
         due_date: Option<Date>,
         repeat: Option<Repeat>,
     ) {
-        if let Some(mut todo) = self.selected_item(db, page).map(|todo| todo.clone()) {
+        if let Some(mut todo) = self.selected_item(page).map(|todo| todo.clone()) {
             todo.text = text;
             todo.due_date = due_date;
             todo.repeat = repeat;
-            if todo.update(db) {
-                self.refresh(db, page);
+            if todo.update(&self.db) {
+                self.refresh(page);
             }
         }
     }
 
-    pub fn move_selection(&mut self, db: &DatabaseConnection, page: Page, delta: isize) {
+    pub fn move_selection(&mut self, page: Page, delta: isize) {
         if delta > 0 {
             for _ in 0..delta as usize {
-                let len = self.items(db, page).len();
+                let len = self.items(page).len();
                 if len == 0 {
                     self.selected = 0;
                     break;
@@ -256,7 +253,7 @@ impl TodosState {
             }
         } else if delta < 0 {
             for _ in 0..delta.unsigned_abs() {
-                let len = self.items(db, page).len();
+                let len = self.items(page).len();
                 if len == 0 {
                     self.selected = 0;
                     break;
@@ -274,48 +271,44 @@ impl TodosState {
         }
     }
 
-    pub fn step_animation(&mut self, db: &DatabaseConnection, page: Page) -> bool {
+    pub fn step_animation(&mut self, page: Page) -> bool {
         let position = (self.offset, self.selected);
 
         match self.direction {
-            Some(Direction::Start) => self.move_selection(db, page, -1),
-            Some(Direction::End) => self.move_selection(db, page, 1),
+            Some(Direction::Start) => self.move_selection(page, -1),
+            Some(Direction::End) => self.move_selection(page, 1),
             None => {}
         }
 
         (self.offset, self.selected) != position
     }
 
-    pub fn toggle_selected(&mut self, db: &DatabaseConnection, page: Page) {
-        if let Some(mut todo) = self.selected_item(db, page).map(|todo| todo.clone()) {
-            todo.toggle(db);
-            self.refresh(db, page);
+    pub fn toggle_selected(&mut self, page: Page) {
+        if let Some(mut todo) = self.selected_item(page).map(|todo| todo.clone()) {
+            todo.toggle(&self.db);
+            self.refresh(page);
         }
     }
 
-    pub fn delete_selected(&mut self, db: &DatabaseConnection, page: Page) {
+    pub fn delete_selected(&mut self, page: Page) {
         let deleted = {
-            let todo = match self.selected_item(db, page) {
+            let todo = match self.selected_item(page) {
                 Some(todo) => todo,
                 None => return (),
             };
             if todo.done {
                 return ();
             }
-            todo.delete(db)
+            todo.delete(&self.db)
         };
 
         if deleted {
-            self.refresh(db, page);
+            self.refresh(page);
         }
     }
 
-    pub fn edit_values(
-        &self,
-        db: &DatabaseConnection,
-        page: Page,
-    ) -> Option<(String, Option<time::Date>, Option<Repeat>)> {
-        self.selected_item(db, page)
+    pub fn edit_values(&self, page: Page) -> Option<(String, Option<time::Date>, Option<Repeat>)> {
+        self.selected_item(page)
             .map(|todo| (todo.text.clone(), todo.due_date, todo.repeat.clone()))
     }
 }

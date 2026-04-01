@@ -3,12 +3,12 @@ use sea_orm::DatabaseConnection;
 use crate::{config::timer::TimerConfig, kinds::phase::Phase, models::session::Session};
 
 pub struct TimerState {
+    pub db: DatabaseConnection,
     pub phase: Phase,
     pub millis: u32,
     pub sessions: u32,
     pub running: bool,
     pub timer_config: TimerConfig,
-    pub db: DatabaseConnection,
     pub selected_todo_id: Option<i32>,
 }
 

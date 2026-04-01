@@ -24,7 +24,6 @@ use super::Tab;
 pub const COLOR: Color = Color::Green;
 
 pub struct TodosTab {
-    db: DatabaseConnection,
     page: Page,
     mode: Mode,
     state: TodosState,
@@ -34,25 +33,24 @@ pub struct TodosTab {
 impl TodosTab {
     pub fn new(db: DatabaseConnection) -> Self {
         Self {
-            db,
             page: Page::Today,
             mode: Mode::Normal,
-            state: TodosState::new(),
+            state: TodosState::new(db),
             input_widget: None,
         }
     }
 
     fn items(&self) -> Ref<'_, [Todo]> {
-        self.state.items(&self.db, self.page)
+        self.state.items(self.page)
     }
 
     fn count(&self) -> usize {
-        self.state.count(&self.db, self.page)
+        self.state.count(self.page)
     }
 
     fn set_page(&mut self, page: Page) {
         self.page = page;
-        self.state.reset_page(&self.db, self.page);
+        self.state.reset_page(self.page);
     }
 
     fn cancel_input(&mut self) {
@@ -81,23 +79,13 @@ impl Tab for TodosTab {
                 KeyCode::Char('4') => self.set_page(Page::History),
                 KeyCode::Char(']') => self.set_page(self.page.next()),
                 KeyCode::Char('[') => self.set_page(self.page.prev()),
-                KeyCode::Char('j') | KeyCode::Down => {
-                    self.state.move_selection(&self.db, self.page, 1);
-                }
-                KeyCode::Char('k') | KeyCode::Up => {
-                    self.state.move_selection(&self.db, self.page, -1);
-                }
-                KeyCode::Char('g') => {
-                    self.state.go_to_start(pending_g);
-                }
-                KeyCode::Char('G') => {
-                    self.state.go_to_end();
-                }
-                KeyCode::Char(' ') | KeyCode::Enter => {
-                    self.state.toggle_selected(&self.db, self.page);
-                }
+                KeyCode::Char('j') | KeyCode::Down => self.state.move_selection(self.page, 1),
+                KeyCode::Char('k') | KeyCode::Up => self.state.move_selection(self.page, -1),
+                KeyCode::Char('g') => self.state.go_to_start(pending_g),
+                KeyCode::Char('G') => self.state.go_to_end(),
+                KeyCode::Char(' ') | KeyCode::Enter => self.state.toggle_selected(self.page),
                 KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    self.state.delete_selected(&self.db, self.page);
+                    self.state.delete_selected(self.page)
                 }
                 KeyCode::Char('a') => {
                     if !matches!(self.page, Page::History) {
@@ -107,9 +95,7 @@ impl Tab for TodosTab {
                 }
                 KeyCode::Char('e') => {
                     if !matches!(self.page, Page::History) {
-                        if let Some((text, due_date, repeat)) =
-                            self.state.edit_values(&self.db, self.page)
-                        {
+                        if let Some((text, due_date, repeat)) = self.state.edit_values(self.page) {
                             self.mode = Mode::Editing;
                             self.input_widget =
                                 Some(InputWidget::new(Some(&text), due_date, repeat.as_ref()));
@@ -122,7 +108,7 @@ impl Tab for TodosTab {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
-                            self.state.add(&self.db, self.page, text, date, repeat);
+                            self.state.add(self.page, text, date, repeat);
                             self.cancel_input();
                         }
                         InputAction::Escape => self.cancel_input(),
@@ -134,7 +120,7 @@ impl Tab for TodosTab {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
-                            self.state.update(&self.db, self.page, text, date, repeat);
+                            self.state.update(self.page, text, date, repeat);
                             self.cancel_input();
                         }
                         InputAction::Escape => self.cancel_input(),
@@ -238,7 +224,7 @@ impl Tab for TodosTab {
         }
 
         if self.state.is_animating() {
-            let changed = self.state.step_animation(&self.db, self.page);
+            let changed = self.state.step_animation(self.page);
             if !changed {
                 self.state.stop_animation();
             }
