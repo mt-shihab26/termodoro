@@ -5,7 +5,7 @@ use sea_orm::DatabaseConnection;
 use time::Date;
 
 use crate::kinds::{direction::Direction, page::Page, repeat::Repeat};
-use crate::models::todo::Todo;
+use crate::models::{session::Session, todo::Todo};
 
 pub struct TodosState {
     db: DatabaseConnection,
@@ -83,6 +83,13 @@ impl TodosState {
 
     pub fn stop_animation(&mut self) {
         self.direction = None;
+    }
+
+    pub fn stats(&self, page: Page) -> Vec<Option<(u32, u32)>> {
+        self.items(page)
+            .iter()
+            .map(|t| t.id.map(|id| Session::stats_for_todo(&self.db, id)))
+            .collect()
     }
 
     pub fn items(&self, page: Page) -> Ref<'_, [Todo]> {
