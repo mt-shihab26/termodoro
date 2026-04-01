@@ -5,13 +5,16 @@ use ratatui::style::Stylize;
 use ratatui::widgets::{Paragraph, Widget};
 
 pub struct SessionProps {
-    session: u32,
-    total: u32,
+    sessions: u32,
+    long_break_interval: u32,
 }
 
 impl SessionProps {
-    pub fn new(session: u32, total: u32) -> Self {
-        Self { session, total }
+    pub fn new(sessions: u32, long_break_interval: u32) -> Self {
+        Self {
+            sessions,
+            long_break_interval,
+        }
     }
 }
 
@@ -29,8 +32,8 @@ impl Widget for &SessionWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         Paragraph::new(format!(
             "Session {} / {}",
-            self.props.session + 1,
-            self.props.total
+            self.props.sessions + 1,
+            self.props.long_break_interval
         ))
         .centered()
         .fg(Color::DarkGray)

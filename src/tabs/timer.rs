@@ -189,10 +189,10 @@ impl Tab for TimerTab {
         let show_millis = state.config.show_millis();
         let millis = state.millis;
 
-        let phase_w = PhaseWidget {
-            label: phase_label,
-            color,
-        };
+        drop(state);
+
+        self.refresh_stats_if_needed(sessions);
+
         let status_w = StatusWidget { running };
         let hint_w = HintWidget {
             selecting_todo: matches!(self.mode, TimerMode::SelectingTodo),
@@ -230,6 +230,10 @@ impl Tab for TimerTab {
         SessionWidget::new(&SessionProps::new(sessions, long_break_interval))
             .render(session_row, buf);
 
+        let phase_w = PhaseWidget {
+            label: phase_label,
+            color,
+        };
         (&phase_w).render(phase_row, buf);
 
         ClockWidget::new(&ClockProps::new(show_millis, millis, color)).render(time_row, buf);
@@ -274,9 +278,5 @@ impl Tab for TimerTab {
                 (&hint_w).render(hint_row, buf);
             }
         }
-
-        drop(state);
-
-        self.refresh_stats_if_needed(sessions);
     }
 }
