@@ -175,7 +175,7 @@ impl App {
         self.tabs[self.selected].render(frame, tab_content);
     }
 
-    pub fn hints(&self) {
+    pub fn hints(&self) -> Vec<Span<'static>> {
         let mut hints = vec![
             Span::from("^q").fg(Color::DarkGray).bold(),
             Span::from(" quit").fg(Color::DarkGray),
@@ -186,5 +186,7 @@ impl App {
             hints.push(Span::from("^f").fg(Color::DarkGray).bold());
             hints.push(Span::from(" fps").fg(Color::DarkGray));
         }
+
+        hints
     }
 }
