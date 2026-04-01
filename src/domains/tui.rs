@@ -80,66 +80,6 @@ impl App {
         Ok(())
     }
 
-    fn recv_event(&self) -> Result<Option<Event>> {
-        let event = if self.tabs[self.selected].should_tick() {
-            match self.events.recv_timeout(Duration::from_millis(8)) {
-                Ok(event) => Some(event),
-                Err(RecvTimeoutError::Timeout) => None,
-                Err(RecvTimeoutError::Disconnected) => {
-                    log_error!("event channel disconnected");
-                    return Err(Error::new(
-                        ErrorKind::BrokenPipe,
-                        "event channel disconnected",
-                    ));
-                }
-            }
-        } else {
-            match self.events.recv() {
-                Ok(event) => Some(event),
-                Err(e) => {
-                    log_error!("event channel disconnected: {e}");
-                    return Err(Error::new(ErrorKind::BrokenPipe, e));
-                }
-            }
-        };
-
-        Ok(event)
-    }
-
-    fn handle_event(&mut self, event: Option<Event>) -> Result<()> {
-        let ctrl = |key: &ratatui::crossterm::event::KeyEvent| {
-            key.modifiers.contains(KeyModifiers::CONTROL)
-        };
-
-        match event {
-            Some(Event::Key(key)) => match key.code {
-                KeyCode::Char('c' | 'q') if ctrl(&key) => self.alive = false,
-                KeyCode::Char('f') if ctrl(&key) => {
-                    self.fps_state = if self.fps_state.is_none() {
-                        Some(FpsState::new())
-                    } else {
-                        None
-                    }
-                }
-                KeyCode::Char('1') if ctrl(&key) => self.selected = 0,
-                KeyCode::Char('2') if ctrl(&key) => self.selected = 1,
-                KeyCode::Tab => self.selected = (self.selected + 1) % self.tabs.len(),
-                _ => self.tabs[self.selected].handle(key).map_err(|e| {
-                    log_error!("tab handle error: {e}");
-                    e
-                })?,
-            },
-            Some(Event::Resize(_, _)) => {}
-            Some(Event::TimerTick) => {}
-            None => self.tabs[self.selected].next_tick().map_err(|e| {
-                log_error!("tab tick error: {e}");
-                e
-            })?,
-        }
-
-        Ok(())
-    }
-
     fn render_frame(&mut self, frame: &mut Frame) {
         let area = frame.area();
         let buf = frame.buffer_mut();
@@ -208,5 +148,67 @@ impl App {
         } else {
             Color::DarkGray
         }
+    }
+
+    fn recv_event(&self) -> Result<Option<Event>> {
+        let event = if self.tabs[self.selected].should_tick() {
+            match self.events.recv_timeout(Duration::from_millis(8)) {
+                Ok(event) => Some(event),
+                Err(RecvTimeoutError::Timeout) => None,
+                Err(RecvTimeoutError::Disconnected) => {
+                    log_error!("event channel disconnected");
+                    return Err(Error::new(
+                        ErrorKind::BrokenPipe,
+                        "event channel disconnected",
+                    ));
+                }
+            }
+        } else {
+            match self.events.recv() {
+                Ok(event) => Some(event),
+                Err(e) => {
+                    log_error!("event channel disconnected: {e}");
+                    return Err(Error::new(ErrorKind::BrokenPipe, e));
+                }
+            }
+        };
+
+        Ok(event)
+    }
+
+    fn handle_event(&mut self, event: Option<Event>) -> Result<()> {
+        let ctrl = |key: &ratatui::crossterm::event::KeyEvent| {
+            key.modifiers.contains(KeyModifiers::CONTROL)
+        };
+
+        match event {
+            Some(Event::Key(key)) => match key.code {
+                KeyCode::Char('c' | 'q') if ctrl(&key) => self.alive = false,
+                KeyCode::Char('f') if ctrl(&key) => self.toggle_fps(),
+                KeyCode::Char('1') if ctrl(&key) => self.selected = 0,
+                KeyCode::Char('2') if ctrl(&key) => self.selected = 1,
+                KeyCode::Tab => self.selected = (self.selected + 1) % self.tabs.len(),
+                _ => self.tabs[self.selected].handle(key).map_err(|e| {
+                    log_error!("tab handle error: {e}");
+                    e
+                })?,
+            },
+            Some(Event::Resize(_, _)) => {}
+            Some(Event::TimerTick) => {}
+            None => self.tabs[self.selected].next_tick().map_err(|e| {
+                log_error!("tab tick error: {e}");
+                e
+            })?,
+        }
+
+        Ok(())
+    }
+
+    fn toggle_fps(&mut self) {
+        self.fps_state = if self.fps_state.is_none() {
+            Some(FpsState::new())
+        } else {
+            None
+        };
     }
 }
