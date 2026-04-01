@@ -8,9 +8,20 @@ use ratatui::{
 
 use crate::{caches::timer::Stat, models::todo::Todo};
 
-pub struct TodoPickerProps<'a> {
-    todos: &'a [(Todo, Stat)],
+pub struct TodoPickerProps {
+    todos: Vec<Todo>,
+    stats: Vec<Stat>,
     cursor: usize,
+}
+
+impl TodoPickerProps {
+    pub fn new(todos: Vec<Todo>, stats: Vec<Stat>) -> Self {
+        Self {
+            todos,
+            stats,
+            cursor: 0,
+        }
+    }
 }
 
 pub enum TodoPickerAction {
@@ -20,42 +31,38 @@ pub enum TodoPickerAction {
 }
 
 pub struct TodoPickerState {
-    todos: Vec<Todo>,
-    stats: Vec<Stat>,
-    cursor: usize,
+    props: TodoPickerProps,
 }
 
 impl TodoPickerState {
-    pub fn new(todos: Vec<(Todo, Stat)>) -> Self {
-        Self { todos, cursor: 0 }
+    pub fn new(todos: Vec<Todo>, stats: Vec<Stat>) -> Self {
+        Self {
+            props: TodoPickerProps::new(todos, stats),
+        }
     }
 
-    pub fn props(&self) -> TodoPickerProps<'_> {
-        TodoPickerProps {
-            todos: &self.todos,
-            cursor: self.cursor,
-        }
+    pub fn props(&self) -> &TodoPickerProps {
+        &self.props
     }
 
     pub fn handle(&mut self, key: KeyEvent) -> TodoPickerAction {
         match key.code {
             KeyCode::Char('j') | KeyCode::Down => {
-                if !self.todos.is_empty() {
-                    self.cursor = (self.cursor + 1).min(self.todos.len() - 1);
+                if !self.props.todos.is_empty() {
+                    self.props.cursor = (self.props.cursor + 1).min(self.props.todos.len() - 1);
                 }
                 TodoPickerAction::None
             }
             KeyCode::Char('k') | KeyCode::Up => {
-                self.cursor = self.cursor.saturating_sub(1);
+                self.props.cursor = self.props.cursor.saturating_sub(1);
                 TodoPickerAction::None
             }
             KeyCode::Enter => {
-                if let Some((todo, _)) = self.todos.get(self.cursor) {
-                    if let Some(id) = todo.id {
-                        return TodoPickerAction::Select(id);
-                    }
+                if let Some(id) = self.props.todos.get(self.props.cursor).and_then(|t| t.id) {
+                    TodoPickerAction::Select(id)
+                } else {
+                    TodoPickerAction::Cancel
                 }
-                TodoPickerAction::Cancel
             }
             KeyCode::Esc => TodoPickerAction::Cancel,
             _ => TodoPickerAction::None,
@@ -64,11 +71,11 @@ impl TodoPickerState {
 }
 
 pub struct TodoPickerWidget<'a> {
-    props: &'a TodoPickerProps<'a>,
+    props: &'a TodoPickerProps,
 }
 
 impl<'a> TodoPickerWidget<'a> {
-    pub fn new(props: &'a TodoPickerProps<'a>) -> Self {
+    pub fn new(props: &'a TodoPickerProps) -> Self {
         Self { props }
     }
 }
@@ -106,6 +113,7 @@ impl Widget for &TodoPickerWidget<'_> {
             .props
             .todos
             .iter()
+            .zip(self.props.stats.iter())
             .enumerate()
             .skip(start)
             .take(5)
