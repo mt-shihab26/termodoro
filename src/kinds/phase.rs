@@ -27,6 +27,14 @@ impl Phase {
         }
     }
 
+    pub fn to_db_str(&self) -> &str {
+        match self {
+            Phase::Work => "work",
+            Phase::Break => "break",
+            Phase::LongBreak => "long_break",
+        }
+    }
+
     pub fn duration(&self, timer_config: &TimerConfig) -> u32 {
         match self {
             Phase::Work => timer_config.work_duration(),

@@ -2,6 +2,8 @@ use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::{Arc, Mutex, mpsc::Sender};
 use std::{thread, time::Duration};
 
+use sea_orm::DatabaseConnection;
+
 use crate::config::timer::TimerConfig;
 use crate::states::timer::TimerState;
 use crate::{kinds::event::Event, log_error, log_warn};
@@ -10,8 +12,9 @@ pub fn spawn(
     render_count: Arc<AtomicU8>,
     sender: Sender<Event>,
     timer_config: TimerConfig,
+    db: DatabaseConnection,
 ) -> Arc<Mutex<TimerState>> {
-    let state = Arc::new(Mutex::new(TimerState::new(timer_config)));
+    let state = Arc::new(Mutex::new(TimerState::new(timer_config, db)));
 
     let thread_state = Arc::clone(&state);
 

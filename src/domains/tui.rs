@@ -29,12 +29,9 @@ impl App {
 
         term::spawn(sender.clone());
 
-        let Config {
-            show_fps, timer, ..
-        } = config;
         let tabs: Vec<Box<dyn Tab>> = vec![
-            Box::new(Todos::new(db)),
-            Box::new(Timer::new(sender, timer)),
+            Box::new(Todos::new(db.clone())),
+            Box::new(Timer::new(sender, config.timer, db)),
         ];
 
         Self {
@@ -42,7 +39,7 @@ impl App {
             selected: 0,
             tabs,
             events,
-            fps_widget: show_fps.then(FpsWidget::new),
+            fps_widget: config.show_fps.then(FpsWidget::new),
         }
     }
 
