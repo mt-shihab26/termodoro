@@ -1,18 +1,21 @@
-use ratatui::buffer::Buffer;
-use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::style::{Color, Stylize};
-use ratatui::text::{Line, Span};
-use ratatui::widgets::{Paragraph, Widget};
+use ratatui::prelude::{Buffer, Color, Constraint, Layout, Line, Rect, Span, Stylize, Widget};
+use ratatui::widgets::Paragraph;
 
-use crate::widgets::fps::FpsWidget;
+use crate::widgets::layout::fps::FpsProps;
+
+use super::fps::FpsWidget;
 
 pub struct HeaderWidget {
-    pub fps_widget: Option<FpsWidget>,
+    fps_show: bool,
+    fps_props: FpsProps,
 }
 
 impl HeaderWidget {
-    pub fn new(fps_widget: Option<FpsWidget>) -> Self {
-        Self { fps_widget }
+    pub fn new(fps_show: bool, fps_props: FpsProps) -> Self {
+        Self {
+            fps_show,
+            fps_props,
+        }
     }
 }
 
@@ -30,7 +33,7 @@ impl Widget for &HeaderWidget {
             Span::from(" quit").fg(Color::DarkGray),
         ];
 
-        if self.show_fps {
+        if self.fps_show {
             hints.push(Span::from("  ").fg(Color::DarkGray));
             hints.push(Span::from("^f").fg(Color::DarkGray).bold());
             hints.push(Span::from(" fps").fg(Color::DarkGray));
@@ -38,8 +41,8 @@ impl Widget for &HeaderWidget {
 
         Line::from(hints).render(left, buf);
 
-        if let Some(fps_widget) = &mut self.fps_widget {
-            fps_widget.render(fps_area2(top), frame.buffer_mut());
+        if self.fps_show {
+            FpsWidget::new(self.fps_props).render(right, buf);
         }
     }
 }
