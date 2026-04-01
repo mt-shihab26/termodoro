@@ -1,11 +1,10 @@
-use std::env;
 use std::io::Result;
-use std::path::PathBuf;
 use std::sync::OnceLock;
 
 use sea_orm::{Database, DatabaseConnection};
 
 use crate::migration::{Migrator, MigratorTrait};
+use crate::utils::path::db_path;
 
 static RUNTIME: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
 
@@ -41,15 +40,6 @@ pub fn reset() -> Result<()> {
         std::fs::remove_file(path)?;
     }
     Ok(())
-}
-
-fn db_path() -> PathBuf {
-    let home = env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(home)
-        .join(".local")
-        .join("share")
-        .join("orivo")
-        .join("orivo.db")
 }
 
 fn io_err(e: impl std::fmt::Display) -> std::io::Error {

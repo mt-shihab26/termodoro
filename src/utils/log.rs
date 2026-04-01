@@ -1,14 +1,7 @@
 use std::fs::{self, OpenOptions};
-use std::{env, io::Write, path::PathBuf, time::SystemTime};
+use std::{io::Write, time::SystemTime};
 
-fn log_path() -> PathBuf {
-    let home = env::var("HOME").unwrap_or_else(|_| ".".to_string());
-
-    PathBuf::from(home)
-        .join(".local/state")
-        .join(env!("CARGO_PKG_NAME"))
-        .join("orivo.log")
-}
+use crate::utils::path::log_path;
 
 fn timestamp() -> String {
     let secs = SystemTime::now()
@@ -75,15 +68,15 @@ pub fn write(level: &str, msg: &str) {
 
 #[macro_export]
 macro_rules! log_error {
-    ($($arg:tt)*) => { $crate::utils::logger::write("ERROR", &format!($($arg)*)) };
+    ($($arg:tt)*) => { $crate::utils::log::write("ERROR", &format!($($arg)*)) };
 }
 
 #[macro_export]
 macro_rules! log_warn {
-    ($($arg:tt)*) => { $crate::utils::logger::write("WARN", &format!($($arg)*)) };
+    ($($arg:tt)*) => { $crate::utils::log::write("WARN", &format!($($arg)*)) };
 }
 
 #[macro_export]
 macro_rules! log_info {
-    ($($arg:tt)*) => { $crate::utils::logger::write("INFO", &format!($($arg)*)) };
+    ($($arg:tt)*) => { $crate::utils::log::write("INFO", &format!($($arg)*)) };
 }
