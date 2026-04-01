@@ -9,7 +9,7 @@ use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Block, Widget};
 use sea_orm::DatabaseConnection;
 
-use crate::kinds::{mode::Mode, page::Page};
+use crate::kinds::{page::Page, todos_mode::TodosMode};
 use crate::states::timer_cache::TimerCache;
 use crate::widgets::todos::hint::HintWidget;
 use crate::widgets::todos::input::{InputAction, InputWidget};
@@ -22,7 +22,7 @@ pub const COLOR: Color = Color::Green;
 
 pub struct TodosTab {
     page: Page,
-    mode: Mode,
+    mode: TodosMode,
     state: TodosState,
     input_widget: Option<InputWidget>,
 }
@@ -31,7 +31,7 @@ impl TodosTab {
     pub fn new(db: DatabaseConnection, timer_cache: Arc<Mutex<TimerCache>>) -> Self {
         Self {
             page: Page::Today,
-            mode: Mode::Normal,
+            mode: TodosMode::Normal,
             state: TodosState::new(db, timer_cache),
             input_widget: None,
         }
@@ -52,7 +52,7 @@ impl TodosTab {
 
     fn cancel_input(&mut self) {
         self.input_widget = None;
-        self.mode = Mode::Normal;
+        self.mode = TodosMode::Normal;
     }
 }
 
@@ -69,7 +69,7 @@ impl Tab for TodosTab {
         let pending_g = self.state.begin_input();
 
         match self.mode {
-            Mode::Normal => match key.code {
+            TodosMode::Normal => match key.code {
                 KeyCode::Char('1') => self.set_page(Page::Due),
                 KeyCode::Char('2') => self.set_page(Page::Today),
                 KeyCode::Char('3') => self.set_page(Page::Index),
@@ -86,14 +86,14 @@ impl Tab for TodosTab {
                 }
                 KeyCode::Char('a') => {
                     if !matches!(self.page, Page::History) {
-                        self.mode = Mode::Adding;
+                        self.mode = TodosMode::Adding;
                         self.input_widget = Some(InputWidget::new(None, None, None));
                     }
                 }
                 KeyCode::Char('e') => {
                     if !matches!(self.page, Page::History) {
                         if let Some((text, due_date, repeat)) = self.state.edit_values(self.page) {
-                            self.mode = Mode::Editing;
+                            self.mode = TodosMode::Editing;
                             self.input_widget =
                                 Some(InputWidget::new(Some(&text), due_date, repeat.as_ref()));
                         }
@@ -101,7 +101,7 @@ impl Tab for TodosTab {
                 }
                 _ => {}
             },
-            Mode::Adding => {
+            TodosMode::Adding => {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
@@ -113,7 +113,7 @@ impl Tab for TodosTab {
                     }
                 }
             }
-            Mode::Editing => {
+            TodosMode::Editing => {
                 if let Some(input_widget) = &mut self.input_widget {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
@@ -140,7 +140,7 @@ impl Tab for TodosTab {
         let area = inner;
 
         let (tabs_area, list_area, hint_area, input_area) = match self.mode {
-            Mode::Normal => {
+            TodosMode::Normal => {
                 let [tabs, list, hint] = Layout::vertical([
                     Constraint::Length(1),
                     Constraint::Fill(1),
@@ -149,7 +149,7 @@ impl Tab for TodosTab {
                 .areas(area);
                 (tabs, list, hint, None)
             }
-            Mode::Adding | Mode::Editing => {
+            TodosMode::Adding | TodosMode::Editing => {
                 let [tabs, list, hint, input] = Layout::vertical([
                     Constraint::Length(1),
                     Constraint::Fill(1),
@@ -216,7 +216,7 @@ impl Tab for TodosTab {
     }
 
     fn next_tick(&mut self) -> Result<()> {
-        if !matches!(self.mode, Mode::Normal) {
+        if !matches!(self.mode, TodosMode::Normal) {
             return Ok(());
         }
 

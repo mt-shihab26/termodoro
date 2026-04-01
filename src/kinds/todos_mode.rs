@@ -1,5 +1,5 @@
 #[derive(Clone, Copy)]
-pub enum Mode {
+pub enum TodosMode {
     Normal,
     Adding,
     Editing,

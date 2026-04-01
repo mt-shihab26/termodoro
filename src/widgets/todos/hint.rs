@@ -3,25 +3,27 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Paragraph, Widget};
 
-use crate::kinds::{mode::Mode, page::Page};
+use crate::kinds::{page::Page, todos_mode::TodosMode};
 
 pub struct HintWidget {
     pub page: Page,
-    pub ui_mode: Mode,
+    pub ui_mode: TodosMode,
     pub can_delete: bool,
 }
 
 impl Widget for &HintWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let hint = match self.ui_mode {
-            Mode::Normal => match self.page {
+            TodosMode::Normal => match self.page {
                 Page::History => "[[/]]Page  [j/k]Navigate",
                 _ if self.can_delete => {
                     "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^d]Delete"
                 }
                 _ => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit",
             },
-            Mode::Adding | Mode::Editing => "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char",
+            TodosMode::Adding | TodosMode::Editing => {
+                "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char"
+            }
         };
 
         Paragraph::new(hint)

@@ -1,46 +1,51 @@
-use std::io::{Error, ErrorKind, Result};
-use std::sync::atomic::{AtomicU8, Ordering};
-use std::sync::mpsc::Sender;
-use std::sync::{Arc, Mutex};
+use std::{
+    io::{Error, ErrorKind, Result},
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicU8, Ordering},
+        mpsc::Sender,
+    },
+};
 
-use ratatui::Frame;
-use ratatui::crossterm::event::{KeyCode, KeyEvent};
-use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::style::Color;
-use ratatui::style::Stylize;
-use ratatui::widgets::{Block, Widget};
 use sea_orm::DatabaseConnection;
 
-use crate::kinds::{event::Event, phase::COLOR};
-use crate::states::timer_cache::TimerCache;
-use crate::widgets::timer::{clock::ClockWidget, status::StatusWidget};
-use crate::widgets::timer::{hint::HintWidget, phase::PhaseWidget, session::SessionWidget};
-use crate::widgets::timer::{todo::TodoWidget, todo_picker::TodoPickerWidget};
-use crate::{config::timer::TimerConfig, states::timer::TimerState};
-use crate::{log_error, log_warn, workers::timer::spawn};
+use ratatui::{
+    Frame,
+    crossterm::event::{KeyCode, KeyEvent},
+    layout::{Constraint, Layout, Rect},
+    style::{Color, Stylize},
+    widgets::{Block, Widget},
+};
+
+use crate::{
+    config::timer::TimerConfig,
+    kinds::{event::Event, phase::COLOR, timer_mode::TimerMode},
+    log_error, log_warn,
+    states::{timer::TimerState, timer_cache::TimerCache},
+    widgets::timer::{
+        clock::ClockWidget, hint::HintWidget, phase::PhaseWidget, session::SessionWidget,
+        status::StatusWidget, todo::TodoWidget, todo_picker::TodoPickerWidget,
+    },
+    workers::timer::spawn,
+};
 
 use super::Tab;
 
-enum TimerMode {
-    Normal,
-    SelectingTodo,
-}
-
 pub struct TimerTab {
-    state: Arc<Mutex<TimerState>>,
-    render_count: Arc<AtomicU8>,
     mode: TimerMode,
-    selected_todo: Option<(i32, String)>,
+    state: Arc<Mutex<TimerState>>,
+    cache: Arc<Mutex<TimerCache>>,
+    render_count: Arc<AtomicU8>,
     todos: Vec<(i32, String)>,
     todo_cursor: usize,
-    cache: Arc<Mutex<TimerCache>>,
+    selected_todo: Option<(i32, String)>,
 }
 
 impl TimerTab {
     pub fn new(
         sender: Sender<Event>,
         timer_config: TimerConfig,
-        cache: Arc<Mutex<TimerCache>>,
+        timer_cache: Arc<Mutex<TimerCache>>,
         db: DatabaseConnection,
     ) -> Self {
         let render_count = Arc::new(AtomicU8::new(1));
@@ -51,9 +56,9 @@ impl TimerTab {
             render_count,
             mode: TimerMode::Normal,
             selected_todo: None,
-            todos: Vec::new(),
             todo_cursor: 0,
-            cache,
+            todos: vec![],
+            cache: timer_cache,
         }
     }
 
