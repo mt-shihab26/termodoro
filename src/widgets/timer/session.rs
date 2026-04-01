@@ -4,16 +4,36 @@ use ratatui::style::Color;
 use ratatui::style::Stylize;
 use ratatui::widgets::{Paragraph, Widget};
 
-pub struct SessionWidget {
-    pub session: u32,
-    pub total: u32,
+pub struct SessionProps {
+    session: u32,
+    total: u32,
 }
 
-impl Widget for &SessionWidget {
+impl SessionProps {
+    pub fn new(session: u32, total: u32) -> Self {
+        Self { session, total }
+    }
+}
+
+pub struct SessionWidget<'a> {
+    props: &'a SessionProps,
+}
+
+impl<'a> SessionWidget<'a> {
+    pub fn new(props: &'a SessionProps) -> Self {
+        Self { props }
+    }
+}
+
+impl Widget for &SessionWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        Paragraph::new(format!("Session {} / {}", self.session, self.total))
-            .centered()
-            .fg(Color::DarkGray)
-            .render(area, buf);
+        Paragraph::new(format!(
+            "Session {} / {}",
+            self.props.session + 1,
+            self.props.total
+        ))
+        .centered()
+        .fg(Color::DarkGray)
+        .render(area, buf);
     }
 }

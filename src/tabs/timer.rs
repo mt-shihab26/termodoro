@@ -26,7 +26,7 @@ use crate::{
         clock::{ClockProps, ClockWidget},
         hint::HintWidget,
         phase::PhaseWidget,
-        session::SessionWidget,
+        session::{SessionProps, SessionWidget},
         status::StatusWidget,
         todo::TodoWidget,
         todo_picker::TodoPickerWidget,
@@ -173,7 +173,7 @@ impl Tab for TimerTab {
     fn render(&self, frame: &mut Frame, area: Rect) {
         self.tick_render_count();
 
-        let s = match self.state.lock() {
+        let state = match self.state.lock() {
             Ok(guard) => guard,
             Err(poisoned) => {
                 log_warn!("timer state mutex poisoned in render, recovering");
@@ -181,22 +181,14 @@ impl Tab for TimerTab {
             }
         };
 
-        let color = s.phase.color();
-        let sessions = s.sessions;
-        let running = s.running;
-        let long_break_interval = s.config.long_break_interval();
-        let phase_label = s.phase.label().to_string();
-        let show_millis = s.config.show_millis();
-        let millis = s.millis;
+        let color = state.phase.color();
+        let sessions = state.sessions;
+        let running = state.running;
+        let long_break_interval = state.config.long_break_interval();
+        let phase_label = state.phase.label().to_string();
+        let show_millis = state.config.show_millis();
+        let millis = state.millis;
 
-        drop(s);
-
-        self.refresh_stats_if_needed(sessions);
-
-        let session_w = SessionWidget {
-            session: sessions + 1,
-            total: long_break_interval,
-        };
         let phase_w = PhaseWidget {
             label: phase_label,
             color,
@@ -235,9 +227,13 @@ impl Tab for TimerTab {
         ])
         .areas(inner);
 
-        (&session_w).render(session_row, buf);
+        SessionWidget::new(&SessionProps::new(sessions, long_break_interval))
+            .render(session_row, buf);
+
         (&phase_w).render(phase_row, buf);
+
         ClockWidget::new(&ClockProps::new(show_millis, millis, color)).render(time_row, buf);
+
         (&status_w).render(status_row, buf);
 
         match self.mode {
@@ -278,5 +274,9 @@ impl Tab for TimerTab {
                 (&hint_w).render(hint_row, buf);
             }
         }
+
+        drop(state);
+
+        self.refresh_stats_if_needed(sessions);
     }
 }
