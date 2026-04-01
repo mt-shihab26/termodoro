@@ -2,10 +2,9 @@ use std::time::{Duration, Instant};
 
 use ratatui::prelude::{Alignment, Buffer, Color, Line, Rect, Span, Stylize, Widget};
 
-// Props — data snapshot, borrowed by the widget at render time.
 pub struct FpsProps {
-    pub per_second: f64,
-    pub per_lifetime: u64,
+    per_second: f64,
+    per_lifetime: u64,
 }
 
 impl FpsProps {
@@ -17,10 +16,8 @@ impl FpsProps {
     }
 }
 
-// State — owned by App, updated each frame via tick().
-// Exposes `props` so App can pass &state.props to the widget.
 pub struct FpsState {
-    pub props: FpsProps,
+    props: FpsProps,
     frame_count_per_second: u32,
     interval_start: Instant,
 }
@@ -32,6 +29,10 @@ impl FpsState {
             frame_count_per_second: 0,
             interval_start: Instant::now() - Duration::from_secs(1),
         }
+    }
+
+    pub fn props(&self) -> &FpsProps {
+        &self.props
     }
 
     /// Call once per frame before rendering.
