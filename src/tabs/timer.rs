@@ -18,7 +18,7 @@ use ratatui::{
 };
 
 use crate::{
-    caches::timer_cache::TimerCache,
+    caches::timer::TimerCache,
     config::timer::TimerConfig,
     kinds::{event::Event, phase::COLOR},
     log_error, log_warn,
@@ -171,10 +171,8 @@ impl Tab for TimerTab {
         drop(state);
 
         let mut cache = self.cache.lock().ok();
-        let todo_text: Option<String> = self
-            .todo_id
-            .and_then(|id| cache.as_mut()?.get_todo(id).map(|t| t.text.clone()));
-        let todo_stats = self.todo_id.and_then(|id| cache.as_mut()?.get_stat(id)).copied();
+        let todo_text = self.todo_id.and_then(|id| cache.as_mut()?.get_todo(id));
+        let todo_stats = self.todo_id.and_then(|id| cache.as_mut()?.get_stat(id));
 
         let buf = frame.buffer_mut();
 
