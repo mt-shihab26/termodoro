@@ -5,7 +5,8 @@ use std::time::Duration;
 
 use ratatui::crossterm::event::{KeyCode, KeyModifiers};
 use ratatui::prelude::{Color, Constraint, Layout, Line, Span, Stylize, Widget};
-use ratatui::widgets::Paragraph;
+use ratatui::style::Style;
+use ratatui::widgets::{Block, Paragraph};
 use ratatui::{DefaultTerminal, Frame, init, restore};
 use sea_orm::DatabaseConnection;
 
@@ -13,7 +14,6 @@ use crate::log_error;
 use crate::states::timer_cache::TimerCache;
 use crate::tabs::{Tab, timer::TimerTab, todos::TodosTab};
 use crate::widgets::layout::fps::{FpsState, FpsWidget};
-use crate::widgets::layout::tabs_bar::{TabEntry, TabsBarWidget};
 use crate::workers::term;
 use crate::{config::Config, kinds::event::Event};
 
@@ -157,20 +157,25 @@ impl App {
             FpsWidget::new(fps_state.props()).render(right, buf);
         }
 
-        let tab_entries: Vec<TabEntry> = self
-            .tabs
-            .iter()
-            .enumerate()
-            .map(|(i, t)| TabEntry {
-                name: t.name(),
-                color: if i == self.selected {
-                    t.color()
-                } else {
-                    Color::DarkGray
-                },
-            })
-            .collect();
-        (&TabsBarWidget { tabs: &tab_entries }).render(tabs_header, frame.buffer_mut());
+        let tab_areas =
+            Layout::horizontal(vec![Constraint::Fill(1); self.tabs.len()]).split(tabs_header);
+
+        for ((i, tab), &tab_area) in self.tabs.iter().enumerate().zip(tab_areas.iter()) {
+            let color = if i == self.selected {
+                tab.color()
+            } else {
+                Color::DarkGray
+            };
+
+            let block = Block::bordered().border_style(Style::default().fg(color).bold());
+            let inner = block.inner(tab_area);
+            block.render(tab_area, buf);
+
+            Paragraph::new(tab.name())
+                .centered()
+                .style(Style::default().fg(color).bold())
+                .render(inner, buf);
+        }
 
         self.tabs[self.selected].render(frame, tab_content);
     }
