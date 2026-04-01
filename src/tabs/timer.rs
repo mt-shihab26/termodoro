@@ -24,7 +24,7 @@ enum TimerMode {
     SelectingTodo,
 }
 
-pub struct Timer {
+pub struct TimerTab {
     db: DatabaseConnection,
     state: Arc<Mutex<TimerState>>,
     render_count: Arc<AtomicU8>,
@@ -36,7 +36,7 @@ pub struct Timer {
     cached_stats: RefCell<(u32, Option<(u32, u32)>)>,
 }
 
-impl Timer {
+impl TimerTab {
     pub fn new(sender: Sender<Event>, timer_config: TimerConfig, db: DatabaseConnection) -> Self {
         let render_count = Arc::new(AtomicU8::new(1));
         let state = spawn(Arc::clone(&render_count), sender, timer_config, db.clone());
@@ -90,7 +90,7 @@ impl Timer {
     }
 }
 
-impl Tab for Timer {
+impl Tab for TimerTab {
     fn name(&self) -> &str {
         "Timer [^p]"
     }

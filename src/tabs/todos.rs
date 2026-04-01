@@ -22,7 +22,7 @@ use super::Tab;
 
 pub const COLOR: Color = Color::Green;
 
-pub struct Todos {
+pub struct TodosTab {
     db: DatabaseConnection,
     page: Page,
     mode: Mode,
@@ -30,7 +30,7 @@ pub struct Todos {
     input_widget: Option<InputWidget>,
 }
 
-impl Todos {
+impl TodosTab {
     pub fn new(db: DatabaseConnection) -> Self {
         Self {
             db,
@@ -60,7 +60,7 @@ impl Todos {
     }
 }
 
-impl Tab for Todos {
+impl Tab for TodosTab {
     fn name(&self) -> &str {
         "Todos [^t]"
     }

@@ -10,7 +10,7 @@ use ratatui::widgets::{Block, Paragraph, Widget};
 use ratatui::{DefaultTerminal, Frame, init, restore};
 use sea_orm::DatabaseConnection;
 
-use crate::tabs::{Tab, timer::Timer, todos::Todos};
+use crate::tabs::{Tab, timer::TimerTab, todos::TodosTab};
 use crate::workers::term;
 use crate::{config::Config, kinds::event::Event};
 use crate::{log_error, widgets::fps::FpsWidget};
@@ -30,8 +30,8 @@ impl App {
         term::spawn(sender.clone());
 
         let tabs: Vec<Box<dyn Tab>> = vec![
-            Box::new(Todos::new(db.clone())),
-            Box::new(Timer::new(sender, config.timer, db)),
+            Box::new(TodosTab::new(db.clone())),
+            Box::new(TimerTab::new(sender, config.timer, db)),
         ];
 
         Self {
