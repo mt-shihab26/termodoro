@@ -3,10 +3,15 @@ use sea_orm::DatabaseConnection;
 use crate::kinds::page::Page;
 use crate::models::{session::Session, todo::Todo};
 
+pub struct Stat {
+    completed_sesions: u32,
+    completed_secs: u32,
+}
+
 pub struct TimerCache {
     db: DatabaseConnection,
     todos: Option<Vec<Todo>>,
-    stats: (u32, Option<(u32, u32)>),
+    stats: (u32, Option<Stat>),
 }
 
 impl TimerCache {
