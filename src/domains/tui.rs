@@ -144,34 +144,30 @@ impl App {
         ])
         .areas(area);
 
-        Paragraph::new(Span::from("Orivo").bold().fg(Color::Green))
+        Paragraph::new(Span::from(self.get_app_name()).bold().fg(Color::Green))
             .centered()
             .render(top, buf);
 
-        let [left, right] =
+        let [top_left, top_right] =
             Layout::horizontal([Constraint::Fill(1), Constraint::Fill(1)]).areas(top);
 
-        Line::from(self.hints()).render(left, buf);
+        Line::from(self.get_hints()).render(top_left, buf);
 
         if let Some(fps_state) = &self.fps_state {
-            FpsWidget::new(fps_state.props()).render(right, buf);
+            FpsWidget::new(fps_state.props()).render(top_right, buf);
         }
 
         let tab_areas =
             Layout::horizontal(vec![Constraint::Fill(1); self.tabs.len()]).split(tabs_header);
 
-        for ((i, tab), &tab_area) in self.tabs.iter().enumerate().zip(tab_areas.iter()) {
-            let color = if i == self.selected {
-                tab.color()
-            } else {
-                Color::DarkGray
-            };
+        for index in 0..self.tabs.len() {
+            let color = self.get_tab_color(index);
 
             let block = Block::bordered().border_style(Style::default().fg(color).bold());
-            let inner = block.inner(tab_area);
-            block.render(tab_area, buf);
+            let inner = block.inner(tab_areas[index]);
+            block.render(tab_areas[index], buf);
 
-            Paragraph::new(tab.name())
+            Paragraph::new(self.tabs[index].name())
                 .centered()
                 .style(Style::default().fg(color).bold())
                 .render(inner, buf);
@@ -180,7 +176,11 @@ impl App {
         self.tabs[self.selected].render(frame, tab_content);
     }
 
-    pub fn hints(&self) -> Vec<Span<'static>> {
+    fn get_app_name(&self) -> &str {
+        "Orivo"
+    }
+
+    fn get_hints(&self) -> Vec<Span<'static>> {
         let mut hints = vec![
             Span::from("^q").fg(Color::DarkGray).bold(),
             Span::from(" quit").fg(Color::DarkGray),
@@ -193,5 +193,13 @@ impl App {
         }
 
         hints
+    }
+
+    fn get_tab_color(&self, index: usize) -> Color {
+        if index == self.selected {
+            self.tabs[index].color()
+        } else {
+            Color::DarkGray
+        }
     }
 }
