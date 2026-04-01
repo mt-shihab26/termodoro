@@ -28,7 +28,7 @@ use crate::{
         phase::{PhaseProps, PhaseWidget},
         session::{SessionProps, SessionWidget},
         status::{StatusProps, StatusWidget},
-        todo::TodoWidget,
+        todo::{TodoProps, TodoWidget},
         todo_picker::{TodoPickerAction, TodoPickerState, TodoPickerWidget},
     },
     workers::timer::spawn,
@@ -41,7 +41,7 @@ pub struct TimerTab {
     state: Arc<Mutex<TimerState>>,
     cache: Arc<Mutex<TimerCache>>,
     picker: Option<TodoPickerState>,
-    selected: Option<(i32, String)>,
+    todo: Option<(i32, String)>,
 }
 
 impl TimerTab {
@@ -59,7 +59,7 @@ impl TimerTab {
             state,
             cache,
             picker: None,
-            selected: None,
+            todo: None,
         }
     }
 
@@ -76,7 +76,7 @@ impl TimerTab {
 
     fn set_selected_todo(&mut self, todo: Option<(i32, String)>) {
         let todo_id = todo.as_ref().map(|(id, _)| *id);
-        self.selected = todo;
+        self.todo = todo;
         if let Ok(mut cache) = self.cache.lock() {
             cache.invalidate_stats();
         }
@@ -86,7 +86,7 @@ impl TimerTab {
     }
 
     fn refresh_stats_if_needed(&self, sessions: u32) {
-        if let Some((todo_id, _)) = &self.selected {
+        if let Some((todo_id, _)) = &self.todo {
             if let Ok(mut cache) = self.cache.lock() {
                 cache.refresh_stats_if_needed(*todo_id, sessions);
             }
@@ -168,6 +168,9 @@ impl Tab for TimerTab {
 
         self.refresh_stats_if_needed(sessions);
 
+        let todo_text = self.todo.as_ref().map(|(_, t)| t.as_str());
+        let todo_stats = self.cache.lock().ok().and_then(|c| c.stats());
+
         let hint_w = HintWidget {
             selecting_todo: self.picker.is_some(),
         };
@@ -198,13 +201,8 @@ impl Tab for TimerTab {
 
         let [todo_row, hint_row] = Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).areas(bottom);
 
-        let stats = self.cache.lock().ok().and_then(|c| c.stats());
-        let todo_w = TodoWidget {
-            selected: self.selected.as_ref().map(|(_, t)| t.as_str()),
-            stats,
-        };
+        TodoWidget::new(&TodoProps::new(todo_text, todo_stats)).render(todo_row, buf);
 
-        (&todo_w).render(todo_row, buf);
         (&hint_w).render(hint_row, buf);
 
         if let Some(picker) = &self.picker {
