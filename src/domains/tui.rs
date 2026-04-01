@@ -33,18 +33,13 @@ impl App {
 
         let timer_cache = Arc::new(Mutex::new(TimerCache::new(db.clone())));
 
-        let mut todos_tab = TodosTab::new(db.clone());
-        todos_tab.set_timer_cache(Arc::clone(&timer_cache));
-
-        let tabs: Vec<Box<dyn Tab>> = vec![
-            Box::new(todos_tab),
-            Box::new(TimerTab::new(sender, config.timer, db, timer_cache)),
-        ];
-
         Self {
             alive: true,
             selected: 0,
-            tabs,
+            tabs: vec![
+                Box::new(TodosTab::new(db.clone(), Arc::clone(&timer_cache))),
+                Box::new(TimerTab::new(sender, config.timer, timer_cache, db)),
+            ],
             events,
             fps_widget: config.show_fps.then(FpsWidget::new),
         }

@@ -12,10 +12,10 @@ use ratatui::widgets::{Block, Widget};
 use sea_orm::DatabaseConnection;
 
 use crate::kinds::{event::Event, phase::COLOR};
+use crate::states::timer_cache::TimerCache;
 use crate::widgets::timer::{clock::ClockWidget, status::StatusWidget};
 use crate::widgets::timer::{hint::HintWidget, phase::PhaseWidget, session::SessionWidget};
 use crate::widgets::timer::{todo::TodoWidget, todo_picker::TodoPickerWidget};
-use crate::states::timer_cache::TimerCache;
 use crate::{config::timer::TimerConfig, states::timer::TimerState};
 use crate::{log_error, log_warn, workers::timer::spawn};
 
@@ -40,8 +40,8 @@ impl TimerTab {
     pub fn new(
         sender: Sender<Event>,
         timer_config: TimerConfig,
-        db: DatabaseConnection,
         cache: Arc<Mutex<TimerCache>>,
+        db: DatabaseConnection,
     ) -> Self {
         let render_count = Arc::new(AtomicU8::new(1));
         let state = spawn(Arc::clone(&render_count), sender, timer_config, db);

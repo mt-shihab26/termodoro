@@ -28,17 +28,13 @@ pub struct TodosTab {
 }
 
 impl TodosTab {
-    pub fn new(db: DatabaseConnection) -> Self {
+    pub fn new(db: DatabaseConnection, timer_cache: Arc<Mutex<TimerCache>>) -> Self {
         Self {
             page: Page::Today,
             mode: Mode::Normal,
-            state: TodosState::new(db),
+            state: TodosState::new(db, timer_cache),
             input_widget: None,
         }
-    }
-
-    pub fn set_timer_cache(&mut self, cache: Arc<Mutex<TimerCache>>) {
-        self.state.set_timer_cache(cache);
     }
 
     fn items(&self) -> Ref<'_, [Todo]> {

@@ -19,11 +19,11 @@ pub struct TodosState {
     list_state: RefCell<ListState>,
     items: RefCell<Option<Vec<Todo>>>,
     count: RefCell<Option<usize>>,
-    timer_cache: Option<Arc<Mutex<TimerCache>>>,
+    timer_cache: Arc<Mutex<TimerCache>>,
 }
 
 impl TodosState {
-    pub fn new(db: DatabaseConnection) -> Self {
+    pub fn new(db: DatabaseConnection, timer_cache: Arc<Mutex<TimerCache>>) -> Self {
         Self {
             db,
             pending_g: false,
@@ -34,12 +34,8 @@ impl TodosState {
             list_state: RefCell::new(ListState::default()),
             items: RefCell::new(None),
             count: RefCell::new(None),
-            timer_cache: None,
+            timer_cache,
         }
-    }
-
-    pub fn set_timer_cache(&mut self, cache: Arc<Mutex<TimerCache>>) {
-        self.timer_cache = Some(cache);
     }
 
     pub fn begin_input(&mut self) -> bool {
@@ -169,10 +165,8 @@ impl TodosState {
     }
 
     fn invalidate_timer_todos(&self) {
-        if let Some(cache) = &self.timer_cache {
-            if let Ok(mut c) = cache.lock() {
-                c.invalidate_todos();
-            }
+        if let Ok(mut c) = self.timer_cache.lock() {
+            c.invalidate_todos();
         }
     }
 
