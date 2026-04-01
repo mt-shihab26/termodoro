@@ -186,6 +186,8 @@ impl Tab for TimerTab {
         let running = s.running;
         let long_break_interval = s.config.long_break_interval();
         let phase_label = s.phase.label().to_string();
+        let show_millis = s.config.show_millis();
+        let millis = s.millis;
 
         drop(s);
 
@@ -199,7 +201,6 @@ impl Tab for TimerTab {
             label: phase_label,
             color,
         };
-
         let status_w = StatusWidget { running };
         let hint_w = HintWidget {
             selecting_todo: matches!(self.mode, TimerMode::SelectingTodo),
@@ -210,34 +211,39 @@ impl Tab for TimerTab {
         let block = Block::bordered().fg(self.color());
         let inner = block.inner(area);
         block.render(area, buf);
-        let area = inner;
+
+        let [
+            session_row,
+            _,
+            phase_row,
+            _,
+            time_row,
+            _,
+            status_row,
+            _,
+            bottom,
+        ] = Layout::vertical([
+            Constraint::Length(1),
+            Constraint::Fill(1),
+            Constraint::Length(1),
+            Constraint::Length(1),
+            Constraint::Length(8),
+            Constraint::Length(1),
+            Constraint::Length(1),
+            Constraint::Fill(1),
+            Constraint::Min(2),
+        ])
+        .areas(inner);
+
+        (&session_w).render(session_row, buf);
+        (&phase_w).render(phase_row, buf);
+        ClockWidget::new(&ClockProps::new(show_millis, millis, color)).render(time_row, buf);
+        (&status_w).render(status_row, buf);
 
         match self.mode {
             TimerMode::Normal => {
-                let [
-                    session_row,
-                    _,
-                    phase_row,
-                    _,
-                    time_row,
-                    _,
-                    status_row,
-                    _,
-                    todo_row,
-                    hint_row,
-                ] = Layout::vertical([
-                    Constraint::Length(1),
-                    Constraint::Fill(1),
-                    Constraint::Length(1),
-                    Constraint::Length(1),
-                    Constraint::Length(8),
-                    Constraint::Length(1),
-                    Constraint::Length(1),
-                    Constraint::Fill(1),
-                    Constraint::Length(1),
-                    Constraint::Length(1),
-                ])
-                .areas(area);
+                let [todo_row, hint_row] =
+                    Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).areas(bottom);
 
                 let stats = self.cache.lock().ok().and_then(|c| c.stats());
                 let todo_w = TodoWidget {
@@ -245,59 +251,24 @@ impl Tab for TimerTab {
                     stats,
                 };
 
-                (&session_w).render(session_row, buf);
-                (&phase_w).render(phase_row, buf);
-
-                ClockWidget::new(&ClockProps::new(s.config.show_millis(), s.millis, color))
-                    .render(time_row, buf);
-
-                (&status_w).render(status_row, buf);
                 (&todo_w).render(todo_row, buf);
                 (&hint_w).render(hint_row, buf);
             }
 
             TimerMode::SelectingTodo => {
                 let list_height = (self.todos.len().min(5) as u16).max(1);
-
-                let [
-                    session_row,
-                    _,
-                    phase_row,
-                    _,
-                    time_row,
-                    _,
-                    status_row,
-                    _,
-                    picker_header,
-                    picker_list,
-                    hint_row,
-                ] = Layout::vertical([
-                    Constraint::Length(1),
-                    Constraint::Fill(1),
-                    Constraint::Length(1),
-                    Constraint::Length(1),
-                    Constraint::Length(8),
-                    Constraint::Length(1),
-                    Constraint::Length(1),
-                    Constraint::Fill(1),
+                let [picker_header, picker_list, hint_row] = Layout::vertical([
                     Constraint::Length(1),
                     Constraint::Length(list_height),
                     Constraint::Length(1),
                 ])
-                .areas(area);
+                .areas(bottom);
 
                 let picker_w = TodoPickerWidget {
                     todos: &self.todos,
                     cursor: self.cursor,
                 };
 
-                (&session_w).render(session_row, buf);
-                (&phase_w).render(phase_row, buf);
-
-                ClockWidget::new(&ClockProps::new(s.config.show_millis(), s.millis, color))
-                    .render(time_row, buf);
-
-                (&status_w).render(status_row, buf);
                 ratatui::widgets::Paragraph::new("Select a todo")
                     .centered()
                     .bold()
