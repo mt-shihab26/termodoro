@@ -7,6 +7,7 @@ use crate::models::todo::Todo;
 
 pub struct ItemWidget<'a> {
     pub todo: &'a Todo,
+    pub stats: Option<(u32, u32)>,
 }
 
 impl<'a> ItemWidget<'a> {
@@ -19,6 +20,13 @@ impl<'a> ItemWidget<'a> {
         };
 
         let mut label = format!("{} {}{}", check, repeat_icon, self.todo.text);
+
+        if let Some((count, total_secs)) = self.stats {
+            if count > 0 {
+                label.push_str(&format!("  · {}× {}m", count, total_secs / 60));
+            }
+        }
+
         if let Some(date) = self.todo.due_date {
             label.push_str(&format!("  [{}]", date));
         }

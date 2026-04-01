@@ -13,6 +13,7 @@ use super::{indicator::IndicatorWidget, item::ItemWidget};
 
 pub struct ListWidget<'a> {
     pub items: &'a [Todo],
+    pub stats: &'a [Option<(u32, u32)>],
     pub offset: usize,
     pub page: Page,
     pub selected: usize,
@@ -69,7 +70,8 @@ impl<'a> ListWidget<'a> {
             .iter()
             .enumerate()
             .map(|(index, todo)| {
-                ItemWidget { todo }.list_item(dimmed, self.offset + index + 1, serial_width)
+                let stats = self.stats.get(index).copied().flatten();
+                ItemWidget { todo, stats }.list_item(dimmed, self.offset + index + 1, serial_width)
             })
             .collect::<Vec<_>>();
 
@@ -111,7 +113,8 @@ impl<'a> ListWidget<'a> {
                 selected_row = rows.len();
             }
 
-            rows.push(ItemWidget { todo }.line(
+            let stats = self.stats.get(index).copied().flatten();
+            rows.push(ItemWidget { todo, stats }.line(
                 index == self.selected,
                 self.color,
                 self.offset + index + 1,

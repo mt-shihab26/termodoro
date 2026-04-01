@@ -10,6 +10,7 @@ use sea_orm::DatabaseConnection;
 
 use crate::kinds::mode::Mode;
 use crate::kinds::page::Page;
+use crate::models::session::Session;
 use crate::models::todo::Todo;
 use crate::states::todos::TodosState;
 use crate::widgets::todos::hint::HintWidget;
@@ -179,6 +180,10 @@ impl Tab for TodosTab {
 
         self.state.set_visible_capacity(list_area);
         let items = self.items();
+        let stats: Vec<Option<(u32, u32)>> = items
+            .iter()
+            .map(|t| t.id.map(|id| Session::stats_for_todo(&self.db, id)))
+            .collect();
         let total = self.count();
         let from = self.state.from(total);
         let to = self.state.to(items.len());
@@ -196,6 +201,7 @@ impl Tab for TodosTab {
 
         ListWidget {
             items: &items,
+            stats: &stats,
             offset: self.state.offset(),
             page: self.page,
             selected: self.state.selected(),
