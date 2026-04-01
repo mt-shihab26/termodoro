@@ -59,69 +59,8 @@ impl App {
         while self.alive {
             self.tick_fps();
             self.terminal_draw(terminal)?;
-
-            let event = if self.tabs[self.selected].should_tick() {
-                match self.events.recv_timeout(Duration::from_millis(8)) {
-                    Ok(event) => Some(event),
-                    Err(RecvTimeoutError::Timeout) => None,
-                    Err(RecvTimeoutError::Disconnected) => {
-                        log_error!("event channel disconnected");
-                        return Err(Error::new(
-                            ErrorKind::BrokenPipe,
-                            "event channel disconnected",
-                        ));
-                    }
-                }
-            } else {
-                match self.events.recv() {
-                    Ok(event) => Some(event),
-                    Err(e) => {
-                        log_error!("event channel disconnected: {e}");
-                        return Err(Error::new(ErrorKind::BrokenPipe, e));
-                    }
-                }
-            };
-
-            match event {
-                Some(Event::Key(key)) => match key.code {
-                    KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        self.alive = false;
-                    }
-                    KeyCode::Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        self.alive = false;
-                    }
-                    KeyCode::Char('f') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        self.fps_state = if self.fps_state.is_none() {
-                            Some(FpsState::new())
-                        } else {
-                            None
-                        }
-                    }
-                    KeyCode::Char('t') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        self.selected = 0;
-                    }
-                    KeyCode::Char('p') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        self.selected = 1;
-                    }
-                    KeyCode::Tab => {
-                        self.selected = (self.selected + 1) % self.tabs.len();
-                    }
-                    _ => {
-                        if let Err(e) = self.tabs[self.selected].handle(key) {
-                            log_error!("tab handle error: {e}");
-                            return Err(e);
-                        }
-                    }
-                },
-                Some(Event::Resize(_, _)) => {}
-                Some(Event::TimerTick) => {}
-                None => {
-                    if let Err(e) = self.tabs[self.selected].next_tick() {
-                        log_error!("tab tick error: {e}");
-                        return Err(e);
-                    }
-                }
-            }
+            let event = self.recv_event()?;
+            self.handle_event(event)?;
         }
 
         Ok(())
@@ -138,6 +77,77 @@ impl App {
             log_error!("terminal draw failed: {e}");
             return Err(e);
         }
+        Ok(())
+    }
+
+    fn recv_event(&self) -> Result<Option<Event>> {
+        let event = if self.tabs[self.selected].should_tick() {
+            match self.events.recv_timeout(Duration::from_millis(8)) {
+                Ok(event) => Some(event),
+                Err(RecvTimeoutError::Timeout) => None,
+                Err(RecvTimeoutError::Disconnected) => {
+                    log_error!("event channel disconnected");
+                    return Err(Error::new(
+                        ErrorKind::BrokenPipe,
+                        "event channel disconnected",
+                    ));
+                }
+            }
+        } else {
+            match self.events.recv() {
+                Ok(event) => Some(event),
+                Err(e) => {
+                    log_error!("event channel disconnected: {e}");
+                    return Err(Error::new(ErrorKind::BrokenPipe, e));
+                }
+            }
+        };
+
+        Ok(event)
+    }
+
+    fn handle_event(&mut self, event: Option<Event>) -> Result<()> {
+        match event {
+            Some(Event::Key(key)) => match key.code {
+                KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    self.alive = false;
+                }
+                KeyCode::Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    self.alive = false;
+                }
+                KeyCode::Char('f') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    self.fps_state = if self.fps_state.is_none() {
+                        Some(FpsState::new())
+                    } else {
+                        None
+                    }
+                }
+                KeyCode::Char('t') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    self.selected = 0;
+                }
+                KeyCode::Char('p') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                    self.selected = 1;
+                }
+                KeyCode::Tab => {
+                    self.selected = (self.selected + 1) % self.tabs.len();
+                }
+                _ => {
+                    if let Err(e) = self.tabs[self.selected].handle(key) {
+                        log_error!("tab handle error: {e}");
+                        return Err(e);
+                    }
+                }
+            },
+            Some(Event::Resize(_, _)) => {}
+            Some(Event::TimerTick) => {}
+            None => {
+                if let Err(e) = self.tabs[self.selected].next_tick() {
+                    log_error!("tab tick error: {e}");
+                    return Err(e);
+                }
+            }
+        }
+
         Ok(())
     }
 
