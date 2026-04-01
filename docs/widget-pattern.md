@@ -2,6 +2,8 @@
 
 Every UI component follows a three-part split: **Props → State → Widget**.
 
+> A complete real-world example of this pattern: `src/widgets/layout/fps.rs`
+
 ---
 
 ## The three parts

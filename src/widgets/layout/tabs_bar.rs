@@ -1,6 +1,6 @@
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::style::{Color, Style, Stylize};
+use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, Paragraph, Widget};
 
 /// A single tab entry: its display name and the effective color (already resolved
