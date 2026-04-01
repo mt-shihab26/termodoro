@@ -35,13 +35,13 @@ impl TimerState {
         if self.millis >= step {
             self.millis -= step;
         } else {
-            self.advance();
+            self.advance(true);
         }
     }
 
-    pub fn advance(&mut self) {
+    pub fn advance(&mut self, completed: bool) {
         let duration = self.phase.duration(&self.timer_config);
-        Session::record(&self.db, &self.phase, duration, self.selected_todo_id);
+        Session::record(&self.db, &self.phase, duration, self.selected_todo_id, completed);
 
         match self.phase {
             Phase::Work => {

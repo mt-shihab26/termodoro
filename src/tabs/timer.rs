@@ -116,7 +116,7 @@ impl Tab for TimerTab {
                         s.running = false;
                     }
                     KeyCode::Char('n') => {
-                        s.advance();
+                        s.advance(false);
                     }
                     KeyCode::Char('t') => {
                         drop(s);

@@ -35,7 +35,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(Sessions::Phase).string().not_null())
                     .col(ColumnDef::new(Sessions::DurationSecs).integer().not_null())
-                    .col(ColumnDef::new(Sessions::CompletedAt).string().not_null())
+                    .col(ColumnDef::new(Sessions::CompletedAt).string().null())
                     .col(ColumnDef::new(Sessions::TodoId).integer().null())
                     .to_owned(),
             )

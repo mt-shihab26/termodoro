@@ -14,7 +14,7 @@ pub struct Model {
     id: i32,
     phase: String,
     duration_secs: i32,
-    completed_at: String,
+    completed_at: Option<String>,
     todo_id: Option<i32>,
 }
 
@@ -28,22 +28,26 @@ pub struct Session {
     pub id: Option<i32>,
     pub phase: String,
     pub duration_secs: u32,
-    pub completed_at: String,
+    pub completed_at: Option<String>,
     pub todo_id: Option<i32>,
 }
 
 impl Session {
-    pub fn new(phase: &Phase, duration_millis: u32, todo_id: Option<i32>) -> Self {
-        let dt = OffsetDateTime::now_utc();
-        let completed_at = format!(
-            "{}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
-            dt.year(),
-            dt.month() as u8,
-            dt.day(),
-            dt.hour(),
-            dt.minute(),
-            dt.second()
-        );
+    pub fn new(phase: &Phase, duration_millis: u32, todo_id: Option<i32>, completed: bool) -> Self {
+        let completed_at = if completed {
+            let dt = OffsetDateTime::now_utc();
+            Some(format!(
+                "{}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
+                dt.year(),
+                dt.month() as u8,
+                dt.day(),
+                dt.hour(),
+                dt.minute(),
+                dt.second()
+            ))
+        } else {
+            None
+        };
         Self {
             id: None,
             phase: phase.to_db_str().to_string(),
@@ -58,8 +62,9 @@ impl Session {
         phase: &Phase,
         duration_millis: u32,
         todo_id: Option<i32>,
+        completed: bool,
     ) {
-        Self::new(phase, duration_millis, todo_id).save(db);
+        Self::new(phase, duration_millis, todo_id, completed).save(db);
     }
 
     pub fn list_for_todo(db: &DatabaseConnection, todo_id: i32) -> Vec<Session> {
@@ -80,7 +85,10 @@ impl Session {
     }
 
     pub fn stats_for_todo(db: &DatabaseConnection, todo_id: i32) -> (u32, u32) {
-        let sessions = Self::list_for_todo(db, todo_id);
+        let sessions: Vec<_> = Self::list_for_todo(db, todo_id)
+            .into_iter()
+            .filter(|s| s.completed_at.is_some())
+            .collect();
         let count = sessions.len() as u32;
         let total_secs: u32 = sessions.iter().map(|s| s.duration_secs).sum();
         (count, total_secs)
