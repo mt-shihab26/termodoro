@@ -107,45 +107,34 @@ impl App {
     }
 
     fn handle_event(&mut self, event: Option<Event>) -> Result<()> {
+        let ctrl = |key: &ratatui::crossterm::event::KeyEvent| {
+            key.modifiers.contains(KeyModifiers::CONTROL)
+        };
+
         match event {
             Some(Event::Key(key)) => match key.code {
-                KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    self.alive = false;
-                }
-                KeyCode::Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    self.alive = false;
-                }
-                KeyCode::Char('f') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                KeyCode::Char('c' | 'q') if ctrl(&key) => self.alive = false,
+                KeyCode::Char('f') if ctrl(&key) => {
                     self.fps_state = if self.fps_state.is_none() {
                         Some(FpsState::new())
                     } else {
                         None
                     }
                 }
-                KeyCode::Char('t') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    self.selected = 0;
-                }
-                KeyCode::Char('p') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                    self.selected = 1;
-                }
-                KeyCode::Tab => {
-                    self.selected = (self.selected + 1) % self.tabs.len();
-                }
-                _ => {
-                    if let Err(e) = self.tabs[self.selected].handle(key) {
-                        log_error!("tab handle error: {e}");
-                        return Err(e);
-                    }
-                }
+                KeyCode::Char('1') if ctrl(&key) => self.selected = 0,
+                KeyCode::Char('2') if ctrl(&key) => self.selected = 1,
+                KeyCode::Tab => self.selected = (self.selected + 1) % self.tabs.len(),
+                _ => self.tabs[self.selected].handle(key).map_err(|e| {
+                    log_error!("tab handle error: {e}");
+                    e
+                })?,
             },
             Some(Event::Resize(_, _)) => {}
             Some(Event::TimerTick) => {}
-            None => {
-                if let Err(e) = self.tabs[self.selected].next_tick() {
-                    log_error!("tab tick error: {e}");
-                    return Err(e);
-                }
-            }
+            None => self.tabs[self.selected].next_tick().map_err(|e| {
+                log_error!("tab tick error: {e}");
+                e
+            })?,
         }
 
         Ok(())
