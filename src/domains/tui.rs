@@ -151,18 +151,7 @@ impl App {
         let [left, right] =
             Layout::horizontal([Constraint::Fill(1), Constraint::Fill(1)]).areas(top);
 
-        let mut hints = vec![
-            Span::from("^q").fg(Color::DarkGray).bold(),
-            Span::from(" quit").fg(Color::DarkGray),
-        ];
-
-        if self.fps_state.is_some() {
-            hints.push(Span::from("  ").fg(Color::DarkGray));
-            hints.push(Span::from("^f").fg(Color::DarkGray).bold());
-            hints.push(Span::from(" fps").fg(Color::DarkGray));
-        }
-
-        Line::from(hints).render(left, buf);
+        Line::from(self.hints()).render(left, buf);
 
         if let Some(fps_state) = &self.fps_state {
             FpsWidget::new(fps_state.props()).render(right, buf);
@@ -184,5 +173,18 @@ impl App {
         (&TabsBarWidget { tabs: &tab_entries }).render(tabs_header, frame.buffer_mut());
 
         self.tabs[self.selected].render(frame, tab_content);
+    }
+
+    pub fn hints(&self) {
+        let mut hints = vec![
+            Span::from("^q").fg(Color::DarkGray).bold(),
+            Span::from(" quit").fg(Color::DarkGray),
+        ];
+
+        if self.fps_state.is_some() {
+            hints.push(Span::from("  ").fg(Color::DarkGray));
+            hints.push(Span::from("^f").fg(Color::DarkGray).bold());
+            hints.push(Span::from(" fps").fg(Color::DarkGray));
+        }
     }
 }
