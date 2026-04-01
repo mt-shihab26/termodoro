@@ -7,13 +7,16 @@ use std::sync::{Arc, Mutex};
 use ratatui::Frame;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::style::{Color, Style, Stylize};
-use ratatui::widgets::{Block, List, ListItem, Paragraph, Widget};
+use ratatui::style::Color;
+use ratatui::style::Stylize;
+use ratatui::widgets::{Block, Widget};
 use sea_orm::DatabaseConnection;
-use tui_big_text::{BigText, PixelSize};
 
 use crate::kinds::{event::Event, page::Page, phase::COLOR};
-use crate::models::{session, todo::Todo};
+use crate::models::{session::Session, todo::Todo};
+use crate::widgets::timer::{clock::ClockWidget, status::StatusWidget};
+use crate::widgets::timer::{hint::HintWidget, phase::PhaseWidget, session::SessionWidget};
+use crate::widgets::timer::{todo::TodoWidget, todo_picker::TodoPickerWidget};
 use crate::{config::timer::TimerConfig, states::timer::TimerState};
 use crate::{log_error, log_warn, workers::timer::spawn};
 
@@ -82,7 +85,7 @@ impl TimerTab {
         if let Some((todo_id, _)) = &self.selected_todo {
             let mut cache = self.cached_stats.borrow_mut();
             if cache.1.is_none() || cache.0 != sessions {
-                cache.1 = Some(session::Session::stats_for_todo(&self.db, *todo_id));
+                cache.1 = Some(Session::stats_for_todo(&self.db, *todo_id));
                 cache.0 = sessions;
             }
         }
@@ -184,6 +187,20 @@ impl Tab for TimerTab {
             format!("{:02}:{:02}", mins, secs)
         };
 
+        let session_w = SessionWidget {
+            session: sessions + 1,
+            total: long_break_interval,
+        };
+        let phase_w = PhaseWidget {
+            label: phase_label,
+            color,
+        };
+        let clock_w = ClockWidget { time, color };
+        let status_w = StatusWidget { running };
+        let hint_w = HintWidget {
+            selecting_todo: matches!(self.mode, TimerMode::SelectingTodo),
+        };
+
         let buf = frame.buffer_mut();
 
         let block = Block::bordered().fg(self.color());
@@ -218,64 +235,18 @@ impl Tab for TimerTab {
                 ])
                 .areas(area);
 
-                Paragraph::new(format!(
-                    "Session {} / {}",
-                    sessions + 1,
-                    long_break_interval
-                ))
-                .centered()
-                .fg(Color::DarkGray)
-                .render(session_row, buf);
-
-                Paragraph::new(phase_label)
-                    .centered()
-                    .bold()
-                    .fg(color)
-                    .render(phase_row, buf);
-
-                BigText::builder()
-                    .pixel_size(PixelSize::Full)
-                    .style(Style::new().fg(color).bold())
-                    .lines(vec![time.as_str().into()])
-                    .centered()
-                    .build()
-                    .render(time_row, buf);
-
-                Paragraph::new(if running { "Running" } else { "Paused" })
-                    .centered()
-                    .fg(if running {
-                        Color::Green
-                    } else {
-                        Color::DarkGray
-                    })
-                    .render(status_row, buf);
-
-                let todo_line = match &self.selected_todo {
-                    Some((_, text)) => {
-                        let cache = self.cached_stats.borrow();
-                        match cache.1 {
-                            Some((count, total_secs)) => {
-                                format!(
-                                    "{}  ·  {} sessions  ·  {} min",
-                                    text,
-                                    count,
-                                    total_secs / 60
-                                )
-                            }
-                            None => text.clone(),
-                        }
-                    }
-                    None => "No todo selected  [t] pick".to_string(),
+                let stats = self.cached_stats.borrow().1;
+                let todo_w = TodoWidget {
+                    selected: self.selected_todo.as_ref().map(|(_, t)| t.as_str()),
+                    stats,
                 };
-                Paragraph::new(todo_line)
-                    .centered()
-                    .fg(Color::DarkGray)
-                    .render(todo_row, buf);
 
-                Paragraph::new("[Space] Toggle   [r] Reset   [n] Skip   [t] Todo   [T] Clear todo")
-                    .centered()
-                    .fg(Color::DarkGray)
-                    .render(hint_row, buf);
+                (&session_w).render(session_row, buf);
+                (&phase_w).render(phase_row, buf);
+                (&clock_w).render(time_row, buf);
+                (&status_w).render(status_row, buf);
+                (&todo_w).render(todo_row, buf);
+                (&hint_w).render(hint_row, buf);
             }
 
             TimerMode::SelectingTodo => {
@@ -290,8 +261,8 @@ impl Tab for TimerTab {
                     _,
                     status_row,
                     _,
-                    todo_header,
-                    todo_list_area,
+                    picker_header,
+                    picker_list,
                     hint_row,
                 ] = Layout::vertical([
                     Constraint::Length(1),
@@ -308,80 +279,22 @@ impl Tab for TimerTab {
                 ])
                 .areas(area);
 
-                Paragraph::new(format!(
-                    "Session {} / {}",
-                    sessions + 1,
-                    long_break_interval
-                ))
-                .centered()
-                .fg(Color::DarkGray)
-                .render(session_row, buf);
+                let picker_w = TodoPickerWidget {
+                    todos: &self.todos,
+                    cursor: self.todo_cursor,
+                };
 
-                Paragraph::new(phase_label)
-                    .centered()
-                    .bold()
-                    .fg(color)
-                    .render(phase_row, buf);
-
-                BigText::builder()
-                    .pixel_size(PixelSize::Full)
-                    .style(Style::new().fg(color).bold())
-                    .lines(vec![time.as_str().into()])
-                    .centered()
-                    .build()
-                    .render(time_row, buf);
-
-                Paragraph::new(if running { "Running" } else { "Paused" })
-                    .centered()
-                    .fg(if running {
-                        Color::Green
-                    } else {
-                        Color::DarkGray
-                    })
-                    .render(status_row, buf);
-
-                Paragraph::new("Select a todo")
+                (&session_w).render(session_row, buf);
+                (&phase_w).render(phase_row, buf);
+                (&clock_w).render(time_row, buf);
+                (&status_w).render(status_row, buf);
+                ratatui::widgets::Paragraph::new("Select a todo")
                     .centered()
                     .bold()
                     .fg(Color::Yellow)
-                    .render(todo_header, buf);
-
-                if self.todos.is_empty() {
-                    Paragraph::new("No todos for today")
-                        .centered()
-                        .fg(Color::DarkGray)
-                        .render(todo_list_area, buf);
-                } else {
-                    let start = self
-                        .todo_cursor
-                        .saturating_sub(2)
-                        .min(self.todos.len().saturating_sub(5));
-
-                    let items: Vec<ListItem> = self
-                        .todos
-                        .iter()
-                        .enumerate()
-                        .skip(start)
-                        .take(5)
-                        .map(|(i, (_, text))| {
-                            let is_cursor = i == self.todo_cursor;
-                            let prefix = if is_cursor { "> " } else { "  " };
-                            let style = if is_cursor {
-                                Style::new().fg(Color::Yellow).bold()
-                            } else {
-                                Style::new().fg(Color::DarkGray)
-                            };
-                            ListItem::new(format!("{prefix}{text}")).style(style)
-                        })
-                        .collect();
-
-                    List::new(items).render(todo_list_area, buf);
-                }
-
-                Paragraph::new("[j/k] Navigate   [Enter] Select   [Esc] Cancel")
-                    .centered()
-                    .fg(Color::DarkGray)
-                    .render(hint_row, buf);
+                    .render(picker_header, buf);
+                (&picker_w).render(picker_list, buf);
+                (&hint_w).render(hint_row, buf);
             }
         }
     }
