@@ -74,6 +74,15 @@ impl TimerTab {
         self.count.store(next, Ordering::Relaxed);
     }
 
+    fn on_picker_select(&mut self, id: i32) {
+        self.set_selected_todo(Some(id));
+        self.picker = None;
+    }
+
+    fn on_picker_cancel(&mut self) {
+        self.picker = None;
+    }
+
     fn open_picker(&mut self) {
         let todos = self
             .cache
@@ -113,15 +122,6 @@ impl TimerTab {
         if let Ok(mut s) = self.state.lock() {
             s.advance(false);
         }
-    }
-
-    fn on_picker_select(&mut self, id: i32) {
-        self.set_selected_todo(Some(id));
-        self.picker = None;
-    }
-
-    fn on_picker_cancel(&mut self) {
-        self.picker = None;
     }
 
     fn todo_info(&self) -> (Option<Todo>, Option<Stat>) {
