@@ -1,21 +1,33 @@
-use std::io::{Error, ErrorKind, Result};
-use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
-use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::{
+    io::{Error, ErrorKind, Result},
+    sync::{
+        Arc, Mutex,
+        mpsc::{self, Receiver, RecvTimeoutError},
+    },
+    time::Duration,
+};
 
-use ratatui::crossterm::event::{KeyCode, KeyModifiers};
-use ratatui::prelude::{Color, Constraint, Layout, Line, Span, Stylize, Widget};
-use ratatui::style::Style;
-use ratatui::widgets::{Block, Paragraph};
-use ratatui::{DefaultTerminal, Frame, init, restore};
 use sea_orm::DatabaseConnection;
 
-use crate::states::timer_cache::TimerCache;
-use crate::tabs::{Tab, timer::TimerTab, todos::TodosTab};
-use crate::widgets::layout::fps::{FpsState, FpsWidget};
-use crate::workers::term;
-use crate::{config::Config, kinds::event::Event};
-use crate::{log_error, log_info};
+use ratatui::{
+    DefaultTerminal, Frame,
+    crossterm::event::{KeyCode, KeyModifiers},
+    init,
+    prelude::{Color, Constraint, Layout, Line, Span, Stylize, Widget},
+    restore,
+    style::Style,
+    widgets::{Block, Paragraph},
+};
+
+use crate::{
+    config::Config,
+    kinds::event::Event,
+    log_error, log_info,
+    states::timer_cache::TimerCache,
+    tabs::{Tab, timer::TimerTab, todos::TodosTab},
+    widgets::layout::fps::{FpsState, FpsWidget},
+    workers::term,
+};
 
 pub struct App {
     alive: bool,

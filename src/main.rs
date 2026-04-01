@@ -1,9 +1,13 @@
-use std::env;
-use std::io::{Error, ErrorKind, Result};
+use std::{
+    env,
+    io::{Error, ErrorKind, Result},
+};
 
-use orivo::cmds::{Cmd, help::Help, seed::Seed, tui::Tui, version::Version};
-use orivo::config::Config;
-use orivo::utils::db;
+use orivo::{
+    cmds::{Cmd, help::Help, seed::Seed, tui::Tui, version::Version},
+    config::Config,
+    utils::db,
+};
 
 fn main() -> Result<()> {
     match env::args().nth(1).as_deref() {
