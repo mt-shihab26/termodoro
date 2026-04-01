@@ -8,16 +8,11 @@ use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Block, Widget};
 use sea_orm::DatabaseConnection;
 
-use crate::kinds::mode::Mode;
-use crate::kinds::page::Page;
-use crate::models::session::Session;
-use crate::models::todo::Todo;
-use crate::states::todos::TodosState;
+use crate::kinds::{mode::Mode, page::Page};
 use crate::widgets::todos::hint::HintWidget;
 use crate::widgets::todos::input::{InputAction, InputWidget};
-use crate::widgets::todos::list::ListWidget;
-use crate::widgets::todos::status::StatusWidget;
-use crate::widgets::todos::tabs::TabsWidget;
+use crate::widgets::todos::{list::ListWidget, status::StatusWidget, tabs::TabsWidget};
+use crate::{models::todo::Todo, states::todos::TodosState};
 
 use super::Tab;
 
