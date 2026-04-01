@@ -41,7 +41,7 @@ pub struct TimerTab {
     state: Arc<Mutex<TimerState>>,
     cache: Arc<Mutex<TimerCache>>,
     picker: Option<TodoPickerState>,
-    todo: Option<(i32, String)>,
+    todo_id: Option<i32>,
 }
 
 impl TimerTab {
@@ -59,7 +59,7 @@ impl TimerTab {
             state,
             cache,
             picker: None,
-            todo: None,
+            todo_id: None,
         }
     }
 
@@ -70,25 +70,33 @@ impl TimerTab {
     }
 
     fn open_picker(&mut self) {
-        let todos = self.cache.lock().map(|mut c| c.todos().to_vec()).unwrap_or_default();
+        let todos = self
+            .cache
+            .lock()
+            .map(|mut c| {
+                c.todos()
+                    .iter()
+                    .filter_map(|t| t.id.map(|id| (id, t.text.clone())))
+                    .collect()
+            })
+            .unwrap_or_default();
         self.picker = Some(TodoPickerState::new(todos));
     }
 
     fn set_selected_todo(&mut self, todo: Option<(i32, String)>) {
-        let todo_id = todo.as_ref().map(|(id, _)| *id);
-        self.todo = todo;
+        self.todo_id = todo.map(|(id, _)| id);
         if let Ok(mut cache) = self.cache.lock() {
             cache.invalidate_stats();
         }
         if let Ok(mut s) = self.state.lock() {
-            s.selected_todo_id = todo_id;
+            s.selected_todo_id = self.todo_id;
         }
     }
 
     fn refresh_stats_if_needed(&self, sessions: u32) {
-        if let Some((todo_id, _)) = &self.todo {
+        if let Some(todo_id) = self.todo_id {
             if let Ok(mut cache) = self.cache.lock() {
-                cache.refresh_stats_if_needed(*todo_id, sessions);
+                cache.refresh_stats_if_needed(todo_id, sessions);
             }
         }
     }
@@ -168,8 +176,11 @@ impl Tab for TimerTab {
 
         self.refresh_stats_if_needed(sessions);
 
-        let todo_text = self.todo.as_ref().map(|(_, t)| t.as_str());
-        let todo_stats = self.cache.lock().ok().and_then(|c| c.stats());
+        let mut cache = self.cache.lock().ok();
+        let todo_text: Option<String> = self
+            .todo_id
+            .and_then(|id| cache.as_mut()?.get(id).map(|t| t.text.clone()));
+        let todo_stats = cache.as_ref().and_then(|c| c.stats());
 
         let buf = frame.buffer_mut();
 
@@ -197,7 +208,7 @@ impl Tab for TimerTab {
 
         let [todo_row, hint_row] = Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).areas(bottom);
 
-        TodoShowWidget::new(&TodoShowProps::new(todo_text, todo_stats)).render(todo_row, buf);
+        TodoShowWidget::new(&TodoShowProps::new(todo_text.as_deref(), todo_stats)).render(todo_row, buf);
         HintWidget::new(&HintProps::new(self.picker.is_some())).render(hint_row, buf);
 
         if let Some(picker) = &self.picker {

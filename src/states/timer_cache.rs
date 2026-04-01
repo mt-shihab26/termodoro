@@ -5,7 +5,7 @@ use crate::models::{session::Session, todo::Todo};
 
 pub struct TimerCache {
     db: DatabaseConnection,
-    todos: Option<Vec<(i32, String)>>,
+    todos: Option<Vec<Todo>>,
     stats: (u32, Option<(u32, u32)>),
 }
 
@@ -19,16 +19,17 @@ impl TimerCache {
     }
 
     /// Returns the cached todo list, querying the DB if needed.
-    pub fn todos(&mut self) -> &[(i32, String)] {
+    pub fn todos(&mut self) -> &[Todo] {
         if self.todos.is_none() {
-            let list = Todo::list(&self.db, Page::Today, 0, 100);
-            self.todos = Some(
-                list.into_iter()
-                    .filter_map(|t| t.id.map(|id| (id, t.text.clone())))
-                    .collect(),
-            );
+            self.todos = Some(Todo::list(&self.db, Page::Today, 0, 100));
         }
         self.todos.as_deref().unwrap_or(&[])
+    }
+
+    /// Returns the cached todo with the given id, querying the DB if needed.
+    pub fn get(&mut self, id: i32) -> Option<&Todo> {
+        self.todos();
+        self.todos.as_deref()?.iter().find(|t| t.id == Some(id))
     }
 
     /// Drops the cached todo list so the next call to `todos()` re-queries.
