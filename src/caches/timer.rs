@@ -12,7 +12,7 @@ pub struct Stat {
 pub struct TimerCache {
     db: DatabaseConnection,
     todos: Option<Vec<Todo>>,
-    stat: Option<Stat>,
+    stats: Option<Vec<Stat>>,
 }
 
 impl TimerCache {
