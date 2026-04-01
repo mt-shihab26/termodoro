@@ -18,19 +18,22 @@ use ratatui::{
 };
 
 use crate::{
+    caches::timer_cache::TimerCache,
     config::timer::TimerConfig,
     kinds::{event::Event, phase::COLOR},
     log_error, log_warn,
-    states::{timer::TimerState, timer_cache::TimerCache},
-    widgets::layout::border::{BorderProps, BorderWidget},
-    widgets::timer::{
-        clock::{ClockProps, ClockWidget},
-        hint::{HintProps, HintWidget},
-        phase::{PhaseProps, PhaseWidget},
-        session::{SessionProps, SessionWidget},
-        status::{StatusProps, StatusWidget},
-        todo_picker::{TodoPickerAction, TodoPickerState, TodoPickerWidget},
-        todo_show::{TodoShowProps, TodoShowWidget},
+    states::timer::TimerState,
+    widgets::{
+        layout::border::{BorderProps, BorderWidget},
+        timer::{
+            clock::{ClockProps, ClockWidget},
+            hint::{HintProps, HintWidget},
+            phase::{PhaseProps, PhaseWidget},
+            session::{SessionProps, SessionWidget},
+            status::{StatusProps, StatusWidget},
+            todo_picker::{TodoPickerAction, TodoPickerState, TodoPickerWidget},
+            todo_show::{TodoShowProps, TodoShowWidget},
+        },
     },
     workers::timer::spawn,
 };
@@ -91,14 +94,6 @@ impl TimerTab {
         }
         if let Ok(mut s) = self.state.lock() {
             s.selected_todo_id = self.todo_id;
-        }
-    }
-
-    fn refresh_stats_if_needed(&self, sessions: u32) {
-        if let Some(todo_id) = self.todo_id {
-            if let Ok(mut cache) = self.cache.lock() {
-                cache.refresh_stats_if_needed(todo_id, sessions);
-            }
         }
     }
 }
@@ -175,13 +170,11 @@ impl Tab for TimerTab {
 
         drop(state);
 
-        self.refresh_stats_if_needed(sessions);
-
         let mut cache = self.cache.lock().ok();
         let todo_text: Option<String> = self
             .todo_id
             .and_then(|id| cache.as_mut()?.get_todo(id).map(|t| t.text.clone()));
-        let todo_stats = cache.as_ref().and_then(|c| c.get_stat()).copied();
+        let todo_stats = self.todo_id.and_then(|id| cache.as_mut()?.get_stat(id)).copied();
 
         let buf = frame.buffer_mut();
 

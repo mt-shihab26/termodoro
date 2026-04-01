@@ -1,3 +1,4 @@
+pub mod caches;
 pub mod cmds;
 pub mod config;
 pub mod domains;
