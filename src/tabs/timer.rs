@@ -13,7 +13,7 @@ use sea_orm::DatabaseConnection;
 use tui_big_text::{BigText, PixelSize};
 
 use crate::kinds::{event::Event, page::Page, phase::COLOR};
-use crate::models::{timer, todo::Todo};
+use crate::models::{session, todo::Todo};
 use crate::{config::timer::TimerConfig, states::timer::TimerState};
 use crate::{log_error, log_warn, workers::timer::spawn};
 
@@ -32,7 +32,6 @@ pub struct TimerTab {
     selected_todo: Option<(i32, String)>,
     todos: Vec<(i32, String)>,
     todo_cursor: usize,
-    // (sessions_count_at_cache_time, cached_stats) — invalidated when sessions changes
     cached_stats: RefCell<(u32, Option<(u32, u32)>)>,
 }
 
@@ -83,7 +82,7 @@ impl TimerTab {
         if let Some((todo_id, _)) = &self.selected_todo {
             let mut cache = self.cached_stats.borrow_mut();
             if cache.1.is_none() || cache.0 != sessions {
-                cache.1 = Some(timer::stats_for_todo(&self.db, *todo_id));
+                cache.1 = Some(session::Session::stats_for_todo(&self.db, *todo_id));
                 cache.0 = sessions;
             }
         }

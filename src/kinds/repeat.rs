@@ -10,6 +10,10 @@ pub enum Repeat {
 }
 
 impl Repeat {
+    pub fn icon() -> &'static str {
+        "⟳"
+    }
+
     pub const ALL: &'static [Repeat] = &[
         Repeat::Daily,
         Repeat::WeeklySameDay,
@@ -28,10 +32,6 @@ impl Repeat {
         }
     }
 
-    pub fn icon() -> &'static str {
-        "⟳"
-    }
-
     pub fn label(&self) -> &str {
         match self {
             Repeat::Daily => "Daily",
@@ -44,21 +44,21 @@ impl Repeat {
 
     pub fn to_db_str(&self) -> &str {
         match self {
-            Repeat::Daily => "Daily",
-            Repeat::WeeklySameDay => "WeeklySameDay",
-            Repeat::WeekdaysMonFri => "WeekdaysMonFri",
-            Repeat::MonthlyOnDay => "MonthlyOnDay",
-            Repeat::YearlyOnDay => "YearlyOnDay",
+            Repeat::Daily => "daily",
+            Repeat::WeeklySameDay => "weekly_same_day",
+            Repeat::WeekdaysMonFri => "weekdays_mon_fri",
+            Repeat::MonthlyOnDay => "monthly_on_day",
+            Repeat::YearlyOnDay => "yearly_on_day",
         }
     }
 
     pub fn from_db_str(s: &str) -> Option<Self> {
         match s {
-            "Daily" => Some(Repeat::Daily),
-            "WeeklySameDay" => Some(Repeat::WeeklySameDay),
-            "WeekdaysMonFri" => Some(Repeat::WeekdaysMonFri),
-            "MonthlyOnDay" => Some(Repeat::MonthlyOnDay),
-            "YearlyOnDay" => Some(Repeat::YearlyOnDay),
+            "daily" => Some(Repeat::Daily),
+            "weekly_same_day" => Some(Repeat::WeeklySameDay),
+            "weekdays_mon_fri" => Some(Repeat::WeekdaysMonFri),
+            "monthly_on_day" => Some(Repeat::MonthlyOnDay),
+            "yearly_on_day" => Some(Repeat::YearlyOnDay),
             _ => None,
         }
     }

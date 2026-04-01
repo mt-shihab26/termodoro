@@ -3,7 +3,7 @@ use sea_orm_migration::prelude::*;
 pub struct Migration;
 
 #[derive(DeriveIden)]
-enum TimerSessions {
+enum Sessions {
     Table,
     Id,
     Phase,
@@ -14,7 +14,7 @@ enum TimerSessions {
 
 impl MigrationName for Migration {
     fn name(&self) -> &str {
-        "m_01_create_timer"
+        "m_01_create_sessions"
     }
 }
 
@@ -24,27 +24,19 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(TimerSessions::Table)
+                    .table(Sessions::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(TimerSessions::Id)
+                        ColumnDef::new(Sessions::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(TimerSessions::Phase).string().not_null())
-                    .col(
-                        ColumnDef::new(TimerSessions::DurationSecs)
-                            .integer()
-                            .not_null(),
-                    )
-                    .col(
-                        ColumnDef::new(TimerSessions::CompletedAt)
-                            .string()
-                            .not_null(),
-                    )
-                    .col(ColumnDef::new(TimerSessions::TodoId).integer().null())
+                    .col(ColumnDef::new(Sessions::Phase).string().not_null())
+                    .col(ColumnDef::new(Sessions::DurationSecs).integer().not_null())
+                    .col(ColumnDef::new(Sessions::CompletedAt).string().not_null())
+                    .col(ColumnDef::new(Sessions::TodoId).integer().null())
                     .to_owned(),
             )
             .await
@@ -52,7 +44,7 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(TimerSessions::Table).to_owned())
+            .drop_table(Table::drop().table(Sessions::Table).to_owned())
             .await
     }
 }

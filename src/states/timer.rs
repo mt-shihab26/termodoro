@@ -1,7 +1,6 @@
 use sea_orm::DatabaseConnection;
 
-use crate::models::timer;
-use crate::{config::timer::TimerConfig, kinds::phase::Phase};
+use crate::{config::timer::TimerConfig, kinds::phase::Phase, models::session::Session};
 
 pub struct TimerState {
     pub phase: Phase,
@@ -42,7 +41,7 @@ impl TimerState {
 
     pub fn advance(&mut self) {
         let duration = self.phase.duration(&self.timer_config);
-        timer::record(&self.db, &self.phase, duration, self.selected_todo_id);
+        Session::record(&self.db, &self.phase, duration, self.selected_todo_id);
 
         match self.phase {
             Phase::Work => {
