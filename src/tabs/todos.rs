@@ -58,7 +58,7 @@ impl TodosTab {
 
 impl Tab for TodosTab {
     fn name(&self) -> &str {
-        "Todos [^t]"
+        "Todos [^1]"
     }
 
     fn color(&self) -> Color {

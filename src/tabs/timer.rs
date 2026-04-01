@@ -94,7 +94,7 @@ impl TimerTab {
 
 impl Tab for TimerTab {
     fn name(&self) -> &str {
-        "Timer [^p]"
+        "Timer [^2]"
     }
 
     fn color(&self) -> Color {
