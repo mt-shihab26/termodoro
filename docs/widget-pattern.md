@@ -35,12 +35,13 @@ pub struct MyProps<'a> {
 }
 ```
 
-### State
+### State *(optional)*
 
 Owns the runtime data that changes over time.
 Lives in the caller (a parent component) — never inside the widget.
 Exposes a `props()` getter so the caller can hand `&props` to the widget at render time without cloning.
 
+If the widget is stateless (no runtime data to track), skip `State` and construct `Props` directly in the caller.
 Optionally exposes a `handle()` method that processes input and returns an `Action`.
 
 ```rust
