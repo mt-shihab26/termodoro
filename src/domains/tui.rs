@@ -1,5 +1,6 @@
 use std::io::{Error, ErrorKind, Result};
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use ratatui::crossterm::event::{KeyCode, KeyModifiers};
@@ -10,6 +11,7 @@ use ratatui::widgets::{Block, Paragraph, Widget};
 use ratatui::{DefaultTerminal, Frame, init, restore};
 use sea_orm::DatabaseConnection;
 
+use crate::states::timer_cache::TimerCache;
 use crate::tabs::{Tab, timer::TimerTab, todos::TodosTab};
 use crate::workers::term;
 use crate::{config::Config, kinds::event::Event};
@@ -29,9 +31,14 @@ impl App {
 
         term::spawn(sender.clone());
 
+        let timer_cache = Arc::new(Mutex::new(TimerCache::new(db.clone())));
+
+        let mut todos_tab = TodosTab::new(db.clone());
+        todos_tab.set_timer_cache(Arc::clone(&timer_cache));
+
         let tabs: Vec<Box<dyn Tab>> = vec![
-            Box::new(TodosTab::new(db.clone())),
-            Box::new(TimerTab::new(sender, config.timer, db)),
+            Box::new(todos_tab),
+            Box::new(TimerTab::new(sender, config.timer, db, timer_cache)),
         ];
 
         Self {

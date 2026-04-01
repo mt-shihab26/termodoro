@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::io::{Error, ErrorKind, Result};
 use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::mpsc::Sender;
@@ -12,11 +11,11 @@ use ratatui::style::Stylize;
 use ratatui::widgets::{Block, Widget};
 use sea_orm::DatabaseConnection;
 
-use crate::kinds::{event::Event, page::Page, phase::COLOR};
-use crate::models::{session::Session, todo::Todo};
+use crate::kinds::{event::Event, phase::COLOR};
 use crate::widgets::timer::{clock::ClockWidget, status::StatusWidget};
 use crate::widgets::timer::{hint::HintWidget, phase::PhaseWidget, session::SessionWidget};
 use crate::widgets::timer::{todo::TodoWidget, todo_picker::TodoPickerWidget};
+use crate::states::timer_cache::TimerCache;
 use crate::{config::timer::TimerConfig, states::timer::TimerState};
 use crate::{log_error, log_warn, workers::timer::spawn};
 
@@ -28,30 +27,33 @@ enum TimerMode {
 }
 
 pub struct TimerTab {
-    db: DatabaseConnection,
     state: Arc<Mutex<TimerState>>,
     render_count: Arc<AtomicU8>,
     mode: TimerMode,
     selected_todo: Option<(i32, String)>,
     todos: Vec<(i32, String)>,
     todo_cursor: usize,
-    cached_stats: RefCell<(u32, Option<(u32, u32)>)>,
+    cache: Arc<Mutex<TimerCache>>,
 }
 
 impl TimerTab {
-    pub fn new(sender: Sender<Event>, timer_config: TimerConfig, db: DatabaseConnection) -> Self {
+    pub fn new(
+        sender: Sender<Event>,
+        timer_config: TimerConfig,
+        db: DatabaseConnection,
+        cache: Arc<Mutex<TimerCache>>,
+    ) -> Self {
         let render_count = Arc::new(AtomicU8::new(1));
-        let state = spawn(Arc::clone(&render_count), sender, timer_config, db.clone());
+        let state = spawn(Arc::clone(&render_count), sender, timer_config, db);
 
         Self {
-            db,
             state,
             render_count,
             mode: TimerMode::Normal,
             selected_todo: None,
             todos: Vec::new(),
             todo_cursor: 0,
-            cached_stats: RefCell::new((u32::MAX, None)),
+            cache,
         }
     }
 
@@ -62,11 +64,9 @@ impl TimerTab {
     }
 
     fn load_todos(&mut self) {
-        let todos = Todo::list(&self.db, Page::Today, 0, 100);
-        self.todos = todos
-            .into_iter()
-            .filter_map(|t| t.id.map(|id| (id, t.text.clone())))
-            .collect();
+        if let Ok(mut cache) = self.cache.lock() {
+            self.todos = cache.todos().to_vec();
+        }
         if !self.todos.is_empty() && self.todo_cursor >= self.todos.len() {
             self.todo_cursor = self.todos.len() - 1;
         }
@@ -75,7 +75,9 @@ impl TimerTab {
     fn set_selected_todo(&mut self, todo: Option<(i32, String)>) {
         let todo_id = todo.as_ref().map(|(id, _)| *id);
         self.selected_todo = todo;
-        *self.cached_stats.borrow_mut() = (u32::MAX, None);
+        if let Ok(mut cache) = self.cache.lock() {
+            cache.invalidate_stats();
+        }
         if let Ok(mut s) = self.state.lock() {
             s.selected_todo_id = todo_id;
         }
@@ -83,10 +85,8 @@ impl TimerTab {
 
     fn refresh_stats_if_needed(&self, sessions: u32) {
         if let Some((todo_id, _)) = &self.selected_todo {
-            let mut cache = self.cached_stats.borrow_mut();
-            if cache.1.is_none() || cache.0 != sessions {
-                cache.1 = Some(Session::stats_for_todo(&self.db, *todo_id));
-                cache.0 = sessions;
+            if let Ok(mut cache) = self.cache.lock() {
+                cache.refresh_stats_if_needed(*todo_id, sessions);
             }
         }
     }
@@ -235,7 +235,7 @@ impl Tab for TimerTab {
                 ])
                 .areas(area);
 
-                let stats = self.cached_stats.borrow().1;
+                let stats = self.cache.lock().ok().and_then(|c| c.stats());
                 let todo_w = TodoWidget {
                     selected: self.selected_todo.as_ref().map(|(_, t)| t.as_str()),
                     stats,

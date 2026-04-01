@@ -1,5 +1,6 @@
 use std::cell::Ref;
 use std::io::Result;
+use std::sync::{Arc, Mutex};
 
 use ratatui::Frame;
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -9,6 +10,7 @@ use ratatui::widgets::{Block, Widget};
 use sea_orm::DatabaseConnection;
 
 use crate::kinds::{mode::Mode, page::Page};
+use crate::states::timer_cache::TimerCache;
 use crate::widgets::todos::hint::HintWidget;
 use crate::widgets::todos::input::{InputAction, InputWidget};
 use crate::widgets::todos::{list::ListWidget, status::StatusWidget, tabs::TabsWidget};
@@ -33,6 +35,10 @@ impl TodosTab {
             state: TodosState::new(db),
             input_widget: None,
         }
+    }
+
+    pub fn set_timer_cache(&mut self, cache: Arc<Mutex<TimerCache>>) {
+        self.state.set_timer_cache(cache);
     }
 
     fn items(&self) -> Ref<'_, [Todo]> {

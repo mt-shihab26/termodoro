@@ -1,4 +1,5 @@
 use std::cell::{Cell, Ref, RefCell, RefMut};
+use std::sync::{Arc, Mutex};
 
 use ratatui::{layout::Rect, widgets::ListState};
 use sea_orm::DatabaseConnection;
@@ -6,6 +7,7 @@ use time::Date;
 
 use crate::kinds::{direction::Direction, page::Page, repeat::Repeat};
 use crate::models::{session::Session, todo::Todo};
+use crate::states::timer_cache::TimerCache;
 
 pub struct TodosState {
     db: DatabaseConnection,
@@ -17,6 +19,7 @@ pub struct TodosState {
     list_state: RefCell<ListState>,
     items: RefCell<Option<Vec<Todo>>>,
     count: RefCell<Option<usize>>,
+    timer_cache: Option<Arc<Mutex<TimerCache>>>,
 }
 
 impl TodosState {
@@ -31,7 +34,12 @@ impl TodosState {
             list_state: RefCell::new(ListState::default()),
             items: RefCell::new(None),
             count: RefCell::new(None),
+            timer_cache: None,
         }
+    }
+
+    pub fn set_timer_cache(&mut self, cache: Arc<Mutex<TimerCache>>) {
+        self.timer_cache = Some(cache);
     }
 
     pub fn begin_input(&mut self) -> bool {
@@ -160,6 +168,14 @@ impl TodosState {
         self.invalidate_count();
     }
 
+    fn invalidate_timer_todos(&self) {
+        if let Some(cache) = &self.timer_cache {
+            if let Ok(mut c) = cache.lock() {
+                c.invalidate_todos();
+            }
+        }
+    }
+
     fn invalidate_items(&self) {
         *self.items.borrow_mut() = None;
     }
@@ -220,6 +236,7 @@ impl TodosState {
 
     pub fn refresh(&mut self, page: Page) {
         self.clear_caches();
+        self.invalidate_timer_todos();
         self.clamp_selected(page);
     }
 
