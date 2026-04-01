@@ -1,2 +1,2 @@
-pub mod timer_session;
+pub mod timer;
 pub mod todo;

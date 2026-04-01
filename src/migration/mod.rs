@@ -1,8 +1,8 @@
 pub use sea_orm_migration::MigratorTrait;
 use sea_orm_migration::prelude::*;
 
-mod m20250101_000001_create_todos;
-mod m20260101_000002_create_timer_sessions;
+mod m_00_create_todos;
+mod m_01_create_timer;
 
 pub struct Migrator;
 
@@ -10,8 +10,8 @@ pub struct Migrator;
 impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
-            Box::new(m20250101_000001_create_todos::Migration),
-            Box::new(m20260101_000002_create_timer_sessions::Migration),
+            Box::new(m_00_create_todos::Migration),
+            Box::new(m_01_create_timer::Migration),
         ]
     }
 }

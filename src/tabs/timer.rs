@@ -13,9 +13,9 @@ use sea_orm::DatabaseConnection;
 use tui_big_text::{BigText, PixelSize};
 
 use crate::kinds::{event::Event, page::Page, phase::COLOR};
-use crate::models::{timer_session, todo::Todo};
+use crate::models::{timer, todo::Todo};
 use crate::{config::timer::TimerConfig, states::timer::TimerState};
-use crate::{log_error, log_warn, workers::timer};
+use crate::{log_error, log_warn, workers::timer::spawn};
 
 use super::Tab;
 
@@ -39,7 +39,7 @@ pub struct Timer {
 impl Timer {
     pub fn new(sender: Sender<Event>, timer_config: TimerConfig, db: DatabaseConnection) -> Self {
         let render_count = Arc::new(AtomicU8::new(1));
-        let state = timer::spawn(Arc::clone(&render_count), sender, timer_config, db.clone());
+        let state = spawn(Arc::clone(&render_count), sender, timer_config, db.clone());
 
         Self {
             db,
@@ -83,7 +83,7 @@ impl Timer {
         if let Some((todo_id, _)) = &self.selected_todo {
             let mut cache = self.cached_stats.borrow_mut();
             if cache.1.is_none() || cache.0 != sessions {
-                cache.1 = Some(timer_session::stats_for_todo(&self.db, *todo_id));
+                cache.1 = Some(timer::stats_for_todo(&self.db, *todo_id));
                 cache.0 = sessions;
             }
         }
@@ -219,10 +219,14 @@ impl Tab for Timer {
                 ])
                 .areas(area);
 
-                Paragraph::new(format!("Session {} / {}", sessions + 1, long_break_interval))
-                    .centered()
-                    .fg(Color::DarkGray)
-                    .render(session_row, buf);
+                Paragraph::new(format!(
+                    "Session {} / {}",
+                    sessions + 1,
+                    long_break_interval
+                ))
+                .centered()
+                .fg(Color::DarkGray)
+                .render(session_row, buf);
 
                 Paragraph::new(phase_label)
                     .centered()
@@ -240,7 +244,11 @@ impl Tab for Timer {
 
                 Paragraph::new(if running { "Running" } else { "Paused" })
                     .centered()
-                    .fg(if running { Color::Green } else { Color::DarkGray })
+                    .fg(if running {
+                        Color::Green
+                    } else {
+                        Color::DarkGray
+                    })
                     .render(status_row, buf);
 
                 let todo_line = match &self.selected_todo {
@@ -248,7 +256,12 @@ impl Tab for Timer {
                         let cache = self.cached_stats.borrow();
                         match cache.1 {
                             Some((count, total_secs)) => {
-                                format!("{}  ·  {} sessions  ·  {} min", text, count, total_secs / 60)
+                                format!(
+                                    "{}  ·  {} sessions  ·  {} min",
+                                    text,
+                                    count,
+                                    total_secs / 60
+                                )
                             }
                             None => text.clone(),
                         }
@@ -296,10 +309,14 @@ impl Tab for Timer {
                 ])
                 .areas(area);
 
-                Paragraph::new(format!("Session {} / {}", sessions + 1, long_break_interval))
-                    .centered()
-                    .fg(Color::DarkGray)
-                    .render(session_row, buf);
+                Paragraph::new(format!(
+                    "Session {} / {}",
+                    sessions + 1,
+                    long_break_interval
+                ))
+                .centered()
+                .fg(Color::DarkGray)
+                .render(session_row, buf);
 
                 Paragraph::new(phase_label)
                     .centered()
@@ -317,7 +334,11 @@ impl Tab for Timer {
 
                 Paragraph::new(if running { "Running" } else { "Paused" })
                     .centered()
-                    .fg(if running { Color::Green } else { Color::DarkGray })
+                    .fg(if running {
+                        Color::Green
+                    } else {
+                        Color::DarkGray
+                    })
                     .render(status_row, buf);
 
                 Paragraph::new("Select a todo")

@@ -14,7 +14,7 @@ enum Todos {
 
 impl MigrationName for Migration {
     fn name(&self) -> &str {
-        "m20250101_000001_create_todos"
+        "m_00_create_todos"
     }
 }
 

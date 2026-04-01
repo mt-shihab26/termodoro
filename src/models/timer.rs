@@ -1,15 +1,16 @@
 use std::io;
 
-use sea_orm::{ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, QueryFilter};
-use sea_orm::{DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait};
+use sea_orm::{ActiveModelBehavior, DeriveEntityModel, QueryFilter};
+use sea_orm::{ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection};
+use sea_orm::{DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait};
 use time::OffsetDateTime;
 
 use crate::kinds::phase::Phase;
-use crate::utils::db::rt;
 use crate::log_error;
+use crate::utils::db::rt;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
-#[sea_orm(table_name = "timer_sessions")]
+#[sea_orm(table_name = "timers")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
     pub id: i32,

@@ -14,7 +14,7 @@ enum TimerSessions {
 
 impl MigrationName for Migration {
     fn name(&self) -> &str {
-        "m20260101_000002_create_timer_sessions"
+        "m_01_create_timer"
     }
 }
 
@@ -34,8 +34,16 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(ColumnDef::new(TimerSessions::Phase).string().not_null())
-                    .col(ColumnDef::new(TimerSessions::DurationSecs).integer().not_null())
-                    .col(ColumnDef::new(TimerSessions::CompletedAt).string().not_null())
+                    .col(
+                        ColumnDef::new(TimerSessions::DurationSecs)
+                            .integer()
+                            .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(TimerSessions::CompletedAt)
+                            .string()
+                            .not_null(),
+                    )
                     .col(ColumnDef::new(TimerSessions::TodoId).integer().null())
                     .to_owned(),
             )
