@@ -1,7 +1,9 @@
 use sea_orm::DatabaseConnection;
 
-use crate::kinds::page::Page;
-use crate::models::{session::Session, todo::Todo};
+use crate::{
+    kinds::page::Page,
+    models::{session::Session, todo::Todo},
+};
 
 #[derive(Clone)]
 pub struct Stat {
@@ -41,11 +43,11 @@ impl TimerCache {
     /// Returns stats for all cached todos, querying the DB if needed.
     pub fn get_stats(&mut self) -> &[Stat] {
         if self.stats.is_none() {
-            let stats = self
-                .get_todos()
-                .iter()
-                .map(|t| {
-                    let (sessions, secs) = t.id.map(|id| Session::stats_for_todo(&self.db, id)).unwrap_or((0, 0));
+            let ids: Vec<Option<i32>> = self.get_todos().iter().map(|t| t.id).collect();
+            let stats = ids
+                .into_iter()
+                .map(|id| {
+                    let (sessions, secs) = id.map(|id| Session::stats_for_todo(&self.db, id)).unwrap_or((0, 0));
                     Stat { sessions, secs }
                 })
                 .collect();
