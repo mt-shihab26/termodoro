@@ -5,9 +5,9 @@ use ratatui::{layout::Rect, widgets::ListState};
 use sea_orm::DatabaseConnection;
 use time::Date;
 
+use crate::caches::timer::TimerCache;
 use crate::kinds::{direction::Direction, page::Page, repeat::Repeat};
 use crate::models::{session::Session, todo::Todo};
-use crate::states::timer_cache::TimerCache;
 
 pub struct TodosState {
     db: DatabaseConnection,

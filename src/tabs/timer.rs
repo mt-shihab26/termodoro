@@ -171,8 +171,12 @@ impl Tab for TimerTab {
         drop(state);
 
         let mut cache = self.cache.lock().ok();
-        let todo_text = self.todo_id.and_then(|id| cache.as_mut()?.get_todo(id));
-        let todo_stats = self.todo_id.and_then(|id| cache.as_mut()?.get_stat(id));
+
+        let (todo, stat) = if let (Some(id), Some(c)) = (self.todo_id, cache.as_mut()) {
+            (c.get_todo(id), c.get_stat(id))
+        } else {
+            (None, None)
+        };
 
         let buf = frame.buffer_mut();
 
@@ -198,7 +202,7 @@ impl Tab for TimerTab {
 
         let [todo_row, hint_row] = Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).areas(bottom);
 
-        TodoShowWidget::new(&TodoShowProps::new(todo_text.as_deref(), todo_stats)).render(todo_row, buf);
+        TodoShowWidget::new(&TodoShowProps::new(todo, stat)).render(todo_row, buf);
         HintWidget::new(&HintProps::new(self.picker.is_some())).render(hint_row, buf);
 
         if let Some(picker) = &self.picker {

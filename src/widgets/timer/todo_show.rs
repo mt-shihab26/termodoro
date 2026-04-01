@@ -31,11 +31,11 @@ impl<'a> TodoShowWidget<'a> {
 impl Widget for &TodoShowWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let text = match self.props.todo {
-            Some(text) => match self.props.stat {
+            Some(todo) => match self.props.stat {
                 Some(stat) => {
-                    format!("{}  ·  {} sessions  ·  {} min", text, stat.sessions, stat.secs / 60)
+                    format!("{}  ·  {} sessions  ·  {} min", todo.text, stat.sessions, stat.secs / 60)
                 }
-                None => text.to_string(),
+                None => todo.text.clone(),
             },
             None => "No todo selected  [t] pick".to_string(),
         };

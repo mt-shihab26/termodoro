@@ -20,10 +20,10 @@ use ratatui::{
 };
 
 use crate::{
+    caches::timer::TimerCache,
     config::Config,
     kinds::event::Event,
     log_error, log_info,
-    states::timer_cache::TimerCache,
     tabs::{Tab, timer::TimerTab, todos::TodosTab},
     widgets::layout::fps::{FpsState, FpsWidget},
     workers::term,
