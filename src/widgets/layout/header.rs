@@ -5,13 +5,13 @@ use crate::widgets::layout::fps::FpsProps;
 
 use super::fps::FpsWidget;
 
-pub struct HeaderWidget {
+pub struct HeaderWidget<'a> {
     fps_show: bool,
-    fps_props: FpsProps,
+    fps_props: &'a FpsProps,
 }
 
-impl HeaderWidget {
-    pub fn new(fps_show: bool, fps_props: FpsProps) -> Self {
+impl<'a> HeaderWidget<'a> {
+    pub fn new(fps_show: bool, fps_props: &'a FpsProps) -> Self {
         Self {
             fps_show,
             fps_props,
@@ -19,7 +19,7 @@ impl HeaderWidget {
     }
 }
 
-impl Widget for &HeaderWidget {
+impl<'a> Widget for &HeaderWidget<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         Paragraph::new(Span::from("Orivo").bold().fg(Color::Green))
             .centered()

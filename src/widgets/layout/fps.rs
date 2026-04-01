@@ -5,17 +5,17 @@ pub struct FpsProps {
     frame_per_lifetime: u64,
 }
 
-pub struct FpsWidget {
-    props: FpsProps,
+pub struct FpsWidget<'a> {
+    props: &'a FpsProps,
 }
 
-impl FpsWidget {
-    pub fn new(props: FpsProps) -> Self {
+impl<'a> FpsWidget<'a> {
+    pub fn new(props: &'a FpsProps) -> Self {
         Self { props }
     }
 }
 
-impl Widget for &FpsWidget {
+impl<'a> Widget for &FpsWidget<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         Line::from(
             Span::from(format!(
