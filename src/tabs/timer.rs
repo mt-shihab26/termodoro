@@ -13,8 +13,8 @@ use ratatui::{
     Frame,
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Layout, Rect},
-    style::{Color, Stylize},
-    widgets::{Block, Widget},
+    style::Color,
+    widgets::Widget,
 };
 
 use crate::{
@@ -22,6 +22,7 @@ use crate::{
     kinds::{event::Event, phase::COLOR},
     log_error, log_warn,
     states::{timer::TimerState, timer_cache::TimerCache},
+    widgets::layout::border::{BorderProps, BorderWidget},
     widgets::timer::{
         clock::{ClockProps, ClockWidget},
         hint::{HintProps, HintWidget},
@@ -179,14 +180,12 @@ impl Tab for TimerTab {
         let mut cache = self.cache.lock().ok();
         let todo_text: Option<String> = self
             .todo_id
-            .and_then(|id| cache.as_mut()?.get(id).map(|t| t.text.clone()));
-        let todo_stats = cache.as_ref().and_then(|c| c.stats());
+            .and_then(|id| cache.as_mut()?.get_todo(id).map(|t| t.text.clone()));
+        let todo_stats = cache.as_ref().and_then(|c| c.get_stats());
 
         let buf = frame.buffer_mut();
 
-        let block = Block::bordered().fg(self.color());
-        let inner = block.inner(area);
-        block.render(area, buf);
+        let inner = BorderWidget::new(&BorderProps::new(self.color()), area).render(area, buf);
 
         let [session_row, _, phase_row, _, time_row, _, status_row, _, bottom] = Layout::vertical([
             Constraint::Length(1),

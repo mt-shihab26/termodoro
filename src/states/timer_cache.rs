@@ -26,12 +26,6 @@ impl TimerCache {
         self.todos.as_deref().unwrap_or(&[])
     }
 
-    /// Returns the cached todo with the given id, querying the DB if needed.
-    pub fn get(&mut self, id: i32) -> Option<&Todo> {
-        self.todos();
-        self.todos.as_deref()?.iter().find(|t| t.id == Some(id))
-    }
-
     /// Drops the cached todo list so the next call to `todos()` re-queries.
     pub fn invalidate_todos(&mut self) {
         self.todos = None;
@@ -50,7 +44,13 @@ impl TimerCache {
         }
     }
 
-    pub fn stats(&self) -> Option<(u32, u32)> {
+    /// Returns the cached todo with the given id, querying the DB if needed.
+    pub fn get_todo(&mut self, id: i32) -> Option<&Todo> {
+        self.todos();
+        self.todos.as_deref()?.iter().find(|t| t.id == Some(id))
+    }
+
+    pub fn get_stats(&self) -> Option<(u32, u32)> {
         self.stats.1
     }
 }
