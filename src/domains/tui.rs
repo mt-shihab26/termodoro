@@ -141,8 +141,12 @@ impl App {
         ])
         .areas(frame.area());
 
-        HeaderWidget::new(&HeaderProps::new(self.fps_show, &self.fps_state.props()))
-            .render(top, frame.buffer_mut());
+        HeaderWidget::new(&HeaderProps::new(if self.fps_show {
+            Some(&self.fps_state.props())
+        } else {
+            None
+        }))
+        .render(top, frame.buffer_mut());
 
         let tab_entries: Vec<TabEntry> = self
             .tabs
