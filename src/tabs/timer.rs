@@ -24,7 +24,7 @@ use crate::{
     states::{timer::TimerState, timer_cache::TimerCache},
     widgets::timer::{
         clock::{ClockProps, ClockWidget},
-        hint::HintWidget,
+        hint::{HintProps, HintWidget},
         phase::{PhaseProps, PhaseWidget},
         session::{SessionProps, SessionWidget},
         status::{StatusProps, StatusWidget},
@@ -198,15 +198,10 @@ impl Tab for TimerTab {
         let [todo_row, hint_row] = Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).areas(bottom);
 
         TodoShowWidget::new(&TodoShowProps::new(todo_text, todo_stats)).render(todo_row, buf);
-
-        HintWidget {
-            selecting_todo: self.picker.is_some(),
-        }
-        .render(hint_row, buf);
+        HintWidget::new(&HintProps::new(self.picker.is_some())).render(hint_row, buf);
 
         if let Some(picker) = &self.picker {
-            let props = picker.props();
-            TodoPickerWidget::new(&props).render(inner, buf);
+            TodoPickerWidget::new(&picker.props()).render(inner, buf);
         }
     }
 }
