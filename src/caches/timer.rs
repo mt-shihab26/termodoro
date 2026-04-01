@@ -53,11 +53,8 @@ impl TimerCache {
             let stats = ids
                 .into_iter()
                 .map(|id| {
-                    let (sessions, secs) = id.map(|id| Session::stats_for_todo(&self.db, id)).unwrap_or((0, 0));
-                    Stat {
-                        completed_sessions: sessions,
-                        completed_secs: secs,
-                    }
+                    id.map(|id| Session::stats_for_todo(&self.db, id))
+                        .unwrap_or(Stat { completed_sessions: 0, completed_secs: 0 })
                 })
                 .collect();
             self.stats = Some(stats);

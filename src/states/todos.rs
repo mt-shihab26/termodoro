@@ -5,7 +5,7 @@ use ratatui::{layout::Rect, widgets::ListState};
 use sea_orm::DatabaseConnection;
 use time::Date;
 
-use crate::caches::timer::TimerCache;
+use crate::caches::timer::{Stat, TimerCache};
 use crate::kinds::{direction::Direction, page::Page, repeat::Repeat};
 use crate::models::{session::Session, todo::Todo};
 
@@ -89,7 +89,7 @@ impl TodosState {
         self.direction = None;
     }
 
-    pub fn stats(&self, page: Page) -> Vec<Option<(u32, u32)>> {
+    pub fn stats(&self, page: Page) -> Vec<Option<Stat>> {
         // Only call borrow_mut when the cache is empty. If the caller already
         // holds a Ref from items(), the cache is populated and we skip straight
         // to the immutable borrow below — two simultaneous Refs are allowed.

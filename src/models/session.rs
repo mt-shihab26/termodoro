@@ -5,6 +5,7 @@ use sea_orm::{ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnectio
 use sea_orm::{DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait};
 
 use crate::{
+    caches::timer::Stat,
     kinds::phase::Phase,
     log_error,
     utils::{date::now_utc_str, db::rt},
@@ -46,22 +47,23 @@ impl Session {
         }
     }
 
-    pub fn stats_for_todo(db: &DatabaseConnection, todo_id: i32) -> (u32, u32) {
-        let sessions: Vec<_> = Self::list_for_todo(db, todo_id)
-            .into_iter()
-            .filter(|s| s.completed_at.is_some())
-            .collect();
-        let count = sessions.len() as u32;
-        let total_secs: u32 = sessions.iter().map(|s| s.duration_secs).sum();
-        (count, total_secs)
-    }
-
-    // TODO: Work on logic
     pub fn record(db: &DatabaseConnection, phase: &Phase, duration_millis: u32, todo_id: Option<i32>) {
         Self::new(phase, duration_millis, todo_id).save(db);
     }
 
-    fn list_for_todo(db: &DatabaseConnection, todo_id: i32) -> Vec<Session> {
+    pub fn stats_for_todo(db: &DatabaseConnection, todo_id: i32) -> Stat {
+        let sessions: Vec<_> = Self::get(db, todo_id)
+            .into_iter()
+            .filter(|s| s.completed_at.is_some())
+            .collect();
+
+        Stat {
+            completed_sessions: sessions.len() as u32,
+            completed_secs: sessions.iter().map(|s| s.duration_secs).sum(),
+        }
+    }
+
+    fn get(db: &DatabaseConnection, todo_id: i32) -> Vec<Session> {
         match rt().block_on(async {
             Entity::find()
                 .filter(Column::TodoId.eq(todo_id))
