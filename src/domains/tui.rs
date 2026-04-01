@@ -10,12 +10,12 @@ use ratatui::widgets::{Block, Paragraph};
 use ratatui::{DefaultTerminal, Frame, init, restore};
 use sea_orm::DatabaseConnection;
 
-use crate::log_error;
 use crate::states::timer_cache::TimerCache;
 use crate::tabs::{Tab, timer::TimerTab, todos::TodosTab};
 use crate::widgets::layout::fps::{FpsState, FpsWidget};
 use crate::workers::term;
 use crate::{config::Config, kinds::event::Event};
+use crate::{log_error, log_info};
 
 pub struct App {
     alive: bool,
@@ -183,25 +183,25 @@ impl App {
 
         match event {
             Some(Event::Key(key)) => match key.code {
-                KeyCode::Char('c' | 'q') if ctrl(&key) => self.alive = false,
+                KeyCode::Char('c' | 'q') if ctrl(&key) => self.quit(),
                 KeyCode::Char('f') if ctrl(&key) => self.toggle_fps(),
-                KeyCode::Char('1') if ctrl(&key) => self.selected = 0,
-                KeyCode::Char('2') if ctrl(&key) => self.selected = 1,
-                KeyCode::Tab => self.selected = (self.selected + 1) % self.tabs.len(),
-                _ => self.tabs[self.selected].handle(key).map_err(|e| {
-                    log_error!("tab handle error: {e}");
-                    e
-                })?,
+                KeyCode::Char('1') if ctrl(&key) => self.select_tab(0),
+                KeyCode::Char('2') if ctrl(&key) => self.select_tab(1),
+                KeyCode::Tab => self.next_tab(),
+                _ => self.handle_key(key)?,
             },
-            Some(Event::Resize(_, _)) => {}
+            Some(Event::Resize(width, height)) => {
+                log_info!("resized width: {width}, height: {height}")
+            }
             Some(Event::TimerTick) => {}
-            None => self.tabs[self.selected].next_tick().map_err(|e| {
-                log_error!("tab tick error: {e}");
-                e
-            })?,
+            None => self.tick_tab()?,
         }
 
         Ok(())
+    }
+
+    fn quit(&mut self) {
+        self.alive = false;
     }
 
     fn toggle_fps(&mut self) {
@@ -210,5 +210,27 @@ impl App {
         } else {
             None
         };
+    }
+
+    fn select_tab(&mut self, index: usize) {
+        self.selected = index;
+    }
+
+    fn next_tab(&mut self) {
+        self.selected = (self.selected + 1) % self.tabs.len();
+    }
+
+    fn handle_key(&mut self, key: ratatui::crossterm::event::KeyEvent) -> Result<()> {
+        self.tabs[self.selected].handle(key).map_err(|e| {
+            log_error!("tab handle error: {e}");
+            e
+        })
+    }
+
+    fn tick_tab(&mut self) -> Result<()> {
+        self.tabs[self.selected].next_tick().map_err(|e| {
+            log_error!("tab tick error: {e}");
+            e
+        })
     }
 }
