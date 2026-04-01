@@ -1,5 +1,5 @@
 use std::{
-    io::{Error, ErrorKind, Result},
+    io::Result,
     sync::{
         Arc, Mutex,
         atomic::{AtomicU8, Ordering},
@@ -21,7 +21,7 @@ use crate::{
     caches::timer::{Stat, TimerCache},
     config::timer::TimerConfig,
     kinds::{event::Event, phase::COLOR},
-    log_error, log_warn,
+    log_warn,
     models::todo::Todo,
     states::timer::TimerState,
     widgets::{
@@ -80,11 +80,7 @@ impl TimerTab {
             .lock()
             .map(|mut c| {
                 let stats = c.get_stats().to_vec();
-                c.get_todos()
-                    .iter()
-                    .zip(stats)
-                    .map(|(t, s)| (t.clone(), s))
-                    .collect()
+                c.get_todos().iter().zip(stats).map(|(t, s)| (t.clone(), s)).collect()
             })
             .unwrap_or_default();
         self.picker = Some(TodoPickerState::new(todos));
@@ -98,6 +94,34 @@ impl TimerTab {
         if let Ok(mut s) = self.state.lock() {
             s.selected_todo_id = self.todo_id;
         }
+    }
+
+    fn toggle_running(&self) {
+        if let Ok(mut s) = self.state.lock() {
+            s.running = !s.running;
+        }
+    }
+
+    fn reset(&self) {
+        if let Ok(mut s) = self.state.lock() {
+            s.time_millis = s.phase.duration(&s.config);
+            s.running = false;
+        }
+    }
+
+    fn skip(&self) {
+        if let Ok(mut s) = self.state.lock() {
+            s.advance(false);
+        }
+    }
+
+    fn on_picker_select(&mut self, id: i32) {
+        self.set_selected_todo(Some(id));
+        self.picker = None;
+    }
+
+    fn on_picker_cancel(&mut self) {
+        self.picker = None;
     }
 
     fn todo_info(&self) -> (Option<Todo>, Option<Stat>) {
@@ -125,39 +149,19 @@ impl Tab for TimerTab {
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
         if let Some(picker) = &mut self.picker {
             match picker.handle(key) {
-                TodoPickerAction::Select(id) => {
-                    self.set_selected_todo(Some(id));
-                    self.picker = None;
-                }
-                TodoPickerAction::Cancel => {
-                    self.picker = None;
-                }
+                TodoPickerAction::Select(id) => self.on_picker_select(id),
+                TodoPickerAction::Cancel => self.on_picker_cancel(),
                 TodoPickerAction::None => {}
             }
             return Ok(());
         }
 
-        let mut s = self.state.lock().map_err(|e| {
-            let err = Error::new(ErrorKind::Other, e.to_string());
-            log_error!("timer state mutex poisoned in handle: {err}");
-            err
-        })?;
-
         match key.code {
-            KeyCode::Char(' ') => s.running = !s.running,
-            KeyCode::Char('r') => {
-                s.time_millis = s.phase.duration(&s.config);
-                s.running = false;
-            }
-            KeyCode::Char('n') => s.advance(false),
-            KeyCode::Char('t') => {
-                drop(s);
-                self.open_picker();
-            }
-            KeyCode::Char('T') => {
-                drop(s);
-                self.set_selected_todo(None);
-            }
+            KeyCode::Char(' ') => self.toggle_running(),
+            KeyCode::Char('r') => self.reset(),
+            KeyCode::Char('n') => self.skip(),
+            KeyCode::Char('t') => self.open_picker(),
+            KeyCode::Char('T') => self.set_selected_todo(None),
             _ => {}
         }
 
