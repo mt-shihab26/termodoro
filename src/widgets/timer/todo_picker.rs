@@ -1,11 +1,16 @@
-use ratatui::buffer::Buffer;
-use ratatui::crossterm::event::{KeyCode, KeyEvent};
-use ratatui::layout::Rect;
-use ratatui::style::{Color, Style, Stylize};
-use ratatui::widgets::{Block, Clear, List, ListItem, Paragraph, Widget};
+use ratatui::{
+    buffer::Buffer,
+    crossterm::event::{KeyCode, KeyEvent},
+    layout::Rect,
+    style::{Color, Style, Stylize},
+    widgets::{Block, Clear, List, ListItem, Paragraph, Widget},
+};
+
+use crate::{caches::timer::Stat, models::todo::Todo};
 
 pub struct TodoPickerProps<'a> {
-    todos: &'a [(i32, String)],
+    todos: &'a [(i32, Todo)],
+    stats: &'a [(i32, Stat)],
     cursor: usize,
 }
 
