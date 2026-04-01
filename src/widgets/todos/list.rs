@@ -5,6 +5,7 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{List, ListState, Paragraph, StatefulWidget, Widget};
 use time::Duration;
 
+use crate::caches::timer::Stat;
 use crate::kinds::page::Page;
 use crate::models::todo::Todo;
 use crate::utils::date::today;
@@ -13,7 +14,7 @@ use super::{indicator::IndicatorWidget, item::ItemWidget};
 
 pub struct ListWidget<'a> {
     pub items: &'a [Todo],
-    pub stats: &'a [Option<(u32, u32)>],
+    pub stats: &'a [Option<Stat>],
     pub offset: usize,
     pub page: Page,
     pub selected: usize,
@@ -62,7 +63,7 @@ impl ListWidget<'_> {
             .iter()
             .enumerate()
             .map(|(index, todo)| {
-                let stats = self.stats.get(index).copied().flatten();
+                let stats = self.stats.get(index).cloned().flatten();
                 ItemWidget { todo, stats }.list_item(dimmed, self.offset + index + 1, serial_width)
             })
             .collect::<Vec<_>>();
@@ -105,7 +106,7 @@ impl ListWidget<'_> {
                 selected_row = rows.len();
             }
 
-            let stats = self.stats.get(index).copied().flatten();
+            let stats = self.stats.get(index).cloned().flatten();
             rows.push(ItemWidget { todo, stats }.line(
                 index == self.selected,
                 self.color,

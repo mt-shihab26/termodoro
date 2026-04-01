@@ -2,12 +2,13 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::ListItem;
 
+use crate::caches::timer::Stat;
 use crate::kinds::repeat::Repeat;
 use crate::models::todo::Todo;
 
 pub struct ItemWidget<'a> {
     pub todo: &'a Todo,
-    pub stats: Option<(u32, u32)>,
+    pub stats: Option<Stat>,
 }
 
 impl<'a> ItemWidget<'a> {
@@ -21,9 +22,9 @@ impl<'a> ItemWidget<'a> {
 
         let mut label = format!("{} {}{}", check, repeat_icon, self.todo.text);
 
-        if let Some((count, total_secs)) = self.stats {
-            if count > 0 {
-                label.push_str(&format!("  · {}× {}m", count, total_secs / 60));
+        if let Some(ref stat) = self.stats {
+            if stat.completed_sessions > 0 {
+                label.push_str(&format!("  · {}× {}m", stat.completed_sessions, stat.completed_secs / 60));
             }
         }
 
