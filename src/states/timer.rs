@@ -54,7 +54,7 @@ impl TimerState {
     pub fn advance(&mut self) {
         let duration = self.cycle_phase.duration(&self.config);
 
-        Session::record(&self.db, &self.cycle_phase, duration, self.todo_id, true);
+        Session::record(&self.db, &self.cycle_phase, duration, self.todo_id);
 
         match self.cycle_phase {
             Phase::Work => {

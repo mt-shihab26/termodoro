@@ -3,9 +3,12 @@ use std::io;
 use sea_orm::{ActiveModelBehavior, DeriveEntityModel, QueryFilter, QueryOrder};
 use sea_orm::{ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection};
 use sea_orm::{DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait};
-use time::OffsetDateTime;
 
-use crate::{kinds::phase::Phase, log_error, utils::db::rt};
+use crate::{
+    kinds::phase::Phase,
+    log_error,
+    utils::{date::now_utc_str, db::rt},
+};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "sessions")]
@@ -33,27 +36,12 @@ pub struct Session {
 }
 
 impl Session {
-    pub fn new(phase: &Phase, duration_millis: u32, todo_id: Option<i32>, completed: bool) -> Self {
-        let completed_at = if completed {
-            let dt = OffsetDateTime::now_utc();
-            Some(format!(
-                "{}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
-                dt.year(),
-                dt.month() as u8,
-                dt.day(),
-                dt.hour(),
-                dt.minute(),
-                dt.second()
-            ))
-        } else {
-            None
-        };
-
+    pub fn new(phase: &Phase, duration_millis: u32, todo_id: Option<i32>) -> Self {
         Self {
             id: None,
             phase: phase.to_db_str().to_string(),
             duration_secs: duration_millis / 1000,
-            completed_at,
+            completed_at: Some(now_utc_str()),
             todo_id,
         }
     }
@@ -69,8 +57,8 @@ impl Session {
     }
 
     // TODO: Work on logic
-    pub fn record(db: &DatabaseConnection, phase: &Phase, duration_millis: u32, todo_id: Option<i32>, completed: bool) {
-        Self::new(phase, duration_millis, todo_id, completed).save(db);
+    pub fn record(db: &DatabaseConnection, phase: &Phase, duration_millis: u32, todo_id: Option<i32>) {
+        Self::new(phase, duration_millis, todo_id).save(db);
     }
 
     fn list_for_todo(db: &DatabaseConnection, todo_id: i32) -> Vec<Session> {

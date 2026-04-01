@@ -1,5 +1,20 @@
 use time::{Date, Month, OffsetDateTime};
 
+// TODO: add comments on each fn's
+
+pub fn now_utc_str() -> String {
+    let dt = OffsetDateTime::now_utc();
+    format!(
+        "{}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
+        dt.year(),
+        dt.month() as u8,
+        dt.day(),
+        dt.hour(),
+        dt.minute(),
+        dt.second()
+    )
+}
+
 pub fn today() -> Date {
     OffsetDateTime::now_local()
         .unwrap_or_else(|_| OffsetDateTime::now_utc())
