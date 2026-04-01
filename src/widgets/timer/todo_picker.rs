@@ -9,24 +9,23 @@ use ratatui::{
 use crate::{caches::timer::Stat, models::todo::Todo};
 
 pub struct TodoPickerProps<'a> {
-    todos: &'a [(i32, Todo)],
-    stats: &'a [(i32, Stat)],
+    todos: &'a [(Todo, Stat)],
     cursor: usize,
 }
 
 pub enum TodoPickerAction {
-    Select((i32, String)),
+    Select(i32),
     Cancel,
     None,
 }
 
 pub struct TodoPickerState {
-    todos: Vec<(i32, String)>,
+    todos: Vec<(Todo, Stat)>,
     cursor: usize,
 }
 
 impl TodoPickerState {
-    pub fn new(todos: Vec<(i32, String)>) -> Self {
+    pub fn new(todos: Vec<(Todo, Stat)>) -> Self {
         Self { todos, cursor: 0 }
     }
 
@@ -50,11 +49,12 @@ impl TodoPickerState {
                 TodoPickerAction::None
             }
             KeyCode::Enter => {
-                if let Some(todo) = self.todos.get(self.cursor).cloned() {
-                    TodoPickerAction::Select(todo)
-                } else {
-                    TodoPickerAction::Cancel
+                if let Some((todo, _)) = self.todos.get(self.cursor) {
+                    if let Some(id) = todo.id {
+                        return TodoPickerAction::Select(id);
+                    }
                 }
+                TodoPickerAction::Cancel
             }
             KeyCode::Esc => TodoPickerAction::Cancel,
             _ => TodoPickerAction::None,
@@ -75,7 +75,7 @@ impl<'a> TodoPickerWidget<'a> {
 impl Widget for &TodoPickerWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let list_height = (self.props.todos.len().min(5) as u16).max(1);
-        let popup = centered_rect(area, 42, list_height + 4);
+        let popup = centered_rect(area, 52, list_height + 4);
 
         Clear.render(popup, buf);
 
@@ -108,11 +108,16 @@ impl Widget for &TodoPickerWidget<'_> {
             .enumerate()
             .skip(start)
             .take(5)
-            .map(|(i, (_, text))| {
-                if i == self.props.cursor {
-                    ListItem::new(format!("> {text}")).style(Style::new().fg(Color::Yellow).bold())
+            .map(|(i, (todo, stat))| {
+                let label = if stat.sessions > 0 {
+                    format!("{}  ·  {} sessions", todo.text, stat.sessions)
                 } else {
-                    ListItem::new(format!("  {text}")).style(Style::new().fg(Color::DarkGray))
+                    todo.text.clone()
+                };
+                if i == self.props.cursor {
+                    ListItem::new(format!("> {label}")).style(Style::new().fg(Color::Yellow).bold())
+                } else {
+                    ListItem::new(format!("  {label}")).style(Style::new().fg(Color::DarkGray))
                 }
             })
             .collect();

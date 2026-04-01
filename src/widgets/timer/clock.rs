@@ -1,9 +1,4 @@
-use ratatui::{
-    buffer::Buffer,
-    layout::Rect,
-    style::{Color, Style},
-    widgets::Widget,
-};
+use ratatui::prelude::{Buffer, Color, Rect, Style, Widget};
 use tui_big_text::{BigText, PixelSize};
 
 pub struct ClockProps {

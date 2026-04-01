@@ -20,7 +20,7 @@ impl TimerCache {
         Self {
             db,
             todos: None,
-            stat: None,
+            stats: None,
         }
     }
 
@@ -38,22 +38,37 @@ impl TimerCache {
         self.todos.as_deref()?.iter().find(|t| t.id == Some(id))
     }
 
-    /// Returns the cached session stats for the selected todo, querying the DB if needed.
-    pub fn get_stat(&mut self, todo_id: i32) -> Option<&Stat> {
-        if self.stat.is_none() {
-            let (sessions, secs) = Session::stats_for_todo(&self.db, todo_id);
-            self.stat = Some(Stat { sessions, secs });
+    /// Returns stats for all cached todos, querying the DB if needed.
+    pub fn get_stats(&mut self) -> &[Stat] {
+        if self.stats.is_none() {
+            let stats = self
+                .get_todos()
+                .iter()
+                .map(|t| {
+                    let (sessions, secs) = t.id.map(|id| Session::stats_for_todo(&self.db, id)).unwrap_or((0, 0));
+                    Stat { sessions, secs }
+                })
+                .collect();
+            self.stats = Some(stats);
         }
-        self.stat.as_ref()
+        self.stats.as_deref().unwrap_or(&[])
+    }
+
+    /// Returns the cached session stats for the given todo id, querying the DB if needed.
+    pub fn get_stat(&mut self, todo_id: i32) -> Option<&Stat> {
+        self.get_stats();
+        let idx = self.todos.as_deref()?.iter().position(|t| t.id == Some(todo_id))?;
+        self.stats.as_deref()?.get(idx)
     }
 
     /// Drops the cached todo list so the next call to `get_todos()` re-queries.
     pub fn invalidate_todos(&mut self) {
         self.todos = None;
+        self.stats = None;
     }
 
     /// Drops the cached session stats so they are re-fetched on next render.
     pub fn invalidate_stats(&mut self) {
-        self.stat = None;
+        self.stats = None;
     }
 }

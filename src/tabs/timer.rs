@@ -79,17 +79,19 @@ impl TimerTab {
             .cache
             .lock()
             .map(|mut c| {
+                let stats = c.get_stats().to_vec();
                 c.get_todos()
                     .iter()
-                    .filter_map(|t| t.id.map(|id| (id, t.text.clone())))
+                    .zip(stats)
+                    .map(|(t, s)| (t.clone(), s))
                     .collect()
             })
             .unwrap_or_default();
         self.picker = Some(TodoPickerState::new(todos));
     }
 
-    fn set_selected_todo(&mut self, todo: Option<(i32, String)>) {
-        self.todo_id = todo.map(|(id, _)| id);
+    fn set_selected_todo(&mut self, id: Option<i32>) {
+        self.todo_id = id;
         if let Ok(mut cache) = self.cache.lock() {
             cache.invalidate_stats();
         }
@@ -123,8 +125,8 @@ impl Tab for TimerTab {
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
         if let Some(picker) = &mut self.picker {
             match picker.handle(key) {
-                TodoPickerAction::Select(todo) => {
-                    self.set_selected_todo(Some(todo));
+                TodoPickerAction::Select(id) => {
+                    self.set_selected_todo(Some(id));
                     self.picker = None;
                 }
                 TodoPickerAction::Cancel => {
