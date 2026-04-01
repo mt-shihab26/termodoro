@@ -126,7 +126,7 @@ impl Tab for TimerTab {
                         s.running = !s.running;
                     }
                     KeyCode::Char('r') => {
-                        s.millis = s.phase.duration(&s.config);
+                        s.time_millis = s.phase.duration(&s.config);
                         s.running = false;
                     }
                     KeyCode::Char('n') => {
@@ -187,7 +187,7 @@ impl Tab for TimerTab {
         let long_break_interval = state.config.long_break_interval();
         let phase_label = state.phase.label().to_string();
         let show_millis = state.config.show_millis();
-        let millis = state.millis;
+        let time_millis = state.time_millis;
 
         drop(state);
 
@@ -236,7 +236,7 @@ impl Tab for TimerTab {
         };
         (&phase_w).render(phase_row, buf);
 
-        ClockWidget::new(&ClockProps::new(show_millis, millis, color)).render(time_row, buf);
+        ClockWidget::new(&ClockProps::new(show_millis, time_millis, color)).render(time_row, buf);
 
         (&status_w).render(status_row, buf);
 

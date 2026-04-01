@@ -5,7 +5,7 @@ use crate::{config::timer::TimerConfig, kinds::phase::Phase, models::session::Se
 pub struct TimerState {
     pub db: DatabaseConnection,
     pub phase: Phase,
-    pub millis: u32,
+    pub time_millis: u32,
     pub sessions: u32,
     pub running: bool,
     pub config: TimerConfig,
@@ -16,7 +16,7 @@ impl TimerState {
     pub fn new(timer_config: TimerConfig, db: DatabaseConnection) -> Self {
         Self {
             phase: Phase::Work,
-            millis: timer_config.work_duration(),
+            time_millis: timer_config.work_duration(),
             sessions: 0,
             running: false,
             config: timer_config,
@@ -32,8 +32,8 @@ impl TimerState {
 
         let step = self.config.tick_interval();
 
-        if self.millis >= step {
-            self.millis -= step;
+        if self.time_millis >= step {
+            self.time_millis -= step;
         } else {
             self.advance(true);
         }
@@ -62,7 +62,7 @@ impl TimerState {
                 self.phase = Phase::Work;
             }
         }
-        self.millis = self.phase.duration(&self.config);
+        self.time_millis = self.phase.duration(&self.config);
         self.running = false;
     }
 }
