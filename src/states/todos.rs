@@ -105,7 +105,7 @@ impl TodosState {
             .as_deref()
             .unwrap_or(&[])
             .iter()
-            .map(|t| t.id.map(|id| Session::stats_for_todo(&self.db, id)))
+            .map(|t| t.id.map(|id| Session::stat(&self.db, id)))
             .collect()
     }
 
