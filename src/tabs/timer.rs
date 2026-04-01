@@ -27,7 +27,7 @@ use crate::{
         hint::HintWidget,
         phase::{PhaseProps, PhaseWidget},
         session::{SessionProps, SessionWidget},
-        status::StatusWidget,
+        status::{StatusProps, StatusWidget},
         todo::TodoWidget,
         todo_picker::TodoPickerWidget,
     },
@@ -193,7 +193,6 @@ impl Tab for TimerTab {
 
         self.refresh_stats_if_needed(sessions);
 
-        let status_w = StatusWidget { running };
         let hint_w = HintWidget {
             selecting_todo: matches!(self.mode, TimerMode::SelectingTodo),
         };
@@ -220,8 +219,7 @@ impl Tab for TimerTab {
         SessionWidget::new(&SessionProps::new(sessions, long_break_interval)).render(session_row, buf);
         PhaseWidget::new(&PhaseProps::new(phase_label, color)).render(phase_row, buf);
         ClockWidget::new(&ClockProps::new(show_millis, time_millis, color)).render(time_row, buf);
-
-        (&status_w).render(status_row, buf);
+        StatusWidget::new(&StatusProps::new(running)).render(status_row, buf);
 
         match self.mode {
             TimerMode::Normal => {
