@@ -86,7 +86,20 @@ impl TodosState {
     }
 
     pub fn stats(&self, page: Page) -> Vec<Option<(u32, u32)>> {
-        self.items(page)
+        // Only call borrow_mut when the cache is empty. If the caller already
+        // holds a Ref from items(), the cache is populated and we skip straight
+        // to the immutable borrow below — two simultaneous Refs are allowed.
+        if self.items.borrow().is_none() {
+            let mut guard = self.items.borrow_mut();
+            if guard.is_none() {
+                *guard = Some(Todo::list(&self.db, page, self.offset, self.page_size()));
+            }
+        }
+
+        self.items
+            .borrow()
+            .as_deref()
+            .unwrap_or(&[])
             .iter()
             .map(|t| t.id.map(|id| Session::stats_for_todo(&self.db, id)))
             .collect()
