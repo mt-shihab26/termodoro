@@ -10,6 +10,7 @@ pub struct TimerState {
     pub running: bool,
     pub timer_config: TimerConfig,
     pub db: DatabaseConnection,
+    pub selected_todo_id: Option<i32>,
 }
 
 impl TimerState {
@@ -21,6 +22,7 @@ impl TimerState {
             running: false,
             timer_config,
             db,
+            selected_todo_id: None,
         }
     }
 
@@ -39,9 +41,8 @@ impl TimerState {
     }
 
     pub fn advance(&mut self) {
-        let completed_phase = &self.phase;
-        let duration = completed_phase.duration(&self.timer_config);
-        timer_session::record(&self.db, completed_phase, duration);
+        let duration = self.phase.duration(&self.timer_config);
+        timer_session::record(&self.db, &self.phase, duration, self.selected_todo_id);
 
         match self.phase {
             Phase::Work => {

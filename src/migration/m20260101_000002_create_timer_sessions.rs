@@ -9,6 +9,7 @@ enum TimerSessions {
     Phase,
     DurationSecs,
     CompletedAt,
+    TodoId,
 }
 
 impl MigrationName for Migration {
@@ -35,6 +36,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(TimerSessions::Phase).string().not_null())
                     .col(ColumnDef::new(TimerSessions::DurationSecs).integer().not_null())
                     .col(ColumnDef::new(TimerSessions::CompletedAt).string().not_null())
+                    .col(ColumnDef::new(TimerSessions::TodoId).integer().null())
                     .to_owned(),
             )
             .await
