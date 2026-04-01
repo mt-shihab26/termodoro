@@ -118,4 +118,5 @@ MyWidget::new(self.my_state.props()).render(area, buf);
 - **Widgets are never stored** — created and dropped each frame.
 - **Visibility is the caller's concern** — wrap the render call in an `if` instead of adding a flag inside the widget.
 - **Implement `Widget for &MyWidget`** (shared ref) unless the widget must mutate itself during render, in which case use `&mut MyWidget`.
+- **`State` is optional** — if the widget has no runtime data to track, construct `Props` directly in the caller and skip `State`.
 - **`Action` and `handle` are optional** — add them only when the widget handles input and needs to signal events to the caller. Pure display widgets omit both.
