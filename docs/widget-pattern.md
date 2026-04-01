@@ -6,7 +6,21 @@ Every UI component follows a three-part split: **Action(optional) → Props → 
 
 ---
 
-## The fours parts
+## The four parts
+
+### Action *(optional)*
+
+An enum returned by `State::handle()` to communicate events back to the caller.
+Only add this when the widget must signal something upward (selection, cancellation, etc.).
+If the widget is purely visual with no input handling, skip `Action` and `handle` entirely.
+
+```rust
+pub enum MyAction {
+    Select((i32, String)),
+    Cancel,
+    None,
+}
+```
 
 ### Props
 
@@ -27,7 +41,7 @@ Owns the runtime data that changes over time.
 Lives in the caller (a parent component) — never inside the widget.
 Exposes a `props()` getter so the caller can hand `&props` to the widget at render time without cloning.
 
-Optionally exposes a `handle()` method that processes input and returns an `Action` (see below).
+Optionally exposes a `handle()` method that processes input and returns an `Action`.
 
 ```rust
 pub struct MyState {
@@ -52,20 +66,6 @@ impl MyState {
             _              => MyAction::None,
         }
     }
-}
-```
-
-### Action *(optional)*
-
-An enum returned by `State::handle()` to communicate events back to the caller.
-Only add this when the widget must signal something upward (selection, cancellation, etc.).
-If the widget is purely visual with no input handling, skip `Action` and `handle` entirely.
-
-```rust
-pub enum MyAction {
-    Select((i32, String)),
-    Cancel,
-    None,
 }
 ```
 
