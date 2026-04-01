@@ -1,8 +1,7 @@
-use ratatui::buffer::Buffer;
-use ratatui::layout::Rect;
-use ratatui::style::Color;
-use ratatui::style::Stylize;
-use ratatui::widgets::{Paragraph, Widget};
+use ratatui::{
+    prelude::{Buffer, Color, Rect, Stylize, Widget},
+    widgets::Paragraph,
+};
 
 pub struct StatusProps {
     running: bool,

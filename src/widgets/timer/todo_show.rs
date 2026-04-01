@@ -1,11 +1,9 @@
-use ratatui::buffer::Buffer;
-use ratatui::layout::Rect;
-use ratatui::style::Color;
-use ratatui::style::Stylize;
-use ratatui::widgets::{Paragraph, Widget};
+use ratatui::{
+    prelude::{Buffer, Color, Rect, Stylize, Widget},
+    widgets::Paragraph,
+};
 
-use crate::caches::timer::Stat;
-use crate::models::todo::Todo;
+use crate::{caches::timer::Stat, models::todo::Todo};
 
 pub struct TodoShowProps<'a> {
     todo: Option<&'a Todo>,
