@@ -24,8 +24,7 @@ pub struct App {
     selected: usize,
     tabs: Vec<Box<dyn Tab>>,
     events: Receiver<Event>,
-    fps_show: bool,
-    fps_state: FpsState,
+    fps_state: Option<FpsState>,
 }
 
 impl App {
@@ -44,8 +43,7 @@ impl App {
                 Box::new(TimerTab::new(sender, config.timer, timer_cache, db)),
             ],
             events,
-            fps_show: config.show_fps,
-            fps_state: FpsState::new(),
+            fps_state: config.show_fps.then(FpsState::new),
         }
     }
 
@@ -61,8 +59,8 @@ impl App {
 
     fn event_loop(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
         while self.alive {
-            if self.fps_show {
-                self.fps_state.tick();
+            if let Some(fps_state) = &mut self.fps_state {
+                fps_state.tick();
             }
 
             if let Err(e) = terminal.draw(|frame| self.render_frame(frame)) {
@@ -101,7 +99,11 @@ impl App {
                         self.alive = false;
                     }
                     KeyCode::Char('f') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        self.fps_show = !self.fps_show;
+                        self.fps_state = if self.fps_state.is_none() {
+                            Some(FpsState::new())
+                        } else {
+                            None
+                        }
                     }
                     KeyCode::Char('t') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                         self.selected = 0;
@@ -141,11 +143,9 @@ impl App {
         ])
         .areas(frame.area());
 
-        HeaderWidget::new(&HeaderProps::new(if self.fps_show {
-            Some(&self.fps_state.props())
-        } else {
-            None
-        }))
+        HeaderWidget::new(&HeaderProps::new(
+            self.fps_state.as_ref().map(|s| s.props()),
+        ))
         .render(top, frame.buffer_mut());
 
         let tab_entries: Vec<TabEntry> = self
