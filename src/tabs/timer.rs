@@ -28,8 +28,8 @@ use crate::{
         phase::{PhaseProps, PhaseWidget},
         session::{SessionProps, SessionWidget},
         status::{StatusProps, StatusWidget},
-        todo::{TodoProps, TodoWidget},
         todo_picker::{TodoPickerAction, TodoPickerState, TodoPickerWidget},
+        todo_show::{TodoShowProps, TodoShowWidget},
     },
     workers::timer::spawn,
 };
@@ -171,10 +171,6 @@ impl Tab for TimerTab {
         let todo_text = self.todo.as_ref().map(|(_, t)| t.as_str());
         let todo_stats = self.cache.lock().ok().and_then(|c| c.stats());
 
-        let hint_w = HintWidget {
-            selecting_todo: self.picker.is_some(),
-        };
-
         let buf = frame.buffer_mut();
 
         let block = Block::bordered().fg(self.color());
@@ -201,9 +197,12 @@ impl Tab for TimerTab {
 
         let [todo_row, hint_row] = Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).areas(bottom);
 
-        TodoWidget::new(&TodoProps::new(todo_text, todo_stats)).render(todo_row, buf);
+        TodoShowWidget::new(&TodoShowProps::new(todo_text, todo_stats)).render(todo_row, buf);
 
-        (&hint_w).render(hint_row, buf);
+        HintWidget {
+            selecting_todo: self.picker.is_some(),
+        }
+        .render(hint_row, buf);
 
         if let Some(picker) = &self.picker {
             let props = picker.props();

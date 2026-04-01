@@ -4,28 +4,28 @@ use ratatui::style::Color;
 use ratatui::style::Stylize;
 use ratatui::widgets::{Paragraph, Widget};
 
-pub struct TodoProps<'a> {
+pub struct TodoShowProps<'a> {
     selected: Option<&'a str>,
     stats: Option<(u32, u32)>,
 }
 
-impl<'a> TodoProps<'a> {
+impl<'a> TodoShowProps<'a> {
     pub fn new(selected: Option<&'a str>, stats: Option<(u32, u32)>) -> Self {
         Self { selected, stats }
     }
 }
 
-pub struct TodoWidget<'a> {
-    props: &'a TodoProps<'a>,
+pub struct TodoShowWidget<'a> {
+    props: &'a TodoShowProps<'a>,
 }
 
-impl<'a> TodoWidget<'a> {
-    pub fn new(props: &'a TodoProps<'a>) -> Self {
+impl<'a> TodoShowWidget<'a> {
+    pub fn new(props: &'a TodoShowProps<'a>) -> Self {
         Self { props }
     }
 }
 
-impl Widget for &TodoWidget<'_> {
+impl Widget for &TodoShowWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let text = match self.props.selected {
             Some(text) => match self.props.stats {
