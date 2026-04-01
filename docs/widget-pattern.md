@@ -1,22 +1,23 @@
 # Widget Pattern
 
-Every UI component follows a three-part split: **Props → State → Widget**.
+Every UI component follows a three-part split: **Action(optional) → Props → State(optional) → Widget**.
 
-> A complete real-world example of this pattern: `src/widgets/layout/fps.rs`
+> A complete real-world example of this pattern: `src/widgets/layout/fps.rs` or `src/widgets/timer/todo_picker.rs`
 
 ---
 
-## The three parts
+## The fours parts
 
 ### Props
 
-Holds the data a widget needs to render one frame. 
+Holds the data a widget needs to render one frame.
 It is a plain struct with no behaviour — just fields.
 The widget borrows `&Props`, it never owns or mutates it.
 
 ```rust
-pub struct MyProps {
-    value: u64,
+pub struct MyProps<'a> {
+    items: &'a [(i32, String)],
+    cursor: usize,
 }
 ```
 
@@ -26,15 +27,45 @@ Owns the runtime data that changes over time.
 Lives in the caller (a parent component) — never inside the widget.
 Exposes a `props()` getter so the caller can hand `&props` to the widget at render time without cloning.
 
+Optionally exposes a `handle()` method that processes input and returns an `Action` (see below).
+
 ```rust
 pub struct MyState {
-    props: MyProps,           // private
-    // private tracking fields ...
+    items: Vec<(i32, String)>,  // private
+    cursor: usize,              // private tracking fields
 }
 
 impl MyState {
-    pub fn props(&self) -> &MyProps { &self.props }
-    pub fn tick(&mut self) { /* update props */ }
+    pub fn new(items: Vec<(i32, String)>) -> Self {
+        Self { items, cursor: 0 }
+    }
+
+    pub fn props(&self) -> MyProps<'_> {
+        MyProps { items: &self.items, cursor: self.cursor }
+    }
+
+    // optional — only add if the widget handles input
+    pub fn handle(&mut self, key: KeyEvent) -> MyAction {
+        match key.code {
+            KeyCode::Enter => { /* ... */ MyAction::Select(…) }
+            KeyCode::Esc   => MyAction::Cancel,
+            _              => MyAction::None,
+        }
+    }
+}
+```
+
+### Action *(optional)*
+
+An enum returned by `State::handle()` to communicate events back to the caller.
+Only add this when the widget must signal something upward (selection, cancellation, etc.).
+If the widget is purely visual with no input handling, skip `Action` and `handle` entirely.
+
+```rust
+pub enum MyAction {
+    Select((i32, String)),
+    Cancel,
+    None,
 }
 ```
 
@@ -46,11 +77,11 @@ Borrows `&Props` for the duration of one render call, then is dropped.
 
 ```rust
 pub struct MyWidget<'a> {
-    props: &'a MyProps,
+    props: &'a MyProps<'a>,
 }
 
 impl<'a> MyWidget<'a> {
-    pub fn new(props: &'a MyProps) -> Self { Self { props } }
+    pub fn new(props: &'a MyProps<'a>) -> Self { Self { props } }
 }
 
 impl Widget for &MyWidget<'_> {
@@ -66,8 +97,13 @@ impl Widget for &MyWidget<'_> {
 // 1. Own the state
 my_state: MyState,
 
-// 2. Update it before drawing
-self.my_state.tick();
+// 2. Handle input (optional — only when Action/handle are present)
+let action = self.my_state.handle(key_event);
+match action {
+    MyAction::Select(item) => { /* do something with item */ }
+    MyAction::Cancel       => { /* dismiss the widget */ }
+    MyAction::None         => {}
+}
 
 // 3. Pass props via getter into the widget at render time
 MyWidget::new(self.my_state.props()).render(area, buf);
@@ -81,6 +117,4 @@ MyWidget::new(self.my_state.props()).render(area, buf);
 - **Widgets are never stored** — created and dropped each frame.
 - **Visibility is the caller's concern** — wrap the render call in an `if` instead of adding a flag inside the widget.
 - **Implement `Widget for &MyWidget`** (shared ref) unless the widget must mutate itself during render, in which case use `&mut MyWidget`.
-
----
-
+- **`Action` and `handle` are optional** — add them only when the widget handles input and needs to signal events to the caller. Pure display widgets omit both.
