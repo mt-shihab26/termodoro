@@ -10,9 +10,8 @@ use ratatui::style::{Color, Style, Stylize};
 use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_big_text::{BigText, PixelSize};
 
-use crate::config::timer::TimerConfig;
 use crate::kinds::{event::Event, phase::COLOR};
-use crate::models::timer::TimerState;
+use crate::{config::timer::TimerConfig, states::timer::TimerState};
 use crate::{log_error, log_warn, workers::timer};
 
 use super::Tab;

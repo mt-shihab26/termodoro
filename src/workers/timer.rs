@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex, mpsc::Sender};
 use std::{thread, time::Duration};
 
 use crate::config::timer::TimerConfig;
-use crate::models::timer::TimerState;
+use crate::states::timer::TimerState;
 use crate::{kinds::event::Event, log_error, log_warn};
 
 pub fn spawn(
