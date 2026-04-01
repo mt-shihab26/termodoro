@@ -11,7 +11,7 @@ pub struct HintWidget {
     pub can_delete: bool,
 }
 
-impl Widget for HintWidget {
+impl Widget for &HintWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let hint = match self.ui_mode {
             Mode::Normal => match self.page {

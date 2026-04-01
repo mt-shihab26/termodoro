@@ -1,4 +1,7 @@
-use ratatui::{Frame, layout::Rect, style::Stylize, widgets::Paragraph};
+use ratatui::buffer::Buffer;
+use ratatui::layout::Rect;
+use ratatui::style::Stylize;
+use ratatui::widgets::{Paragraph, Widget};
 
 use crate::tabs::todos::COLOR;
 
@@ -7,17 +10,29 @@ pub struct IndicatorWidget {
     pub show_more_below: bool,
 }
 
-impl IndicatorWidget {
-    pub fn render(self, frame: &mut Frame, top_area: Rect, bottom_area: Rect) {
-        if self.show_more_above && top_area.height > 0 {
-            frame.render_widget(Paragraph::new("^ more").fg(COLOR).right_aligned(), top_area);
+impl Widget for &IndicatorWidget {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let horizontal_padding = 2;
+        let inner_width = area.width.saturating_sub(horizontal_padding * 2);
+
+        if self.show_more_above {
+            let top_area = Rect {
+                x: area.x + horizontal_padding,
+                y: area.y,
+                width: inner_width,
+                height: 1,
+            };
+            Paragraph::new("^ more").fg(COLOR).right_aligned().render(top_area, buf);
         }
 
-        if self.show_more_below && bottom_area.height > 0 {
-            frame.render_widget(
-                Paragraph::new("v more").fg(COLOR).right_aligned(),
-                bottom_area,
-            );
+        if self.show_more_below && area.height > 0 {
+            let bottom_area = Rect {
+                x: area.x + horizontal_padding,
+                y: area.y + area.height.saturating_sub(1),
+                width: inner_width,
+                height: 1,
+            };
+            Paragraph::new("v more").fg(COLOR).right_aligned().render(bottom_area, buf);
         }
     }
 }

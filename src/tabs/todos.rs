@@ -167,30 +167,33 @@ impl Tab for TodosTab {
         let to = self.state.to(items.len());
         let page = self.state.page();
 
-        frame.render_widget(StatusWidget::new(total, from, to, page), area);
+        frame.render_widget(&StatusWidget::new(total, from, to, page), area);
 
         frame.render_widget(
-            TabsWidget {
+            &TabsWidget {
                 page: self.page,
                 color: self.color(),
             },
             tabs_area,
         );
 
-        ListWidget {
-            items: &items,
-            stats: &stats,
-            offset: self.state.offset(),
-            page: self.page,
-            selected: self.state.selected(),
-            color: self.color(),
-            show_more_above: self.state.show_more_above(),
-            show_more_below: self.state.show_more_below(items.len()),
-        }
-        .render(frame, list_area, &mut self.state.list_state_mut());
+        frame.render_stateful_widget(
+            &ListWidget {
+                items: &items,
+                stats: &stats,
+                offset: self.state.offset(),
+                page: self.page,
+                selected: self.state.selected(),
+                color: self.color(),
+                show_more_above: self.state.show_more_above(),
+                show_more_below: self.state.show_more_below(items.len()),
+            },
+            list_area,
+            &mut self.state.list_state_mut(),
+        );
 
         frame.render_widget(
-            HintWidget {
+            &HintWidget {
                 page: self.page,
                 ui_mode: self.mode,
                 can_delete: self.state.can_delete(self.page, &items),

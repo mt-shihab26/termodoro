@@ -1,8 +1,8 @@
-use ratatui::Frame;
+use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{List, ListState, Paragraph};
+use ratatui::widgets::{List, ListState, Paragraph, StatefulWidget, Widget};
 use time::Duration;
 
 use crate::kinds::page::Page;
@@ -22,23 +22,13 @@ pub struct ListWidget<'a> {
     pub show_more_below: bool,
 }
 
-impl<'a> ListWidget<'a> {
-    pub fn render(self, frame: &mut Frame, area: Rect, state: &mut ListState) {
+impl StatefulWidget for &ListWidget<'_> {
+    type State = ListState;
+
+    fn render(self, area: Rect, buf: &mut Buffer, state: &mut ListState) {
         let horizontal_padding = 2;
         let top_padding = 1;
         let bottom_padding = 1;
-        let top_indicator_area = Rect {
-            x: area.x + horizontal_padding,
-            y: area.y,
-            width: area.width.saturating_sub(horizontal_padding * 2),
-            height: top_padding,
-        };
-        let bottom_indicator_area = Rect {
-            x: area.x + horizontal_padding,
-            y: area.y + area.height.saturating_sub(bottom_padding),
-            width: area.width.saturating_sub(horizontal_padding * 2),
-            height: bottom_padding,
-        };
         let padded_area = Rect {
             x: area.x + horizontal_padding,
             y: area.y + top_padding,
@@ -51,18 +41,20 @@ impl<'a> ListWidget<'a> {
         }
 
         match self.page {
-            Page::Index => self.render_index(frame, padded_area),
-            Page::Due | Page::Today | Page::History => self.render_flat(frame, padded_area, state),
+            Page::Index => self.render_index(padded_area, buf),
+            Page::Due | Page::Today | Page::History => self.render_flat(padded_area, buf, state),
         }
 
         IndicatorWidget {
             show_more_above: self.show_more_above,
             show_more_below: self.show_more_below,
         }
-        .render(frame, top_indicator_area, bottom_indicator_area);
+        .render(area, buf);
     }
+}
 
-    fn render_flat(&self, frame: &mut Frame, area: Rect, state: &mut ListState) {
+impl ListWidget<'_> {
+    fn render_flat(&self, area: Rect, buf: &mut Buffer, state: &mut ListState) {
         let dimmed = matches!(self.page, Page::History);
         let serial_width = (self.offset + self.items.len()).max(1).to_string().len();
         let items = self
@@ -79,10 +71,10 @@ impl<'a> ListWidget<'a> {
             .highlight_style(Style::default().fg(self.color).bold())
             .highlight_symbol(">");
 
-        frame.render_stateful_widget(list, area, state);
+        StatefulWidget::render(list, area, buf, state);
     }
 
-    fn render_index(&self, frame: &mut Frame, area: Rect) {
+    fn render_index(&self, area: Rect, buf: &mut Buffer) {
         let (rows, selected_row) = self.index_rows(area.width as usize);
         let visible_rows = area.height as usize;
         let start = if rows.len() <= visible_rows {
@@ -94,7 +86,7 @@ impl<'a> ListWidget<'a> {
         };
         let end = (start + visible_rows).min(rows.len());
 
-        frame.render_widget(Paragraph::new(rows[start..end].to_vec()), area);
+        Paragraph::new(rows[start..end].to_vec()).render(area, buf);
     }
 
     fn index_rows(&self, width: usize) -> (Vec<Line<'static>>, usize) {

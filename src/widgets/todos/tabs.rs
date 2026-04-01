@@ -10,7 +10,7 @@ pub struct TabsWidget {
     pub color: Color,
 }
 
-impl Widget for TabsWidget {
+impl Widget for &TabsWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let tab_titles: Vec<&str> = Page::ALL.iter().map(|p| p.label()).collect();
         let tabs_width: u16 = Page::ALL
