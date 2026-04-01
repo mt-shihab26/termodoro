@@ -10,21 +10,22 @@ use ratatui::widgets::Widget;
 use ratatui::{DefaultTerminal, Frame, init, restore};
 use sea_orm::DatabaseConnection;
 
+use crate::log_error;
 use crate::states::timer_cache::TimerCache;
 use crate::tabs::{Tab, timer::TimerTab, todos::TodosTab};
-use crate::widgets::layout::fps::FpsProps;
+use crate::widgets::layout::fps::FpsState;
 use crate::widgets::layout::header::{HeaderProps, HeaderWidget};
 use crate::widgets::layout::tabs_bar::{TabEntry, TabsBarWidget};
 use crate::workers::term;
 use crate::{config::Config, kinds::event::Event};
-use crate::{log_error, widgets::fps::FpsWidget};
 
 pub struct App {
     alive: bool,
     selected: usize,
     tabs: Vec<Box<dyn Tab>>,
     events: Receiver<Event>,
-    fps_widget: Option<FpsWidget>,
+    fps_show: bool,
+    fps_state: FpsState,
 }
 
 impl App {
@@ -43,7 +44,8 @@ impl App {
                 Box::new(TimerTab::new(sender, config.timer, timer_cache, db)),
             ],
             events,
-            fps_widget: config.show_fps.then(FpsWidget::new),
+            fps_show: config.show_fps,
+            fps_state: FpsState::new(),
         }
     }
 
@@ -59,8 +61,8 @@ impl App {
 
     fn event_loop(&mut self, terminal: &mut DefaultTerminal) -> Result<()> {
         while self.alive {
-            if let Some(fps_widget) = &mut self.fps_widget {
-                fps_widget.tick();
+            if self.fps_show {
+                self.fps_state.tick();
             }
 
             if let Err(e) = terminal.draw(|frame| self.render_frame(frame)) {
@@ -99,11 +101,7 @@ impl App {
                         self.alive = false;
                     }
                     KeyCode::Char('f') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                        if self.fps_widget.is_some() {
-                            self.fps_widget = None;
-                        } else {
-                            self.fps_widget = Some(FpsWidget::new());
-                        }
+                        self.fps_show = !self.fps_show;
                     }
                     KeyCode::Char('t') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                         self.selected = 0;
@@ -143,11 +141,8 @@ impl App {
         ])
         .areas(frame.area());
 
-        HeaderWidget::new(&HeaderProps::new(
-            self.fps_widget.is_some(),
-            &FpsProps::new(0.0, 0),
-        ))
-        .render(top, frame.buffer_mut());
+        HeaderWidget::new(&HeaderProps::new(self.fps_show, &self.fps_state.props))
+            .render(top, frame.buffer_mut());
 
         let tab_entries: Vec<TabEntry> = self
             .tabs
