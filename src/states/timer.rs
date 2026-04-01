@@ -1,11 +1,14 @@
+use std::sync::{Arc, Mutex};
+
 use sea_orm::DatabaseConnection;
 
-use crate::{config::timer::TimerConfig, kinds::phase::Phase, models::session::Session};
+use crate::{caches::timer::TimerCache, config::timer::TimerConfig, kinds::phase::Phase, models::session::Session};
 
 /// Runtime state for the pomodoro timer, owned by the timer worker thread.
 pub struct TimerState {
     pub db: DatabaseConnection,
     pub config: TimerConfig,
+    pub cache: Arc<Mutex<TimerCache>>,
     /// Whether the timer is actively counting down.
     pub is_running: bool,
     /// Remaining time in the current phase, in milliseconds.
@@ -19,7 +22,7 @@ pub struct TimerState {
 }
 
 impl TimerState {
-    pub fn new(config: TimerConfig, db: DatabaseConnection) -> Self {
+    pub fn new(config: TimerConfig, cache: Arc<Mutex<TimerCache>>, db: DatabaseConnection) -> Self {
         Self {
             cycle_phase: Phase::Work,
             time_millis: config.work_duration(),
@@ -28,6 +31,7 @@ impl TimerState {
             config,
             db,
             todo_id: None,
+            cache,
         }
     }
 
@@ -67,5 +71,9 @@ impl TimerState {
         }
         self.time_millis = self.cycle_phase.duration(&self.config);
         self.is_running = false;
+
+        if let Ok(mut c) = self.cache.lock() {
+            c.invalidate_stats();
+        }
     }
 }

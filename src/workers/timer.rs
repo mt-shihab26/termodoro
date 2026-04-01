@@ -4,6 +4,7 @@ use std::{thread, time::Duration};
 
 use sea_orm::DatabaseConnection;
 
+use crate::caches::timer::TimerCache;
 use crate::config::timer::TimerConfig;
 use crate::states::timer::TimerState;
 use crate::{kinds::event::Event, log_error, log_warn};
@@ -12,9 +13,10 @@ pub fn spawn(
     count: Arc<AtomicU8>,
     sender: Sender<Event>,
     timer_config: TimerConfig,
+    cache: Arc<Mutex<TimerCache>>,
     db: DatabaseConnection,
 ) -> Arc<Mutex<TimerState>> {
-    let state = Arc::new(Mutex::new(TimerState::new(timer_config, db)));
+    let state = Arc::new(Mutex::new(TimerState::new(timer_config, cache, db)));
 
     let thread_state = Arc::clone(&state);
 

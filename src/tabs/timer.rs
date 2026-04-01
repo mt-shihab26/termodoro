@@ -1,5 +1,4 @@
 use std::{
-    cell::Cell,
     io::Result,
     sync::{
         Arc, Mutex,
@@ -47,8 +46,6 @@ pub struct TimerTab {
     cache: Arc<Mutex<TimerCache>>,
     state: Arc<Mutex<TimerState>>,
     picker: Option<TodoPickerState>,
-    /// Tracks the last seen sessions_count to detect natural timer advances.
-    last_sessions: Cell<u32>,
 }
 
 impl TimerTab {
@@ -59,14 +56,13 @@ impl TimerTab {
         db: DatabaseConnection,
     ) -> Self {
         let count = Arc::new(AtomicU8::new(1));
-        let state = spawn(Arc::clone(&count), sender, config, db);
+        let state = spawn(Arc::clone(&count), sender, config, Arc::clone(&cache), db);
 
         Self {
             count,
             cache,
             state,
             picker: None,
-            last_sessions: Cell::new(0),
         }
     }
 
@@ -101,9 +97,6 @@ impl TimerTab {
     fn skip_session(&self) {
         if let Ok(mut s) = self.state.lock() {
             s.advance();
-        }
-        if let Ok(mut c) = self.cache.lock() {
-            c.invalidate_stats();
         }
     }
 
