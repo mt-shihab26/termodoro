@@ -46,7 +46,6 @@ pub struct TimerTab {
     state: Arc<Mutex<TimerState>>,
     cache: Arc<Mutex<TimerCache>>,
     picker: Option<TodoPickerState>,
-    todo_id: Option<i32>,
 }
 
 impl TimerTab {
@@ -64,45 +63,22 @@ impl TimerTab {
             state,
             cache,
             picker: None,
-            todo_id: None,
         }
     }
 
-    fn tick_render_count(&self) {
-        let current = self.count.load(Ordering::Relaxed);
-        let next = (current + 1) % u8::MAX;
-        self.count.store(next, Ordering::Relaxed);
-    }
-
-    fn on_picker_select(&mut self, id: i32) {
-        self.set_selected_todo(Some(id));
-        self.picker = None;
-    }
-
-    fn on_picker_cancel(&mut self) {
-        self.picker = None;
-    }
-
-    fn open_picker(&mut self) {
-        let todos = self
-            .cache
-            .lock()
-            .map(|mut c| {
-                let stats = c.get_stats().to_vec();
-                c.get_todos().iter().zip(stats).map(|(t, s)| (t.clone(), s)).collect()
-            })
-            .unwrap_or_default();
-        self.picker = Some(TodoPickerState::new(todos));
-    }
-
-    fn set_selected_todo(&mut self, id: Option<i32>) {
-        self.todo_id = id;
-        if let Ok(mut cache) = self.cache.lock() {
-            cache.invalidate_stats();
-        }
+    fn set_todo(&mut self, todo_id: Option<i32>) {
         if let Ok(mut s) = self.state.lock() {
-            s.selected_todo_id = self.todo_id;
+            s.todo_id = todo_id;
         }
+    }
+
+    fn picker_select(&mut self, id: i32) {
+        self.set_todo(Some(id));
+        self.picker = None;
+    }
+
+    fn picker_cancel(&mut self) {
+        self.picker = None;
     }
 
     fn toggle_running(&self) {
@@ -122,6 +98,28 @@ impl TimerTab {
         if let Ok(mut s) = self.state.lock() {
             s.advance(false);
         }
+    }
+
+    fn open_picker(&mut self) {
+        let todos = self
+            .cache
+            .lock()
+            .map(|mut c| {
+                let stats = c.get_stats().to_vec();
+                c.get_todos().iter().zip(stats).map(|(t, s)| (t.clone(), s)).collect()
+            })
+            .unwrap_or_default();
+        self.picker = Some(TodoPickerState::new(todos));
+    }
+
+    fn clear_todo(&mut self) {
+        self.set_todo(None);
+    }
+
+    fn tick_render_count(&self) {
+        let current = self.count.load(Ordering::Relaxed);
+        let next = (current + 1) % u8::MAX;
+        self.count.store(next, Ordering::Relaxed);
     }
 
     fn todo_info(&self) -> (Option<Todo>, Option<Stat>) {
@@ -149,8 +147,8 @@ impl Tab for TimerTab {
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
         if let Some(picker) = &mut self.picker {
             match picker.handle(key) {
-                TodoPickerAction::Select(id) => self.on_picker_select(id),
-                TodoPickerAction::Cancel => self.on_picker_cancel(),
+                TodoPickerAction::Select(id) => self.picker_select(id),
+                TodoPickerAction::Cancel => self.picker_cancel(),
                 TodoPickerAction::None => {}
             }
             return Ok(());
@@ -161,7 +159,7 @@ impl Tab for TimerTab {
             KeyCode::Char('r') => self.reset(),
             KeyCode::Char('n') => self.skip(),
             KeyCode::Char('t') => self.open_picker(),
-            KeyCode::Char('T') => self.set_selected_todo(None),
+            KeyCode::Char('T') => self.clear_todo(),
             _ => {}
         }
 
