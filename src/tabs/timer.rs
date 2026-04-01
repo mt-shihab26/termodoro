@@ -18,10 +18,11 @@ use ratatui::{
 };
 
 use crate::{
-    caches::timer::TimerCache,
+    caches::timer::{Stat, TimerCache},
     config::timer::TimerConfig,
     kinds::{event::Event, phase::COLOR},
     log_error, log_warn,
+    models::todo::Todo,
     states::timer::TimerState,
     widgets::{
         layout::border::{BorderProps, BorderWidget},
@@ -85,6 +86,16 @@ impl TimerTab {
             })
             .unwrap_or_default();
         self.picker = Some(TodoPickerState::new(todos));
+    }
+
+    fn selected_todo_info(&self) -> (Option<Todo>, Option<Stat>) {
+        let Some(id) = self.todo_id else { return (None, None) };
+        let Ok(mut cache) = self.cache.lock() else {
+            return (None, None);
+        };
+        let todo = cache.get_todo(id).cloned();
+        let stat = cache.get_stat(id).cloned();
+        (todo, stat)
     }
 
     fn set_selected_todo(&mut self, todo: Option<(i32, String)>) {
@@ -170,13 +181,7 @@ impl Tab for TimerTab {
 
         drop(state);
 
-        let mut cache = self.cache.lock().ok();
-
-        let (todo, stat) = if let (Some(id), Some(c)) = (self.todo_id, cache.as_mut()) {
-            (c.get_todo(id), c.get_stat(id))
-        } else {
-            (None, None)
-        };
+        let (todo, stat) = self.selected_todo_info();
 
         let buf = frame.buffer_mut();
 
@@ -202,7 +207,7 @@ impl Tab for TimerTab {
 
         let [todo_row, hint_row] = Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).areas(bottom);
 
-        TodoShowWidget::new(&TodoShowProps::new(todo, stat)).render(todo_row, buf);
+        TodoShowWidget::new(&TodoShowProps::new(todo.as_ref(), stat.as_ref())).render(todo_row, buf);
         HintWidget::new(&HintProps::new(self.picker.is_some())).render(hint_row, buf);
 
         if let Some(picker) = &self.picker {

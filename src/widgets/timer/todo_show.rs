@@ -13,8 +13,8 @@ pub struct TodoShowProps<'a> {
 }
 
 impl<'a> TodoShowProps<'a> {
-    pub fn new(selected: Option<&'a Todo>, stat: Option<&'a Stat>) -> Self {
-        Self { todo: selected, stat }
+    pub fn new(todo: Option<&'a Todo>, stat: Option<&'a Stat>) -> Self {
+        Self { todo, stat }
     }
 }
 
@@ -33,7 +33,12 @@ impl Widget for &TodoShowWidget<'_> {
         let text = match self.props.todo {
             Some(todo) => match self.props.stat {
                 Some(stat) => {
-                    format!("{}  ·  {} sessions  ·  {} min", todo.text, stat.sessions, stat.secs / 60)
+                    format!(
+                        "{}  ·  {} sessions  ·  {} min",
+                        todo.text,
+                        stat.sessions,
+                        stat.secs / 60
+                    )
                 }
                 None => todo.text.clone(),
             },

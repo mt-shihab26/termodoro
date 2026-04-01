@@ -3,6 +3,7 @@ use sea_orm::DatabaseConnection;
 use crate::kinds::page::Page;
 use crate::models::{session::Session, todo::Todo};
 
+#[derive(Clone)]
 pub struct Stat {
     pub sessions: u32,
     pub secs: u32,
