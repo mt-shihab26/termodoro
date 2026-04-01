@@ -4,15 +4,15 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Style, Stylize};
 use ratatui::widgets::{Block, Clear, List, ListItem, Paragraph, Widget};
 
+pub struct TodoPickerProps<'a> {
+    todos: &'a [(i32, String)],
+    cursor: usize,
+}
+
 pub enum TodoPickerAction {
     Select((i32, String)),
     Cancel,
     None,
-}
-
-pub struct TodoPickerProps<'a> {
-    todos: &'a [(i32, String)],
-    cursor: usize,
 }
 
 pub struct TodoPickerState {
