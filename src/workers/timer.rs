@@ -9,7 +9,7 @@ use crate::states::timer::TimerState;
 use crate::{kinds::event::Event, log_error, log_warn};
 
 pub fn spawn(
-    render_count: Arc<AtomicU8>,
+    count: Arc<AtomicU8>,
     sender: Sender<Event>,
     timer_config: TimerConfig,
     db: DatabaseConnection,
@@ -38,7 +38,7 @@ pub fn spawn(
 
             thread::sleep(Duration::from_millis(interval as u64));
 
-            let current_render_count = render_count.load(Ordering::Relaxed);
+            let current_render_count = count.load(Ordering::Relaxed);
 
             if running && current_render_count != last_render_count {
                 last_render_count = current_render_count;

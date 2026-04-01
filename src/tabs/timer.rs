@@ -32,54 +32,55 @@ use crate::{
 use super::Tab;
 
 pub struct TimerTab {
+    count: Arc<AtomicU8>,
     mode: TimerMode,
     state: Arc<Mutex<TimerState>>,
     cache: Arc<Mutex<TimerCache>>,
-    render_count: Arc<AtomicU8>,
+    // ---
     todos: Vec<(i32, String)>,
-    todo_cursor: usize,
-    selected_todo: Option<(i32, String)>,
+    cursor: usize,
+    selected: Option<(i32, String)>,
 }
 
 impl TimerTab {
     pub fn new(
         sender: Sender<Event>,
-        timer_config: TimerConfig,
-        timer_cache: Arc<Mutex<TimerCache>>,
+        config: TimerConfig,
+        cache: Arc<Mutex<TimerCache>>,
         db: DatabaseConnection,
     ) -> Self {
-        let render_count = Arc::new(AtomicU8::new(1));
-        let state = spawn(Arc::clone(&render_count), sender, timer_config, db);
+        let count = Arc::new(AtomicU8::new(1));
+        let state = spawn(Arc::clone(&count), sender, config, db);
 
         Self {
-            state,
-            render_count,
+            count,
             mode: TimerMode::Normal,
-            selected_todo: None,
-            todo_cursor: 0,
+            state,
+            cache,
             todos: vec![],
-            cache: timer_cache,
+            cursor: 0,
+            selected: None,
         }
     }
 
     fn tick_render_count(&self) {
-        let current = self.render_count.load(Ordering::Relaxed);
+        let current = self.count.load(Ordering::Relaxed);
         let next = (current + 1) % u8::MAX;
-        self.render_count.store(next, Ordering::Relaxed);
+        self.count.store(next, Ordering::Relaxed);
     }
 
     fn load_todos(&mut self) {
         if let Ok(mut cache) = self.cache.lock() {
             self.todos = cache.todos().to_vec();
         }
-        if !self.todos.is_empty() && self.todo_cursor >= self.todos.len() {
-            self.todo_cursor = self.todos.len() - 1;
+        if !self.todos.is_empty() && self.cursor >= self.todos.len() {
+            self.cursor = self.todos.len() - 1;
         }
     }
 
     fn set_selected_todo(&mut self, todo: Option<(i32, String)>) {
         let todo_id = todo.as_ref().map(|(id, _)| *id);
-        self.selected_todo = todo;
+        self.selected = todo;
         if let Ok(mut cache) = self.cache.lock() {
             cache.invalidate_stats();
         }
@@ -89,7 +90,7 @@ impl TimerTab {
     }
 
     fn refresh_stats_if_needed(&self, sessions: u32) {
-        if let Some((todo_id, _)) = &self.selected_todo {
+        if let Some((todo_id, _)) = &self.selected {
             if let Ok(mut cache) = self.cache.lock() {
                 cache.refresh_stats_if_needed(*todo_id, sessions);
             }
@@ -143,14 +144,14 @@ impl Tab for TimerTab {
             TimerMode::SelectingTodo => match key.code {
                 KeyCode::Char('j') | KeyCode::Down => {
                     if !self.todos.is_empty() {
-                        self.todo_cursor = (self.todo_cursor + 1).min(self.todos.len() - 1);
+                        self.cursor = (self.cursor + 1).min(self.todos.len() - 1);
                     }
                 }
                 KeyCode::Char('k') | KeyCode::Up => {
-                    self.todo_cursor = self.todo_cursor.saturating_sub(1);
+                    self.cursor = self.cursor.saturating_sub(1);
                 }
                 KeyCode::Enter => {
-                    if let Some(todo) = self.todos.get(self.todo_cursor).cloned() {
+                    if let Some(todo) = self.todos.get(self.cursor).cloned() {
                         self.set_selected_todo(Some(todo));
                     }
                     self.mode = TimerMode::Normal;
@@ -242,7 +243,7 @@ impl Tab for TimerTab {
 
                 let stats = self.cache.lock().ok().and_then(|c| c.stats());
                 let todo_w = TodoWidget {
-                    selected: self.selected_todo.as_ref().map(|(_, t)| t.as_str()),
+                    selected: self.selected.as_ref().map(|(_, t)| t.as_str()),
                     stats,
                 };
 
@@ -286,7 +287,7 @@ impl Tab for TimerTab {
 
                 let picker_w = TodoPickerWidget {
                     todos: &self.todos,
-                    cursor: self.todo_cursor,
+                    cursor: self.cursor,
                 };
 
                 (&session_w).render(session_row, buf);
