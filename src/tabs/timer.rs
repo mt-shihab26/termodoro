@@ -75,7 +75,7 @@ impl TimerTab {
             .cache
             .lock()
             .map(|mut c| {
-                c.todos()
+                c.get_todos()
                     .iter()
                     .filter_map(|t| t.id.map(|id| (id, t.text.clone())))
                     .collect()
@@ -181,7 +181,7 @@ impl Tab for TimerTab {
         let todo_text: Option<String> = self
             .todo_id
             .and_then(|id| cache.as_mut()?.get_todo(id).map(|t| t.text.clone()));
-        let todo_stats = cache.as_ref().and_then(|c| c.get_stats());
+        let todo_stats = cache.as_ref().and_then(|c| c.get_stat()).copied();
 
         let buf = frame.buffer_mut();
 

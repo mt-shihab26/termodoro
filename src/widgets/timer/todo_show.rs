@@ -4,13 +4,15 @@ use ratatui::style::Color;
 use ratatui::style::Stylize;
 use ratatui::widgets::{Paragraph, Widget};
 
+use crate::states::timer_cache::Stat;
+
 pub struct TodoShowProps<'a> {
     selected: Option<&'a str>,
-    stats: Option<(u32, u32)>,
+    stats: Option<&'a Stat>,
 }
 
 impl<'a> TodoShowProps<'a> {
-    pub fn new(selected: Option<&'a str>, stats: Option<(u32, u32)>) -> Self {
+    pub fn new(selected: Option<&'a str>, stats: Option<&'a Stat>) -> Self {
         Self { selected, stats }
     }
 }
@@ -29,8 +31,8 @@ impl Widget for &TodoShowWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let text = match self.props.selected {
             Some(text) => match self.props.stats {
-                Some((count, total_secs)) => {
-                    format!("{}  ·  {} sessions  ·  {} min", text, count, total_secs / 60)
+                Some(stat) => {
+                    format!("{}  ·  {} sessions  ·  {} min", text, stat.sessions, stat.secs / 60)
                 }
                 None => text.to_string(),
             },
