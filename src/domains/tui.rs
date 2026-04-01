@@ -12,7 +12,8 @@ use sea_orm::DatabaseConnection;
 
 use crate::states::timer_cache::TimerCache;
 use crate::tabs::{Tab, timer::TimerTab, todos::TodosTab};
-use crate::widgets::layout::header::HeaderWidget;
+use crate::widgets::layout::fps::FpsProps;
+use crate::widgets::layout::header::{HeaderProps, HeaderWidget};
 use crate::widgets::layout::tabs_bar::{TabEntry, TabsBarWidget};
 use crate::workers::term;
 use crate::{config::Config, kinds::event::Event};
@@ -142,7 +143,11 @@ impl App {
         ])
         .areas(frame.area());
 
-        HeaderWidget::new(self.fps_widget.is_some()).render(top, frame.buffer_mut());
+        HeaderWidget::new(&HeaderProps::new(
+            self.fps_widget.is_some(),
+            &FpsProps::new(0.0, 0),
+        ))
+        .render(top, frame.buffer_mut());
 
         let tab_entries: Vec<TabEntry> = self
             .tabs

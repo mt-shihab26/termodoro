@@ -1,8 +1,17 @@
 use ratatui::prelude::{Alignment, Buffer, Color, Line, Rect, Span, Stylize, Widget};
 
 pub struct FpsProps {
-    fps_per_second: f64,
-    frame_per_lifetime: u64,
+    per_second: f64,
+    per_lifetime: u64,
+}
+
+impl FpsProps {
+    pub fn new(per_second: f64, per_lifetime: u64) -> Self {
+        Self {
+            per_second,
+            per_lifetime,
+        }
+    }
 }
 
 pub struct FpsWidget<'a> {
@@ -20,7 +29,7 @@ impl<'a> Widget for &FpsWidget<'a> {
         Line::from(
             Span::from(format!(
                 "{:.0} fps  {} frames",
-                self.props.fps_per_second, self.props.frame_per_lifetime
+                self.props.per_second, self.props.per_lifetime
             ))
             .fg(Color::DarkGray),
         )

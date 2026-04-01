@@ -6,8 +6,8 @@ use ratatui::text::{Line, Span};
 use ratatui::{layout::Alignment, widgets::Widget};
 
 pub struct FpsWidget {
-    per_second: f64,
-    per_lifetime: u64,
+    pub per_second: f64,
+    pub per_lifetime: u64,
     frame_count_per_second: u32,
     interval_start: Instant,
 }

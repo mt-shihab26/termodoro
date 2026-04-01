@@ -5,17 +5,27 @@ use crate::widgets::layout::fps::FpsProps;
 
 use super::fps::FpsWidget;
 
-pub struct HeaderWidget<'a> {
+pub struct HeaderProps<'a> {
     fps_show: bool,
     fps_props: &'a FpsProps,
 }
 
-impl<'a> HeaderWidget<'a> {
+impl<'a> HeaderProps<'a> {
     pub fn new(fps_show: bool, fps_props: &'a FpsProps) -> Self {
         Self {
             fps_show,
             fps_props,
         }
+    }
+}
+
+pub struct HeaderWidget<'a> {
+    props: &'a HeaderProps<'a>,
+}
+
+impl<'a> HeaderWidget<'a> {
+    pub fn new(props: &'a HeaderProps<'a>) -> Self {
+        Self { props }
     }
 }
 
@@ -33,7 +43,7 @@ impl<'a> Widget for &HeaderWidget<'a> {
             Span::from(" quit").fg(Color::DarkGray),
         ];
 
-        if self.fps_show {
+        if self.props.fps_show {
             hints.push(Span::from("  ").fg(Color::DarkGray));
             hints.push(Span::from("^f").fg(Color::DarkGray).bold());
             hints.push(Span::from(" fps").fg(Color::DarkGray));
@@ -41,8 +51,8 @@ impl<'a> Widget for &HeaderWidget<'a> {
 
         Line::from(hints).render(left, buf);
 
-        if self.fps_show {
-            FpsWidget::new(self.fps_props).render(right, buf);
+        if self.props.fps_show {
+            FpsWidget::new(self.props.fps_props).render(right, buf);
         }
     }
 }
