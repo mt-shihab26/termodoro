@@ -57,27 +57,32 @@ impl TimerState {
         }
     }
 
-    /// Sets the currently associated todo on the timer state.
+    /// Returns the currently associated todo id, if any.
     pub fn todo_id(&self) -> Option<i32> {
         self.todo_id
     }
 
+    /// Returns the current phase of the pomodoro cycle.
     pub fn cycle_phase(&self) -> &Phase {
         &self.cycle_phase
     }
 
+    /// Returns the number of completed work sessions since the timer started.
     pub fn sessions_count(&self) -> u32 {
         self.sessions_count
     }
 
+    /// Returns whether the timer is actively counting down.
     pub fn is_running(&self) -> bool {
         self.is_running
     }
 
+    /// Returns whether milliseconds are shown on the clock.
     pub fn show_millis(&self) -> bool {
         self.show_millis
     }
 
+    /// Returns the number of work sessions before a long break.
     pub fn long_break_interval(&self) -> u32 {
         self.config.long_break_interval()
     }

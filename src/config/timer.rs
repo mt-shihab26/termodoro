@@ -53,9 +53,9 @@ impl TimerConfig {
         self.long_break_duration as u32 * 60 * 1000
     }
 
-    /// Returns the number of work sessions between long breaks.
+    /// Returns the number of work sessions between long breaks, minimum 1.
     pub fn long_break_interval(&self) -> u32 {
-        self.long_break_interval
+        self.long_break_interval.max(1)
     }
 
     /// Returns the tick interval in milliseconds — 10ms when showing millis, 1000ms otherwise.
