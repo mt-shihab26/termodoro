@@ -1,97 +1,43 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO="mt-shihab26/orivo"
-BINARY="orivo"
-PREFIX="${HOME}/.local"
-TERMINAL=""
-
-# ---- Config (derived after args are parsed) ----
-BIN_DIR=""
-ICON_DIR=""
-APPS_DIR=""
-OS_TAG=""
-ARCH_TAG=""
-FETCH=""
-VERSION=""
-TMP=""
-
 # ------------------------------------------------------------------ #
-#  Argument parsing                                                    #
+#  Functions                                                           #
 # ------------------------------------------------------------------ #
-parse_args() {
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-        --prefix)
-            PREFIX="$2"
-            shift 2
-            ;;
-        --prefix=*)
-            PREFIX="${1#--prefix=}"
-            shift
-            ;;
-        --terminal)
-            TERMINAL="$2"
-            shift 2
-            ;;
-        --terminal=*)
-            TERMINAL="${1#--terminal=}"
-            shift
-            ;;
-        -h | --help)
-            echo "Usage: $0 [--prefix DIR] [--terminal kitty|alacritty]"
-            echo "  --prefix DIR                Install to DIR/bin (default: ~/.local)"
-            echo "  --terminal kitty|alacritty  Terminal for the desktop entry"
-            exit 0
-            ;;
-        *)
-            echo "Unknown option: $1" >&2
-            exit 1
-            ;;
-        esac
-    done
 
-    BIN_DIR="$PREFIX/bin"
-    ICON_DIR="$PREFIX/share/icons/hicolor/scalable/apps"
-    APPS_DIR="$PREFIX/share/applications"
-}
-
-# ------------------------------------------------------------------ #
-#  Detect OS and architecture                                          #
-# ------------------------------------------------------------------ #
 detect_platform() {
     local os arch
     os=$(uname -s)
     arch=$(uname -m)
-    case "$os" in Linux) OS_TAG=linux ;; Darwin) OS_TAG=macos ;; *)
+    case "$os" in
+    Linux) echo "linux" ;;
+    Darwin) echo "macos" ;;
+    *)
         echo "Unsupported OS: $os" >&2
         exit 1
         ;;
     esac
-    case "$arch" in x86_64) ARCH_TAG=x86_64 ;; aarch64 | arm64) ARCH_TAG=aarch64 ;; *)
+    case "$arch" in
+    x86_64) echo "x86_64" ;;
+    aarch64 | arm64) echo "aarch64" ;;
+    *)
         echo "Unsupported arch: $arch" >&2
         exit 1
         ;;
     esac
 }
 
-# ------------------------------------------------------------------ #
-#  Detect download tool                                                #
-# ------------------------------------------------------------------ #
 detect_fetch() {
     if command -v curl &>/dev/null; then
-        FETCH="curl -fsSL"
+        echo "curl -fsSL"
     elif command -v wget &>/dev/null; then
-        FETCH="wget -qO-"
+        echo "wget -qO-"
     else
         echo "ERROR: curl or wget is required." >&2
         exit 1
     fi
 }
 
-# ------------------------------------------------------------------ #
-#  Install sqlite3 system dependency                                   #
-# ------------------------------------------------------------------ #
 install_sqlite() {
     echo "Checking sqlite3..."
     command -v sqlite3 &>/dev/null && {
@@ -118,102 +64,140 @@ install_sqlite() {
     fi
 }
 
-# ------------------------------------------------------------------ #
-#  Resolve latest release version from GitHub                         #
-# ------------------------------------------------------------------ #
 resolve_version() {
-    VERSION=$(${FETCH} "https://api.github.com/repos/${REPO}/releases/latest" |
+    local fetch="$1" repo="$2"
+    local version
+    version=$(${fetch} "https://api.github.com/repos/${repo}/releases/latest" |
         grep '"tag_name"' | sed 's/.*"\([^"]*\)".*/\1/')
-    [ -z "$VERSION" ] && {
+    [ -z "$version" ] && {
         echo "ERROR: Could not fetch latest version." >&2
         exit 1
     }
+    echo "$version"
 }
 
-# ------------------------------------------------------------------ #
-#  Download and install binary                                         #
-# ------------------------------------------------------------------ #
 install_binary() {
-    local archive="${BINARY}-${VERSION}-${OS_TAG}-${ARCH_TAG}.tar.gz"
-    echo "Installing ${BINARY} ${VERSION} (${OS_TAG}/${ARCH_TAG}) -> ${BIN_DIR}..."
+    local fetch="$1" repo="$2" binary="$3" version="$4" os_tag="$5" arch_tag="$6" bin_dir="$7"
+    local archive="${binary}-${version}-${os_tag}-${arch_tag}.tar.gz"
+    echo "Installing ${binary} ${version} (${os_tag}/${arch_tag}) -> ${bin_dir}..."
 
-    TMP=$(mktemp -d)
-    trap 'rm -rf "$TMP"' EXIT
-    ${FETCH} "https://github.com/${REPO}/releases/download/${VERSION}/${archive}" >"$TMP/$archive"
-    tar xzf "$TMP/$archive" -C "$TMP"
+    local tmp
+    tmp=$(mktemp -d)
+    trap 'rm -rf "$tmp"' EXIT
+    ${fetch} "https://github.com/${repo}/releases/download/${version}/${archive}" >"$tmp/$archive"
+    tar xzf "$tmp/$archive" -C "$tmp"
 
-    mkdir -p "$BIN_DIR"
-    install -m 755 "$TMP/$BINARY" "$BIN_DIR/$BINARY"
-    echo "Binary:  $BIN_DIR/$BINARY"
+    mkdir -p "$bin_dir"
+    install -m 755 "$tmp/$binary" "$bin_dir/$binary"
+    echo "Binary:  $bin_dir/$binary"
 }
 
-# ------------------------------------------------------------------ #
-#  Prompt for terminal selection (Linux only)                          #
-# ------------------------------------------------------------------ #
 pick_terminal() {
-    [ -n "$TERMINAL" ] && return
+    local terminal="$1"
+    [ -n "$terminal" ] && {
+        echo "$terminal"
+        return
+    }
     printf "Select terminal for the desktop entry:\n"
     printf "  1) kitty      (default)\n"
     printf "  2) alacritty\n"
     printf "Choice [1]: "
     read -r choice
     case "${choice:-1}" in
-    2 | alacritty) TERMINAL=alacritty ;;
-    *) TERMINAL=kitty ;;
+    2 | alacritty) echo "alacritty" ;;
+    *) echo "kitty" ;;
     esac
 }
 
-# ------------------------------------------------------------------ #
-#  Install desktop entry and icon (Linux only)                         #
-# ------------------------------------------------------------------ #
 install_desktop() {
-    [ "$OS_TAG" != linux ] && return
+    local fetch="$1" repo="$2" os_tag="$3" terminal="$4" apps_dir="$5" icon_dir="$6"
+    [ "$os_tag" != linux ] && return
 
-    pick_terminal
+    terminal=$(pick_terminal "$terminal")
 
     local desktop_src
-    case "$TERMINAL" in
+    case "$terminal" in
     kitty) desktop_src="orivo-kitty.desktop" ;;
     alacritty) desktop_src="orivo-alacritty.desktop" ;;
     *)
-        echo "ERROR: Unknown terminal '$TERMINAL'. Choose kitty or alacritty." >&2
+        echo "ERROR: Unknown terminal '$terminal'. Choose kitty or alacritty." >&2
         exit 1
         ;;
     esac
 
-    # Fetch desktop file and icon directly from the repo (works with curl | bash)
-    mkdir -p "$APPS_DIR" "$ICON_DIR"
-    local base="https://raw.githubusercontent.com/${REPO}/main/xdg"
-    ${FETCH} "${base}/${desktop_src}" >"$APPS_DIR/orivo.desktop"
-    ${FETCH} "${base}/orivo.svg" >"$ICON_DIR/orivo.svg"
+    mkdir -p "$apps_dir" "$icon_dir"
+    local base="https://raw.githubusercontent.com/${repo}/main/xdg"
+    ${fetch} "${base}/${desktop_src}" >"$apps_dir/orivo.desktop"
+    ${fetch} "${base}/orivo.svg" >"$icon_dir/orivo.svg"
 
-    command -v update-desktop-database &>/dev/null && update-desktop-database "$APPS_DIR" 2>/dev/null || true
-    echo "Terminal: $TERMINAL"
-    echo "Desktop:  $APPS_DIR/orivo.desktop"
-    echo "Icon:     $ICON_DIR/orivo.svg"
+    command -v update-desktop-database &>/dev/null && update-desktop-database "$apps_dir" 2>/dev/null || true
+    echo "Terminal: $terminal"
+    echo "Desktop:  $apps_dir/orivo.desktop"
+    echo "Icon:     $icon_dir/orivo.svg"
 }
 
-# ------------------------------------------------------------------ #
-#  PATH reminder                                                       #
-# ------------------------------------------------------------------ #
 check_path() {
-    echo "$PATH" | tr ':' '\n' | grep -qx "$BIN_DIR" && return
-    printf "\nNOTE: Add to your shell profile:\n  export PATH=\"\$PATH:%s\"\n" "$BIN_DIR"
+    local bin_dir="$1"
+    echo "$PATH" | tr ':' '\n' | grep -qx "$bin_dir" && return
+    printf "\nNOTE: Add to your shell profile:\n  export PATH=\"\$PATH:%s\"\n" "$bin_dir"
 }
+
+# ------------------------------------------------------------------ #
+#  Argument parsing                                                    #
+# ------------------------------------------------------------------ #
+PREFIX="${HOME}/.local"
+TERMINAL=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+    --prefix)
+        PREFIX="$2"
+        shift 2
+        ;;
+    --prefix=*)
+        PREFIX="${1#--prefix=}"
+        shift
+        ;;
+    --terminal)
+        TERMINAL="$2"
+        shift 2
+        ;;
+    --terminal=*)
+        TERMINAL="${1#--terminal=}"
+        shift
+        ;;
+    -h | --help)
+        echo "Usage: $0 [--prefix DIR] [--terminal kitty|alacritty]"
+        echo "  --prefix DIR                Install to DIR/bin (default: ~/.local)"
+        echo "  --terminal kitty|alacritty  Terminal for the desktop entry"
+        exit 0
+        ;;
+    *)
+        echo "Unknown option: $1" >&2
+        exit 1
+        ;;
+    esac
+done
+
+REPO="mt-shihab26/orivo"
+BINARY="orivo"
+BIN_DIR="$PREFIX/bin"
+ICON_DIR="$PREFIX/share/icons/hicolor/scalable/apps"
+APPS_DIR="$PREFIX/share/applications"
 
 # ------------------------------------------------------------------ #
 #  Main                                                                #
 # ------------------------------------------------------------------ #
 main() {
-    parse_args "$@"
-    detect_platform
-    detect_fetch
+    local fetch os_tag arch_tag version
+    read -r os_tag arch_tag < <(detect_platform)
+    fetch=$(detect_fetch)
     install_sqlite
-    resolve_version
-    install_binary
-    install_desktop
-    check_path
+    version=$(resolve_version "$fetch" "$REPO")
+    install_binary  "$fetch" "$REPO" "$BINARY" "$version" "$os_tag" "$arch_tag" "$BIN_DIR"
+    install_desktop "$fetch" "$REPO" "$os_tag" "$TERMINAL" "$APPS_DIR" "$ICON_DIR"
+    check_path "$BIN_DIR"
     printf "\nRun 'orivo' to start. Config: ~/.config/orivo/config.toml\n"
 }
 
-main "$@"
+main

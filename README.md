@@ -1,4 +1,4 @@
-<p align="center">
+<p>
   <img src="xdg/orivo.svg" width="120" alt="orivo logo"/>
 </p>
 
