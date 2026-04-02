@@ -23,11 +23,11 @@ use crate::{
 pub fn spawn(
     count: Arc<AtomicU8>,
     sender: Sender<Event>,
-    timer_config: TimerConfig,
+    config: TimerConfig,
     cache: Arc<Mutex<TimerCache>>,
     db: DatabaseConnection,
 ) -> Arc<Mutex<TimerState>> {
-    let state = Arc::new(Mutex::new(TimerState::new(timer_config, cache, db)));
+    let state = Arc::new(Mutex::new(TimerState::new(config, cache, db)));
 
     let thread_state = Arc::clone(&state);
 
