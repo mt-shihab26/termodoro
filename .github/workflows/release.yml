@@ -83,20 +83,20 @@ jobs:
         if: matrix.use_cross == false
         run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Package binary
+      - name: Prepare binary
         shell: bash
         run: |
           VERSION="${GITHUB_REF_NAME}"
-          ARCHIVE="orivo-${VERSION}-${{ matrix.os_tag }}-${{ matrix.arch_tag }}.tar.gz"
-          tar czf "$ARCHIVE" \
-            -C "target/${{ matrix.target }}/release" orivo
-          echo "ARCHIVE=$ARCHIVE" >> "$GITHUB_ENV"
+          BINARY_ASSET="orivo-${VERSION}-${{ matrix.os_tag }}-${{ matrix.arch_tag }}"
+          cp "target/${{ matrix.target }}/release/orivo" "$BINARY_ASSET"
+          chmod +x "$BINARY_ASSET"
+          echo "BINARY_ASSET=$BINARY_ASSET" >> "$GITHUB_ENV"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: orivo-${{ matrix.os_tag }}-${{ matrix.arch_tag }}
-          path: ${{ env.ARCHIVE }}
+          path: ${{ env.BINARY_ASSET }}
 
   release:
     name: Create GitHub Release
@@ -115,7 +115,7 @@ jobs:
       - name: Generate checksums
         run: |
           cd dist
-          sha256sum *.tar.gz > SHA256SUMS.txt
+          sha256sum orivo-v* > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
       - name: Stamp install script tag
@@ -126,7 +126,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/*.tar.gz
+            dist/orivo-v*
             dist/SHA256SUMS.txt
             bin/install.sh
             xdg/orivo-kitty.desktop

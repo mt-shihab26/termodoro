@@ -111,21 +111,20 @@ verify_checksum() {
 
 install_binary() {
     local fetch="$1" repo="$2" binary="$3" version="$4" os_tag="$5" arch_tag="$6" bin_dir="$7"
-    local archive="${binary}-${version}-${os_tag}-${arch_tag}.tar.gz"
+    local asset="${binary}-${version}-${os_tag}-${arch_tag}"
     local base="https://github.com/${repo}/releases/download/${version}"
     echo "Installing ${binary} ${version} (${os_tag}/${arch_tag}) -> ${bin_dir}..."
 
     local tmp
     tmp=$(mktemp -d)
     trap "rm -rf -- '$tmp'" EXIT
-    ${fetch} "${base}/${archive}" >"$tmp/$archive"
+    ${fetch} "${base}/${asset}" >"$tmp/$asset"
     ${fetch} "${base}/SHA256SUMS.txt" >"$tmp/SHA256SUMS.txt"
 
-    verify_checksum "$tmp/$archive" "$archive" "$tmp/SHA256SUMS.txt"
+    verify_checksum "$tmp/$asset" "$asset" "$tmp/SHA256SUMS.txt"
 
-    tar xzf "$tmp/$archive" -C "$tmp"
     mkdir -p "$bin_dir"
-    install -m 755 "$tmp/$binary" "$bin_dir/$binary"
+    install -m 755 "$tmp/$asset" "$bin_dir/$binary"
     echo "Binary:  $bin_dir/$binary"
 }
 
