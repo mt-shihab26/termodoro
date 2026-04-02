@@ -22,6 +22,8 @@ jobs:
             os_tag: linux
             arch_tag: x86_64
             use_cross: false
+            binary_name: orivo
+            asset_suffix: ""
 
           # Linux aarch64
           - target: aarch64-unknown-linux-gnu
@@ -29,6 +31,8 @@ jobs:
             os_tag: linux
             arch_tag: aarch64
             use_cross: true
+            binary_name: orivo
+            asset_suffix: ""
 
           # macOS x86_64 (Intel)
           - target: x86_64-apple-darwin
@@ -36,6 +40,8 @@ jobs:
             os_tag: macos
             arch_tag: x86_64
             use_cross: false
+            binary_name: orivo
+            asset_suffix: ""
 
           # macOS aarch64 (Apple Silicon)
           - target: aarch64-apple-darwin
@@ -43,10 +49,30 @@ jobs:
             os_tag: macos
             arch_tag: aarch64
             use_cross: false
+            binary_name: orivo
+            asset_suffix: ""
+
+          # Windows x86_64
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            os_tag: windows
+            arch_tag: x86_64
+            use_cross: false
+            binary_name: orivo.exe
+            asset_suffix: ".exe"
+
+          # Windows aarch64
+          - target: aarch64-pc-windows-msvc
+            os: windows-11-arm
+            os_tag: windows
+            arch_tag: aarch64
+            use_cross: false
+            binary_name: orivo.exe
+            asset_suffix: ".exe"
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -54,7 +80,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Cache Cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -87,13 +113,15 @@ jobs:
         shell: bash
         run: |
           VERSION="${GITHUB_REF_NAME}"
-          BINARY_ASSET="orivo-${VERSION}-${{ matrix.os_tag }}-${{ matrix.arch_tag }}"
-          cp "target/${{ matrix.target }}/release/orivo" "$BINARY_ASSET"
-          chmod +x "$BINARY_ASSET"
+          BINARY_ASSET="orivo-${VERSION}-${{ matrix.os_tag }}-${{ matrix.arch_tag }}${{ matrix.asset_suffix }}"
+          cp "target/${{ matrix.target }}/release/${{ matrix.binary_name }}" "$BINARY_ASSET"
+          if [ "${{ matrix.os_tag }}" != "windows" ]; then
+            chmod +x "$BINARY_ASSET"
+          fi
           echo "BINARY_ASSET=$BINARY_ASSET" >> "$GITHUB_ENV"
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: orivo-${{ matrix.os_tag }}-${{ matrix.arch_tag }}
           path: ${{ env.BINARY_ASSET }}
@@ -104,7 +132,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
