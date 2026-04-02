@@ -38,24 +38,24 @@ impl TimerConfig {
         self.show_millis
     }
 
-    /// Returns the work session duration in milliseconds.
+    /// Returns the work session duration in milliseconds, clamped to 1–120 minutes.
     pub fn work_duration(&self) -> u32 {
-        self.work_duration as u32 * 60 * 1000
+        self.work_duration.clamp(1, 120) * 60 * 1000
     }
 
-    /// Returns the short break duration in milliseconds.
+    /// Returns the short break duration in milliseconds, clamped to 1–60 minutes.
     pub fn break_duration(&self) -> u32 {
-        self.break_duration as u32 * 60 * 1000
+        self.break_duration.clamp(1, 60) * 60 * 1000
     }
 
-    /// Returns the long break duration in milliseconds.
+    /// Returns the long break duration in milliseconds, clamped to 1–60 minutes.
     pub fn long_break_duration(&self) -> u32 {
-        self.long_break_duration as u32 * 60 * 1000
+        self.long_break_duration.clamp(1, 60) * 60 * 1000
     }
 
-    /// Returns the number of work sessions between long breaks, minimum 1.
+    /// Returns the number of work sessions between long breaks, clamped to 1–10.
     pub fn long_break_interval(&self) -> u32 {
-        self.long_break_interval.max(1)
+        self.long_break_interval.clamp(1, 10)
     }
 
     /// Returns the tick interval in milliseconds — 10ms when showing millis, 1000ms otherwise.
