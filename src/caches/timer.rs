@@ -18,6 +18,7 @@ pub struct TimerCache {
 }
 
 impl TimerCache {
+    /// Creates a new empty cache backed by the given database connection.
     pub fn new(db: DatabaseConnection) -> Self {
         Self {
             db,

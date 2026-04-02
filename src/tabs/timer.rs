@@ -54,6 +54,7 @@ pub struct TimerTab {
 }
 
 impl TimerTab {
+    /// Creates a new `TimerTab`, spawning the timer worker thread.
     pub fn new(
         sender: Sender<Event>,
         config: TimerConfig,
