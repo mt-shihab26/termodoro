@@ -2,25 +2,26 @@
 set -euo pipefail
 
 detect_platform() {
-    local os arch
+    local os arch os_tag arch_tag
     os=$(uname -s)
     arch=$(uname -m)
     case "$os" in
-    Linux) echo "linux" ;;
-    Darwin) echo "macos" ;;
+    Linux) os_tag="linux" ;;
+    Darwin) os_tag="macos" ;;
     *)
         echo "Unsupported OS: $os" >&2
         exit 1
         ;;
     esac
     case "$arch" in
-    x86_64) echo "x86_64" ;;
-    aarch64 | arm64) echo "aarch64" ;;
+    x86_64) arch_tag="x86_64" ;;
+    aarch64 | arm64) arch_tag="aarch64" ;;
     *)
         echo "Unsupported arch: $arch" >&2
         exit 1
         ;;
     esac
+    printf "%s %s\n" "$os_tag" "$arch_tag"
 }
 
 detect_fetch() {
@@ -83,7 +84,10 @@ verify_checksum() {
     echo "Verifying checksum..."
     local expected
     expected=$(grep "${archive}" "$checksums" | awk '{print $1}')
-    [ -z "$expected" ] && { echo "ERROR: No checksum found for ${archive}" >&2; exit 1; }
+    [ -z "$expected" ] && {
+        echo "ERROR: No checksum found for ${archive}" >&2
+        exit 1
+    }
 
     local actual
     if command -v sha256sum &>/dev/null; then
@@ -95,7 +99,10 @@ verify_checksum() {
         return
     fi
 
-    [ "$actual" = "$expected" ] || { echo "ERROR: Checksum mismatch for ${archive}" >&2; exit 1; }
+    [ "$actual" = "$expected" ] || {
+        echo "ERROR: Checksum mismatch for ${archive}" >&2
+        exit 1
+    }
     echo "Checksum OK."
 }
 
@@ -105,11 +112,12 @@ install_binary() {
     local base="https://github.com/${repo}/releases/download/${version}"
     echo "Installing ${binary} ${version} (${os_tag}/${arch_tag}) -> ${bin_dir}..."
 
-    local tmp
+    local tmp cleanup_tmp
     tmp=$(mktemp -d)
-    trap 'rm -rf "$tmp"' EXIT
-    ${fetch} "${base}/${archive}"       >"$tmp/$archive"
-    ${fetch} "${base}/SHA256SUMS.txt"   >"$tmp/SHA256SUMS.txt"
+    cleanup_tmp="$tmp"
+    trap 'rm -rf "$cleanup_tmp"' EXIT
+    ${fetch} "${base}/${archive}" >"$tmp/$archive"
+    ${fetch} "${base}/SHA256SUMS.txt" >"$tmp/SHA256SUMS.txt"
 
     verify_checksum "$tmp/$archive" "$archive" "$tmp/SHA256SUMS.txt"
 
