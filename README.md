@@ -20,6 +20,8 @@ The script will:
 - **Install the desktop entry** *(Linux only)* — registers orivo as an app so it appears in your launcher
 - **Install the icon** *(Linux only)* — installs the app icon to the hicolor theme
 
+Running the same command again will **upgrade** to the latest version, or do nothing if already up to date.
+
 Options:
 
 ```sh

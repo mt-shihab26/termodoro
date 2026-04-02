@@ -60,6 +60,12 @@ install_sqlite() {
     fi
 }
 
+resolve_current_version() {
+    local bin_dir="$1"
+    local bin="${bin_dir}/orivo"
+    [ -x "$bin" ] && "$bin" --version 2>/dev/null || echo ""
+}
+
 resolve_version() {
     local fetch="$1" repo="$2"
     local version
@@ -197,11 +203,21 @@ while [[ $# -gt 0 ]]; do
 done
 
 main() {
-    local fetch os_tag arch_tag version
+    local fetch os_tag arch_tag version current_version
     read -r os_tag arch_tag < <(detect_platform)
     fetch=$(detect_fetch)
     install_sqlite
     version=$(resolve_version "$fetch" "$REPO")
+    current_version=$(resolve_current_version "$BIN_DIR")
+
+    # Strip leading 'v' from release tag for comparison (tag: v0.1.0, binary: 0.1.0)
+    if [ "${version#v}" = "$current_version" ] && [ -n "$current_version" ]; then
+        echo "Already up to date (${current_version})."
+        exit 0
+    fi
+
+    [ -n "$current_version" ] && echo "Upgrading ${current_version} -> ${version#v}..." || true
+
     install_binary "$fetch" "$REPO" "$BINARY" "$version" "$os_tag" "$arch_tag" "$BIN_DIR"
     install_desktop "$fetch" "$REPO" "$os_tag" "$TERMINAL" "$APPS_DIR" "$ICON_DIR"
     check_path "$BIN_DIR"

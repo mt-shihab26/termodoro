@@ -16,7 +16,7 @@ impl Cmd for Version {
     }
 
     fn run(self: Box<Self>) -> Result<()> {
-        println!("{}", env!("CARGO_PKG_VERSION"));
+        println!("v{}", env!("CARGO_PKG_VERSION"));
         Ok(())
     }
 }
