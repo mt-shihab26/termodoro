@@ -1,8 +1,8 @@
 [Desktop Entry]
 Name=Orivo
 Comment=Terminal-based Todos + Pomodoro timer
-Exec=alacritty --class orivo,orivo --title Orivo -e orivo
-Icon=orivo
+Exec=alacritty --class orivo,orivo --title Orivo -e ~/.local/bin/orivo
+Icon=~/.local/share/icons/hicolor/scalable/apps/orivo.svg
 Terminal=false
 Type=Application
 Categories=Utility;Productivity;
