@@ -2,15 +2,18 @@ use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::{Arc, Mutex, mpsc::Sender};
 use std::{thread, time::Duration};
 
-// TODO: add docs
-
 use sea_orm::DatabaseConnection;
 
-use crate::caches::timer::TimerCache;
-use crate::config::timer::TimerConfig;
-use crate::states::timer::TimerState;
-use crate::{kinds::event::Event, log_error, log_warn};
+use crate::{
+    caches::timer::TimerCache, config::timer::TimerConfig, kinds::event::Event, log_error, log_warn,
+    states::timer::TimerState,
+};
 
+/// Spawns the timer worker thread and returns a shared handle to its state.
+///
+/// The worker ticks the timer at the configured interval and sends a `TimerTick`
+/// event whenever the UI has rendered a new frame (detected via `count`), ensuring
+/// the display stays in sync without flooding the event queue.
 pub fn spawn(
     count: Arc<AtomicU8>,
     sender: Sender<Event>,
