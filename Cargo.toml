@@ -1,6 +1,6 @@
 [package]
 name = "orivo"
-version = "0.1.0"
+version = "0.1.7"
 edition = "2024"
 
 [dependencies]
@@ -14,4 +14,3 @@ toml = "0.8"
 log = "0.4"
 sea-orm = { version = "1", features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
 sea-orm-migration = { version = "1", features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
-

@@ -79,6 +79,20 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
+      - name: Verify Cargo version matches tag
+        shell: bash
+        run: |
+          CARGO_VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n 1)
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          [ -n "$CARGO_VERSION" ] || {
+            echo "Failed to read version from Cargo.toml" >&2
+            exit 1
+          }
+          [ "$CARGO_VERSION" = "$TAG_VERSION" ] || {
+            echo "Tag ${GITHUB_REF_NAME} does not match Cargo.toml version ${CARGO_VERSION}" >&2
+            exit 1
+          }
+
       - name: Cache Cargo registry
         uses: actions/cache@v5
         with:
@@ -135,7 +149,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: dist
           merge-multiple: true
@@ -158,13 +172,18 @@ jobs:
           cat SHA256SUMS.txt
 
       - name: Create release and upload assets
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            dist/orivo-v*
-            dist/SHA256SUMS.txt
-            dist/install.sh
-            dist/orivo-kitty.desktop
-            dist/orivo-alacritty.desktop
-            dist/orivo.svg
-          generate_release_notes: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release create "${GITHUB_REF_NAME}" --generate-notes
+          fi
+
+          gh release upload "${GITHUB_REF_NAME}" \
+            dist/orivo-v* \
+            dist/SHA256SUMS.txt \
+            dist/install.sh \
+            dist/orivo-kitty.desktop \
+            dist/orivo-alacritty.desktop \
+            dist/orivo.svg \
+            --clobber
