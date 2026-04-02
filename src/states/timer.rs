@@ -28,8 +28,6 @@ pub struct TimerState {
     phase_started_at: Option<String>,
     /// Current phase of the pomodoro cycle (work, break, or long break).
     cycle_phase: Phase,
-    /// Number of completed work sessions since the timer started.
-    sessions_count: u32,
     /// The currently selected todo id, used to associate sessions.
     todo_id: Option<i32>,
     /// Whether to display milliseconds on the clock, toggleable at runtime.
@@ -47,7 +45,6 @@ impl TimerState {
             remaining_millis,
             started_at: None,
             phase_started_at: None,
-            sessions_count: 0,
             is_running: false,
             config,
             db,
@@ -67,9 +64,13 @@ impl TimerState {
         &self.cycle_phase
     }
 
-    /// Returns the number of completed work sessions since the timer started.
+    /// Returns the number of completed work sessions today, loaded from the cache.
     pub fn sessions_count(&self) -> u32 {
-        self.sessions_count
+        if let Ok(mut c) = self.cache.lock() {
+            c.get_today_sessions()
+        } else {
+            0
+        }
     }
 
     /// Returns whether the timer is actively counting down.
@@ -149,8 +150,13 @@ impl TimerState {
 
         match self.cycle_phase {
             Phase::Work => {
-                self.sessions_count += 1;
-                self.cycle_phase = if self.sessions_count % self.config.long_break_interval() == 0 {
+                let sessions_count = if let Ok(mut c) = self.cache.lock() {
+                    c.invalidate_stats();
+                    c.get_today_sessions()
+                } else {
+                    0
+                };
+                self.cycle_phase = if sessions_count % self.config.long_break_interval() == 0 {
                     Phase::LongBreak
                 } else {
                     Phase::Break
@@ -158,6 +164,9 @@ impl TimerState {
             }
             Phase::Break | Phase::LongBreak => {
                 self.cycle_phase = Phase::Work;
+                if let Ok(mut c) = self.cache.lock() {
+                    c.invalidate_stats();
+                }
             }
         }
 
@@ -165,9 +174,5 @@ impl TimerState {
         self.started_at = None;
         self.phase_started_at = None;
         self.is_running = false;
-
-        if let Ok(mut c) = self.cache.lock() {
-            c.invalidate_stats();
-        }
     }
 }

@@ -7,7 +7,7 @@ use sea_orm::{DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKe
 use crate::{
     kinds::phase::Phase,
     log_error,
-    utils::{date::now_utc_str, db::rt},
+    utils::{date::{format_date, now_utc_str, today}, db::rt},
 };
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
@@ -79,6 +79,25 @@ impl Session {
     /// Creates and persists a completed session to the database.
     pub fn record(db: &DatabaseConnection, phase: &Phase, duration_millis: u32, started_at: Option<String>, todo_id: Option<i32>) {
         Self::new(phase, duration_millis, started_at, todo_id).save(db);
+    }
+
+    /// Returns the number of completed work sessions started today.
+    pub fn count_today(db: &DatabaseConnection) -> u32 {
+        let prefix = format!("{}%", format_date(today()));
+        match rt().block_on(async {
+            Entity::find()
+                .filter(Column::Phase.eq(Phase::Work.to_db_str()))
+                .filter(Column::EndedAt.like(prefix))
+                .all(db)
+                .await
+                .map_err(io_err)
+        }) {
+            Ok(rows) => rows.len() as u32,
+            Err(e) => {
+                log_error!("failed to count today's sessions: {e}");
+                0
+            }
+        }
     }
 
     /// Returns aggregated work session stats for the given todo.

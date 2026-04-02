@@ -15,6 +15,8 @@ pub struct TimerCache {
     todos: Option<Vec<Todo>>,
     /// Cached stats parallel to `todos`, `None` until first fetch.
     stats: Option<Vec<Stat>>,
+    /// Cached count of today's completed work sessions, `None` until first fetch.
+    today_sessions: Option<u32>,
 }
 
 impl TimerCache {
@@ -24,6 +26,7 @@ impl TimerCache {
             db,
             todos: None,
             stats: None,
+            today_sessions: None,
         }
     }
 
@@ -61,14 +64,24 @@ impl TimerCache {
         self.stats.as_deref()?.get(idx)
     }
 
+    /// Returns the number of today's completed work sessions, querying the DB if needed.
+    pub fn get_today_sessions(&mut self) -> u32 {
+        if self.today_sessions.is_none() {
+            self.today_sessions = Some(Session::count_today(&self.db));
+        }
+        self.today_sessions.unwrap_or(0)
+    }
+
     /// Drops the cached todo list so the next call to `get_todos()` re-queries.
     pub fn invalidate_todos(&mut self) {
         self.todos = None;
         self.stats = None;
+        self.today_sessions = None;
     }
 
     /// Drops the cached session stats so they are re-fetched on next render.
     pub fn invalidate_stats(&mut self) {
         self.stats = None;
+        self.today_sessions = None;
     }
 }
