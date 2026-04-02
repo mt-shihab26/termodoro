@@ -154,15 +154,24 @@ install_desktop() {
     esac
 
     mkdir -p "$apps_dir" "$icon_dir"
-    local asset_tag base
+    local asset_tag base tmp
     asset_tag=$(resolve_asset_tag)
     [ -n "$asset_tag" ] || {
         echo "ERROR: Install script tag is missing; cannot resolve desktop assets." >&2
         exit 1
     }
     base="https://github.com/${repo}/releases/download/${asset_tag}"
-    ${fetch} "${base}/${desktop_src}" >"$apps_dir/orivo.desktop"
-    ${fetch} "${base}/orivo.svg" >"$icon_dir/orivo.svg"
+    tmp=$(mktemp -d)
+    trap "rm -rf -- '$tmp'" EXIT
+    ${fetch} "${base}/${desktop_src}" >"$tmp/$desktop_src"
+    ${fetch} "${base}/orivo.svg" >"$tmp/orivo.svg"
+    ${fetch} "${base}/SHA256SUMS.txt" >"$tmp/SHA256SUMS.txt"
+
+    verify_checksum "$tmp/$desktop_src" "$desktop_src" "$tmp/SHA256SUMS.txt"
+    verify_checksum "$tmp/orivo.svg" "orivo.svg" "$tmp/SHA256SUMS.txt"
+
+    install -m 644 "$tmp/$desktop_src" "$apps_dir/orivo.desktop"
+    install -m 644 "$tmp/orivo.svg" "$icon_dir/orivo.svg"
 
     # Patch Icon to absolute path
     sed -i "s|Icon=orivo|Icon=${icon_dir}/orivo.svg|" "$apps_dir/orivo.desktop"

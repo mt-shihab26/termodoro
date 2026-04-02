@@ -112,15 +112,22 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Generate checksums
-        run: |
-          cd dist
-          sha256sum orivo-v* > SHA256SUMS.txt
-          cat SHA256SUMS.txt
-
       - name: Stamp install script tag
         run: |
           sed -i "s|__ORIVO_RELEASE_TAG__|${GITHUB_REF_NAME}|g" bin/install.sh
+
+      - name: Prepare release assets
+        run: |
+          cp bin/install.sh dist/install.sh
+          cp xdg/orivo-kitty.desktop dist/orivo-kitty.desktop
+          cp xdg/orivo-alacritty.desktop dist/orivo-alacritty.desktop
+          cp xdg/orivo.svg dist/orivo.svg
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum orivo-v* install.sh orivo-kitty.desktop orivo-alacritty.desktop orivo.svg > SHA256SUMS.txt
+          cat SHA256SUMS.txt
 
       - name: Create release and upload assets
         uses: softprops/action-gh-release@v2
@@ -128,8 +135,8 @@ jobs:
           files: |
             dist/orivo-v*
             dist/SHA256SUMS.txt
-            bin/install.sh
-            xdg/orivo-kitty.desktop
-            xdg/orivo-alacritty.desktop
-            xdg/orivo.svg
+            dist/install.sh
+            dist/orivo-kitty.desktop
+            dist/orivo-alacritty.desktop
+            dist/orivo.svg
           generate_release_notes: true
