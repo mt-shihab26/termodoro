@@ -1,22 +1,28 @@
 pub mod db;
 pub mod timer;
 
-use std::env;
-use std::fs;
-use std::io::{Error, ErrorKind, Result};
-use std::path::PathBuf;
+use std::{
+    fs,
+    io::{Error, ErrorKind, Result},
+};
 
 use serde::{Deserialize, Serialize};
 
-use crate::config::db::DBConfig;
-use crate::config::timer::TimerConfig;
+use crate::{
+    config::{db::DBConfig, timer::TimerConfig},
+    utils::path::config_path,
+};
 
+/// Top-level application configuration, loaded from `~/.config/orivo/config.toml`.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
+    /// Whether to show the FPS counter in the UI.
     #[serde(default)]
     pub show_fps: bool,
+    /// Database connection settings.
     #[serde(default)]
     pub db: DBConfig,
+    /// Pomodoro timer settings.
     #[serde(default)]
     pub timer: TimerConfig,
 }
@@ -32,15 +38,9 @@ impl Default for Config {
 }
 
 impl Config {
-    pub fn path() -> PathBuf {
-        PathBuf::from(env::var("HOME").unwrap_or_else(|_| ".".to_string()))
-            .join(".config")
-            .join("orivo")
-            .join("config.toml")
-    }
-
+    /// Loads the config from disk, returning the default if the file does not exist.
     pub fn load() -> Result<Self> {
-        let path = Self::path();
+        let path = config_path();
         if !path.exists() {
             return Ok(Self::default());
         }
