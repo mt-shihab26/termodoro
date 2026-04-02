@@ -1,5 +1,21 @@
 use serde::{Deserialize, Serialize};
 
+fn default_work_duration() -> u32 {
+    25
+}
+fn default_break_duration() -> u32 {
+    5
+}
+fn default_long_break_duration() -> u32 {
+    15
+}
+fn default_long_break_interval() -> u32 {
+    4
+}
+fn default_daily_session_goal() -> u32 {
+    16
+}
+
 /// Configuration for the pomodoro timer, loaded from the user's config file.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TimerConfig {
@@ -7,19 +23,19 @@ pub struct TimerConfig {
     #[serde(default)]
     show_millis: bool,
     /// Work session duration in minutes.
-    #[serde(default)]
+    #[serde(default = "default_work_duration")]
     work_duration: u32,
     /// Short break duration in minutes.
-    #[serde(default)]
+    #[serde(default = "default_break_duration")]
     break_duration: u32,
     /// Long break duration in minutes.
-    #[serde(default)]
+    #[serde(default = "default_long_break_duration")]
     long_break_duration: u32,
     /// Number of work sessions before a long break.
-    #[serde(default)]
+    #[serde(default = "default_long_break_interval")]
     long_break_interval: u32,
     /// Target number of work sessions to complete each day.
-    #[serde(default)]
+    #[serde(default = "default_daily_session_goal")]
     daily_session_goal: u32,
 }
 
@@ -27,11 +43,11 @@ impl Default for TimerConfig {
     fn default() -> Self {
         Self {
             show_millis: false,
-            work_duration: 25,
-            break_duration: 5,
-            long_break_duration: 15,
-            long_break_interval: 4,
-            daily_session_goal: 16,
+            work_duration: default_work_duration(),
+            break_duration: default_break_duration(),
+            long_break_duration: default_long_break_duration(),
+            long_break_interval: default_long_break_interval(),
+            daily_session_goal: default_daily_session_goal(),
         }
     }
 }
