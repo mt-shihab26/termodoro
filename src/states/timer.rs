@@ -22,11 +22,15 @@ pub struct TimerState {
     pub sessions_count: u32,
     /// The currently selected todo id, used to associate sessions.
     pub todo_id: Option<i32>,
+    /// Whether to display milliseconds on the clock, toggleable at runtime.
+    pub show_millis: bool,
 }
 
 impl TimerState {
     /// Creates a new `TimerState` in the initial paused work phase.
     pub fn new(config: TimerConfig, cache: Arc<Mutex<TimerCache>>, db: DatabaseConnection) -> Self {
+        let show_millis = config.show_millis();
+
         Self {
             cycle_phase: Phase::Work,
             time_millis: config.work_duration(),
@@ -36,6 +40,7 @@ impl TimerState {
             db,
             todo_id: None,
             cache,
+            show_millis,
         }
     }
 
@@ -45,7 +50,7 @@ impl TimerState {
             return;
         }
 
-        let step = self.config.tick_interval();
+        let step = TimerConfig::tick_interval(self.show_millis);
 
         if self.time_millis >= step {
             self.time_millis -= step;
@@ -79,5 +84,10 @@ impl TimerState {
         if let Ok(mut c) = self.cache.lock() {
             c.invalidate_stats();
         }
+    }
+
+    /// Toggles whether milliseconds are shown on the clock.
+    pub fn toggle_show_millis(&mut self) {
+        self.show_millis = !self.show_millis;
     }
 }

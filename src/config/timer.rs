@@ -59,7 +59,7 @@ impl TimerConfig {
     }
 
     /// Returns the tick interval in milliseconds — 10ms when showing millis, 1000ms otherwise.
-    pub fn tick_interval(&self) -> u32 {
-        if self.show_millis { 10 } else { 1000 }
+    pub fn tick_interval(show_millis: bool) -> u32 {
+        if show_millis { 10 } else { 1000 }
     }
 }

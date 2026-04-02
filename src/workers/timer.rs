@@ -46,7 +46,7 @@ pub fn spawn(
 
                 state.tick();
 
-                (state.config.tick_interval(), state.is_running)
+                (TimerConfig::tick_interval(state.show_millis), state.is_running)
             };
 
             thread::sleep(Duration::from_millis(interval as u64));

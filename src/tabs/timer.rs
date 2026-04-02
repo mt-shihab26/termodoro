@@ -126,6 +126,13 @@ impl TimerTab {
         self.set_todo(None);
     }
 
+    /// Toggles millisecond display on the clock.
+    fn toggle_millis(&self) {
+        if let Ok(mut s) = self.state.lock() {
+            s.toggle_show_millis();
+        }
+    }
+
     /// Increments the render counter so the worker thread knows a new frame was drawn.
     fn tick_render_count(&self) {
         let current = self.count.load(Ordering::Relaxed);
@@ -172,6 +179,7 @@ impl Tab for TimerTab {
             KeyCode::Char('n') => self.skip_session(),
             KeyCode::Char('t') => self.open_picker(),
             KeyCode::Char('T') => self.clear_todo(),
+            KeyCode::Char('m') => self.toggle_millis(),
             _ => {}
         }
 
@@ -194,7 +202,7 @@ impl Tab for TimerTab {
         let running = state.is_running;
         let long_break_interval = state.config.long_break_interval();
         let phase_label = state.cycle_phase.label().to_string();
-        let show_millis = state.config.show_millis();
+        let show_millis = state.show_millis;
         let time_millis = state.time_millis;
 
         drop(state);
