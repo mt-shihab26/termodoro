@@ -1,14 +1,34 @@
+<p align="center">
+  <img src="xdg/orivo.svg" width="120" alt="orivo logo"/>
+</p>
+
 # orivo
 
 A terminal-based Todos + Pomodoro timer written in Rust
 
-## Dependencies
+## Installation
 
-Orivo requires the following system libraries to be installed before building:
+```sh
+curl -fsSL https://raw.githubusercontent.com/mt-shihab26/orivo/main/bin/install.sh | bash
+```
 
-| Dependency | Reason | Install |
-|------------|--------|---------|
-| `sqlite3`  | Required at link time by `sqlx-sqlite` (uses system SQLite instead of bundling its own, to avoid conflicts with libSQL) | `sudo pacman -S sqlite` |
+The script will:
+
+- **Install sqlite3** — the only system dependency, detected and installed automatically for your distro
+- **Download the binary** — fetches the latest release for your OS and architecture
+- **Install the binary** — places `orivo` in `~/.local/bin`
+- **Install the desktop entry** *(Linux only)* — registers orivo as an app so it appears in your launcher
+- **Install the icon** *(Linux only)* — installs the app icon to the hicolor theme
+
+Options:
+
+```sh
+# Choose terminal for the desktop entry (default: kitty)
+curl -fsSL https://raw.githubusercontent.com/mt-shihab26/orivo/main/bin/install.sh | bash -s -- --terminal alacritty
+
+# Install system-wide
+curl -fsSL https://raw.githubusercontent.com/mt-shihab26/orivo/main/bin/install.sh | bash -s -- --prefix /usr/local
+```
 
 ## Configuration
 
