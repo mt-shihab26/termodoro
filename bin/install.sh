@@ -2,6 +2,20 @@
 set -euo pipefail
 
 INSTALL_SCRIPT_TAG="__ORIVO_RELEASE_TAG__"
+TMP_DIRS=()
+
+cleanup_tmp_dirs() {
+    local dir
+    for dir in "${TMP_DIRS[@]}"; do
+        [ -n "$dir" ] && rm -rf -- "$dir"
+    done
+}
+
+register_tmp_dir() {
+    TMP_DIRS+=("$1")
+}
+
+trap cleanup_tmp_dirs EXIT
 
 detect_platform() {
     local os arch os_tag arch_tag
@@ -47,7 +61,7 @@ install_sqlite() {
     if command -v pacman &>/dev/null; then
         sudo pacman -S --noconfirm sqlite
     elif command -v apt-get &>/dev/null; then
-        sudo apt-get install -y libsqlite3-dev
+        sudo apt-get install -y sqlite3
     elif command -v dnf &>/dev/null; then
         sudo dnf install -y sqlite-devel
     elif command -v zypper &>/dev/null; then
@@ -90,7 +104,7 @@ verify_checksum() {
     local file="$1" archive="$2" checksums="$3"
     echo "Verifying checksum..."
     local expected
-    expected=$(grep "${archive}" "$checksums" | awk '{print $1}')
+    expected=$(awk -v archive="$archive" '$2 == archive { print $1; exit }' "$checksums")
     [ -z "$expected" ] && {
         echo "ERROR: No checksum found for ${archive}" >&2
         exit 1
@@ -121,7 +135,7 @@ install_binary() {
 
     local tmp
     tmp=$(mktemp -d)
-    trap "rm -rf -- '$tmp'" EXIT
+    register_tmp_dir "$tmp"
     ${fetch} "${base}/${asset}" >"$tmp/$asset"
     ${fetch} "${base}/SHA256SUMS.txt" >"$tmp/SHA256SUMS.txt"
 
@@ -166,7 +180,7 @@ install_desktop() {
     }
     base="https://github.com/${repo}/releases/download/${asset_tag}"
     tmp=$(mktemp -d)
-    trap "rm -rf -- '$tmp'" EXIT
+    register_tmp_dir "$tmp"
     ${fetch} "${base}/${desktop_src}" >"$tmp/$desktop_src"
     ${fetch} "${base}/orivo.svg" >"$tmp/orivo.svg"
     ${fetch} "${base}/SHA256SUMS.txt" >"$tmp/SHA256SUMS.txt"
@@ -203,8 +217,13 @@ TERMINAL=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
     --terminal)
-        TERMINAL="$2"
-        shift 2
+        if [[ $# -ge 2 ]] && [[ "$2" != -* ]]; then
+            TERMINAL="$2"
+            shift 2
+        else
+            TERMINAL="kitty"
+            shift
+        fi
         ;;
     --terminal=*)
         TERMINAL="${1#--terminal=}"
