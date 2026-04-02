@@ -112,10 +112,9 @@ install_binary() {
     local base="https://github.com/${repo}/releases/download/${version}"
     echo "Installing ${binary} ${version} (${os_tag}/${arch_tag}) -> ${bin_dir}..."
 
-    local tmp cleanup_tmp
+    local tmp
     tmp=$(mktemp -d)
-    cleanup_tmp="$tmp"
-    trap 'rm -rf "$cleanup_tmp"' EXIT
+    trap "rm -rf -- '$tmp'" EXIT
     ${fetch} "${base}/${archive}" >"$tmp/$archive"
     ${fetch} "${base}/SHA256SUMS.txt" >"$tmp/SHA256SUMS.txt"
 
@@ -133,15 +132,7 @@ pick_terminal() {
         echo "$terminal"
         return
     }
-    printf "Select terminal for the desktop entry:\n"
-    printf "  1) kitty      (default)\n"
-    printf "  2) alacritty\n"
-    printf "Choice [1]: "
-    read -r choice
-    case "${choice:-1}" in
-    2 | alacritty) echo "alacritty" ;;
-    *) echo "kitty" ;;
-    esac
+    echo "kitty"
 }
 
 install_desktop() {
