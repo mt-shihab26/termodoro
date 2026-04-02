@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ------------------------------------------------------------------ #
-#  Functions                                                           #
-# ------------------------------------------------------------------ #
-
 detect_platform() {
     local os arch
     os=$(uname -s)
@@ -145,9 +141,12 @@ check_path() {
     printf "\nNOTE: Add to your shell profile:\n  export PATH=\"\$PATH:%s\"\n" "$bin_dir"
 }
 
-# ------------------------------------------------------------------ #
-#  Argument parsing                                                    #
-# ------------------------------------------------------------------ #
+REPO="mt-shihab26/orivo"
+BINARY="orivo"
+BIN_DIR="${HOME}/.local/bin"
+ICON_DIR="${HOME}/.local/share/icons/hicolor/scalable/apps"
+APPS_DIR="${HOME}/.local/share/applications"
+
 TERMINAL=""
 
 while [[ $# -gt 0 ]]; do
@@ -172,22 +171,13 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-REPO="mt-shihab26/orivo"
-BINARY="orivo"
-BIN_DIR="${HOME}/.local/bin"
-ICON_DIR="${HOME}/.local/share/icons/hicolor/scalable/apps"
-APPS_DIR="${HOME}/.local/share/applications"
-
-# ------------------------------------------------------------------ #
-#  Main                                                                #
-# ------------------------------------------------------------------ #
 main() {
     local fetch os_tag arch_tag version
     read -r os_tag arch_tag < <(detect_platform)
     fetch=$(detect_fetch)
     install_sqlite
     version=$(resolve_version "$fetch" "$REPO")
-    install_binary  "$fetch" "$REPO" "$BINARY" "$version" "$os_tag" "$arch_tag" "$BIN_DIR"
+    install_binary "$fetch" "$REPO" "$BINARY" "$version" "$os_tag" "$arch_tag" "$BIN_DIR"
     install_desktop "$fetch" "$REPO" "$os_tag" "$TERMINAL" "$APPS_DIR" "$ICON_DIR"
     check_path "$BIN_DIR"
     printf "\nRun 'orivo' to start. Config: ~/.config/orivo/config.toml\n"
