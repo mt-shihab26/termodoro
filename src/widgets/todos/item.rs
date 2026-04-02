@@ -2,8 +2,8 @@ use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::ListItem;
 
-use crate::caches::timer::Stat;
 use crate::kinds::repeat::Repeat;
+use crate::models::session::Stat;
 use crate::models::todo::Todo;
 
 pub struct ItemWidget<'a> {
@@ -24,7 +24,11 @@ impl<'a> ItemWidget<'a> {
 
         if let Some(ref stat) = self.stats {
             if stat.completed_sessions > 0 {
-                label.push_str(&format!("  · {}× {}m", stat.completed_sessions, stat.completed_secs / 60));
+                label.push_str(&format!(
+                    "  · {}× {}m",
+                    stat.completed_sessions,
+                    stat.completed_secs / 60
+                ));
             }
         }
 

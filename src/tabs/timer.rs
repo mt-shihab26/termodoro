@@ -18,11 +18,11 @@ use ratatui::{
 };
 
 use crate::{
-    caches::timer::{Stat, TimerCache},
+    caches::timer::TimerCache,
     config::timer::TimerConfig,
     kinds::{event::Event, phase::COLOR},
     log_warn,
-    models::todo::Todo,
+    models::{session::Stat, todo::Todo},
     states::timer::TimerState,
     widgets::{
         layout::border::{BorderProps, BorderWidget},

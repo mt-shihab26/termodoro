@@ -5,8 +5,8 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{List, ListState, Paragraph, StatefulWidget, Widget};
 use time::Duration;
 
-use crate::caches::timer::Stat;
 use crate::kinds::page::Page;
+use crate::models::session::Stat;
 use crate::models::todo::Todo;
 use crate::utils::date::today;
 

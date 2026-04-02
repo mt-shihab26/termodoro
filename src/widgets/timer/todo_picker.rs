@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{Block, Clear, List, ListItem, Paragraph, Widget},
 };
 
-use crate::{caches::timer::Stat, models::todo::Todo};
+use crate::models::{session::Stat, todo::Todo};
 
 pub struct TodoPickerProps {
     todos: Vec<Todo>,
