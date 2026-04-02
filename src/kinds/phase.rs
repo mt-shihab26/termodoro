@@ -2,15 +2,21 @@ use ratatui::style::Color;
 
 use crate::config::timer::TimerConfig;
 
+/// Accent color used for the work phase across the UI.
 pub const COLOR: Color = Color::Red;
 
+/// A phase in the pomodoro cycle.
 pub enum Phase {
+    /// A focused work session.
     Work,
+    /// A short break between work sessions.
     Break,
+    /// A longer break after completing a full interval of work sessions.
     LongBreak,
 }
 
 impl Phase {
+    /// Returns the human-readable label for the phase.
     pub fn label(&self) -> &str {
         match self {
             Phase::Work => "Work Session",
@@ -19,6 +25,7 @@ impl Phase {
         }
     }
 
+    /// Returns the accent color for the phase.
     pub fn color(&self) -> Color {
         match self {
             Phase::Work => COLOR,
@@ -27,6 +34,7 @@ impl Phase {
         }
     }
 
+    /// Returns the database string identifier for the phase.
     pub fn to_db_str(&self) -> &str {
         match self {
             Phase::Work => "work",
@@ -35,6 +43,7 @@ impl Phase {
         }
     }
 
+    /// Returns the configured duration for this phase in milliseconds.
     pub fn duration(&self, timer_config: &TimerConfig) -> u32 {
         match self {
             Phase::Work => timer_config.work_duration(),

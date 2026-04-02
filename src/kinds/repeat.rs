@@ -1,19 +1,27 @@
 use time::{Date, Duration};
 
+/// A recurrence rule for a todo item.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Repeat {
+    /// Repeats every day.
     Daily,
+    /// Repeats on the same weekday each week.
     WeeklySameDay,
+    /// Repeats on weekdays only (Monday–Friday).
     WeekdaysMonFri,
+    /// Repeats on the same day of each month.
     MonthlyOnDay,
+    /// Repeats on the same day each year.
     YearlyOnDay,
 }
 
 impl Repeat {
+    /// Returns the icon used to indicate a repeating todo.
     pub fn icon() -> &'static str {
         "⟳"
     }
 
+    /// All repeat variants in display order.
     pub const ALL: &'static [Repeat] = &[
         Repeat::Daily,
         Repeat::WeeklySameDay,
@@ -22,6 +30,7 @@ impl Repeat {
         Repeat::YearlyOnDay,
     ];
 
+    /// Clones a `Repeat` value from a reference.
     pub fn of(r: &Repeat) -> Repeat {
         match r {
             Repeat::Daily => Repeat::Daily,
@@ -32,6 +41,7 @@ impl Repeat {
         }
     }
 
+    /// Returns the human-readable label for the repeat rule.
     pub fn label(&self) -> &str {
         match self {
             Repeat::Daily => "Daily",
@@ -42,6 +52,7 @@ impl Repeat {
         }
     }
 
+    /// Returns the database string identifier for the repeat rule.
     pub fn to_db_str(&self) -> &str {
         match self {
             Repeat::Daily => "daily",
@@ -52,6 +63,7 @@ impl Repeat {
         }
     }
 
+    /// Parses a repeat rule from its database string identifier, returning `None` if unrecognised.
     pub fn from_db_str(s: &str) -> Option<Self> {
         match s {
             "daily" => Some(Repeat::Daily),
@@ -63,6 +75,7 @@ impl Repeat {
         }
     }
 
+    /// Returns the next due date after `from` according to this repeat rule.
     pub fn next_date(&self, from: Date) -> Date {
         match self {
             Repeat::Daily => from + Duration::days(1),
