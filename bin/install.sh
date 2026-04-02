@@ -257,7 +257,7 @@ main() {
         exit 0
     fi
 
-    [ -n "$current_version" ] && echo "Upgrading ${current_version} -> ${version#v}..." || true
+    [ -n "$current_version" ] && echo "Upgrading ${current_version} -> v${version#v}..." || true
 
     install_binary "$fetch" "$REPO" "$BINARY" "$version" "$os_tag" "$arch_tag" "$BIN_DIR"
     install_desktop "$fetch" "$REPO" "$os_tag" "$TERMINAL" "$APPS_DIR" "$ICON_DIR"
