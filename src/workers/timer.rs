@@ -2,6 +2,8 @@ use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::{Arc, Mutex, mpsc::Sender};
 use std::{thread, time::Duration};
 
+// TODO: add docs
+
 use sea_orm::DatabaseConnection;
 
 use crate::caches::timer::TimerCache;

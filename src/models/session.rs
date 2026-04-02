@@ -26,12 +26,12 @@ pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
-/// Session statistics for a single todo.
+/// Aggregated work session statistics for a single todo.
 #[derive(Clone)]
 pub struct Stat {
-    /// Number of completed pomodoro sessions.
+    /// Number of completed work sessions.
     pub completed_sessions: u32,
-    /// Total time spent in seconds across all sessions.
+    /// Total time spent in seconds across all completed work sessions.
     pub completed_secs: u32,
 }
 
@@ -44,16 +44,23 @@ impl Stat {
     }
 }
 
+/// A single pomodoro session record.
 #[derive(Clone)]
 pub struct Session {
+    /// Database primary key, `None` before the record is saved.
     pub id: Option<i32>,
+    /// Phase identifier stored as a string (e.g. `"work"`, `"break"`).
     pub phase: String,
+    /// Duration of the session in seconds.
     pub duration_secs: u32,
+    /// ISO 8601 UTC timestamp of when the session was completed, `None` if not yet completed.
     pub completed_at: Option<String>,
+    /// Associated todo id, if any.
     pub todo_id: Option<i32>,
 }
 
 impl Session {
+    /// Creates a new completed session for the given phase and duration.
     pub fn new(phase: &Phase, duration_millis: u32, todo_id: Option<i32>) -> Self {
         Self {
             id: None,
@@ -64,10 +71,12 @@ impl Session {
         }
     }
 
+    /// Creates and persists a completed session to the database.
     pub fn record(db: &DatabaseConnection, phase: &Phase, duration_millis: u32, todo_id: Option<i32>) {
         Self::new(phase, duration_millis, todo_id).save(db);
     }
 
+    /// Returns aggregated work session stats for the given todo.
     pub fn stat(db: &DatabaseConnection, todo_id: i32) -> Stat {
         let sessions: Vec<_> = Self::get(db, todo_id)
             .into_iter()
@@ -80,6 +89,7 @@ impl Session {
         Stat::new(completed_sessions, completed_secs)
     }
 
+    /// Fetches all sessions for the given todo from the database.
     fn get(db: &DatabaseConnection, todo_id: i32) -> Vec<Session> {
         match rt().block_on(async {
             Entity::find()
@@ -97,6 +107,7 @@ impl Session {
         }
     }
 
+    /// Inserts or updates this session in the database.
     fn save(&mut self, db: &DatabaseConnection) -> bool {
         match rt().block_on(async { self.to_model().insert(db).await.map_err(io_err) }) {
             Ok(model) => {

@@ -1,7 +1,6 @@
 use time::{Date, Month, OffsetDateTime};
 
-// TODO: add comments on each fn's
-
+/// Returns the current UTC time formatted as an ISO 8601 string (e.g. `"2024-01-15T10:30:00Z"`).
 pub fn now_utc_str() -> String {
     let dt = OffsetDateTime::now_utc();
     format!(
@@ -15,12 +14,14 @@ pub fn now_utc_str() -> String {
     )
 }
 
+/// Returns today's local date, falling back to UTC if the local offset is unavailable.
 pub fn today() -> Date {
     OffsetDateTime::now_local()
         .unwrap_or_else(|_| OffsetDateTime::now_utc())
         .date()
 }
 
+/// Shifts a date by `delta` months, clamping the day to the last valid day of the target month.
 pub fn shift_month(date: Date, delta: i32) -> Date {
     let total = date.month() as i32 - 1 + delta;
     let new_year = date.year() + total.div_euclid(12);
@@ -34,10 +35,12 @@ pub fn shift_month(date: Date, delta: i32) -> Date {
     date
 }
 
+/// Formats a date as `"YYYY-MM-DD"`.
 pub fn format_date(date: Date) -> String {
     format!("{}-{:02}-{:02}", date.year(), date.month() as u8, date.day())
 }
 
+/// Parses a `"YYYY-MM-DD"` string into a `Date`, returning `None` if the input is invalid.
 pub fn parse_date(s: &str) -> Option<Date> {
     let mut parts = s.splitn(3, '-');
     let year: i32 = parts.next()?.parse().ok()?;
@@ -46,6 +49,7 @@ pub fn parse_date(s: &str) -> Option<Date> {
     Date::from_calendar_date(year, Month::try_from(month).ok()?, day).ok()
 }
 
+/// Returns the number of days in the given month of the given year.
 fn days_in_month(year: i32, month: Month) -> u8 {
     let (ny, nm) = if month == Month::December {
         (year + 1, 1u8)

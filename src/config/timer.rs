@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+// TODO: add docs
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct TimerConfig {
     #[serde(default)]
