@@ -79,6 +79,14 @@ resolve_version() {
     echo "$version"
 }
 
+resolve_asset_tag() {
+    if [ "$INSTALL_SCRIPT_TAG" = "__ORIVO_RELEASE_TAG__" ]; then
+        echo ""
+    else
+        echo "$INSTALL_SCRIPT_TAG"
+    fi
+}
+
 verify_checksum() {
     local file="$1" archive="$2" checksums="$3"
     echo "Verifying checksum..."
@@ -152,7 +160,13 @@ install_desktop() {
     esac
 
     mkdir -p "$apps_dir" "$icon_dir"
-    local base="https://raw.githubusercontent.com/${repo}/main/xdg"
+    local asset_tag base
+    asset_tag=$(resolve_asset_tag)
+    [ -n "$asset_tag" ] || {
+        echo "ERROR: Install script tag is missing; cannot resolve desktop assets." >&2
+        exit 1
+    }
+    base="https://github.com/${repo}/releases/download/${asset_tag}"
     ${fetch} "${base}/${desktop_src}" >"$apps_dir/orivo.desktop"
     ${fetch} "${base}/orivo.svg" >"$icon_dir/orivo.svg"
 

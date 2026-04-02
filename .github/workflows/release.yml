@@ -129,4 +129,7 @@ jobs:
             dist/*.tar.gz
             dist/SHA256SUMS.txt
             bin/install.sh
+            xdg/orivo-kitty.desktop
+            xdg/orivo-alacritty.desktop
+            xdg/orivo.svg
           generate_release_notes: true
