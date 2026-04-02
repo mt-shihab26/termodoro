@@ -1,6 +1,12 @@
-use std::sync::atomic::{AtomicU8, Ordering};
-use std::sync::{Arc, Mutex, mpsc::Sender};
-use std::{thread, time::Duration};
+use std::{
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicU8, Ordering},
+        mpsc::Sender,
+    },
+    thread,
+    time::Duration,
+};
 
 use sea_orm::DatabaseConnection;
 

@@ -41,10 +41,15 @@ use crate::{
 
 use super::Tab;
 
+/// The timer tab, managing the pomodoro timer UI and its worker thread.
 pub struct TimerTab {
+    /// Render counter shared with the worker thread to pace `TimerTick` events.
     count: Arc<AtomicU8>,
+    /// Shared cache for today's todos and session stats.
     cache: Arc<Mutex<TimerCache>>,
+    /// Shared timer state owned by the worker thread.
     state: Arc<Mutex<TimerState>>,
+    /// Active todo picker overlay, `None` when closed.
     picker: Option<TodoPickerState>,
 }
 
@@ -66,27 +71,32 @@ impl TimerTab {
         }
     }
 
+    /// Sets the currently associated todo on the timer state.
     fn set_todo(&mut self, todo_id: Option<i32>) {
         if let Ok(mut s) = self.state.lock() {
             s.todo_id = todo_id;
         }
     }
 
+    /// Confirms the picker selection and closes the overlay.
     fn picker_select(&mut self, id: i32) {
         self.set_todo(Some(id));
         self.picker = None;
     }
 
+    /// Closes the picker without changing the selected todo.
     fn picker_cancel(&mut self) {
         self.picker = None;
     }
 
+    /// Toggles the timer between running and paused.
     fn toggle_running(&self) {
         if let Ok(mut s) = self.state.lock() {
             s.is_running = !s.is_running;
         }
     }
 
+    /// Resets the timer to the full duration of the current phase without advancing.
     fn reset_timer(&self) {
         if let Ok(mut s) = self.state.lock() {
             s.time_millis = s.cycle_phase.duration(&s.config);
@@ -94,12 +104,14 @@ impl TimerTab {
         }
     }
 
+    /// Records the current session and advances to the next phase.
     fn skip_session(&self) {
         if let Ok(mut s) = self.state.lock() {
             s.advance();
         }
     }
 
+    /// Opens the todo picker, loading todos and stats from the cache.
     fn open_picker(&mut self) {
         if let Ok(mut c) = self.cache.lock() {
             let todos = c.get_todos().to_vec();
@@ -108,16 +120,19 @@ impl TimerTab {
         }
     }
 
+    /// Clears the currently associated todo from the timer state.
     fn clear_todo(&mut self) {
         self.set_todo(None);
     }
 
+    /// Increments the render counter so the worker thread knows a new frame was drawn.
     fn tick_render_count(&self) {
         let current = self.count.load(Ordering::Relaxed);
         let next = (current + 1) % u8::MAX;
         self.count.store(next, Ordering::Relaxed);
     }
 
+    /// Returns the todo and stat for the currently selected todo id, if any.
     fn todo_info(&self) -> (Option<Todo>, Option<Stat>) {
         let Some(id) = self.state.lock().ok().and_then(|s| s.todo_id) else {
             return (None, None);
