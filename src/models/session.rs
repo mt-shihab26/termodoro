@@ -5,7 +5,6 @@ use sea_orm::{ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnectio
 use sea_orm::{DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait};
 
 use crate::{
-    caches::timer::Stat,
     kinds::phase::Phase,
     log_error,
     utils::{date::now_utc_str, db::rt},
@@ -26,6 +25,24 @@ pub struct Model {
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
+
+/// Session statistics for a single todo.
+#[derive(Clone)]
+pub struct Stat {
+    /// Number of completed pomodoro sessions.
+    pub completed_sessions: u32,
+    /// Total time spent in seconds across all sessions.
+    pub completed_secs: u32,
+}
+
+impl Stat {
+    pub fn new(completed_sessions: u32, completed_secs: u32) -> Self {
+        Self {
+            completed_sessions,
+            completed_secs,
+        }
+    }
+}
 
 #[derive(Clone)]
 pub struct Session {
@@ -57,10 +74,10 @@ impl Session {
             .filter(|s| s.completed_at.is_some() && s.phase == Phase::Work.to_db_str())
             .collect();
 
-        Stat {
-            completed_sessions: sessions.len() as u32,
-            completed_secs: sessions.iter().map(|s| s.duration_secs).sum(),
-        }
+        let completed_sessions = sessions.len() as u32;
+        let completed_secs = sessions.iter().map(|s| s.duration_secs).sum();
+
+        Stat::new(completed_sessions, completed_secs)
     }
 
     fn get(db: &DatabaseConnection, todo_id: i32) -> Vec<Session> {

@@ -2,17 +2,11 @@ use sea_orm::DatabaseConnection;
 
 use crate::{
     kinds::page::Page,
-    models::{session::Session, todo::Todo},
+    models::{
+        session::{Session, Stat},
+        todo::Todo,
+    },
 };
-
-/// Session statistics for a single todo.
-#[derive(Clone)]
-pub struct Stat {
-    /// Number of completed pomodoro sessions.
-    pub completed_sessions: u32,
-    /// Total time spent in seconds across all sessions.
-    pub completed_secs: u32,
-}
 
 /// Per-tab cache for today's todos and their session stats.
 pub struct TimerCache {
@@ -52,12 +46,7 @@ impl TimerCache {
             let ids: Vec<Option<i32>> = self.get_todos().iter().map(|t| t.id).collect();
             let stats = ids
                 .into_iter()
-                .map(|id| {
-                    id.map(|id| Session::stat(&self.db, id)).unwrap_or(Stat {
-                        completed_sessions: 0,
-                        completed_secs: 0,
-                    })
-                })
+                .map(|id| id.map(|id| Session::stat(&self.db, id)).unwrap_or(Stat::new(0, 0)))
                 .collect();
             self.stats = Some(stats);
         }

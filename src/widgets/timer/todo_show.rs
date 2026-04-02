@@ -3,7 +3,7 @@ use ratatui::{
     widgets::Paragraph,
 };
 
-use crate::{caches::timer::Stat, models::todo::Todo};
+use crate::models::{session::Stat, todo::Todo};
 
 pub struct TodoShowProps<'a> {
     todo: Option<&'a Todo>,
