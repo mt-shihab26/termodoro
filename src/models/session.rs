@@ -17,7 +17,8 @@ pub struct Model {
     id: i32,
     phase: String,
     duration_secs: i32,
-    completed_at: Option<String>,
+    started_at: Option<String>,
+    ended_at: Option<String>,
     todo_id: Option<i32>,
 }
 
@@ -54,34 +55,37 @@ pub struct Session {
     pub phase: String,
     /// Duration of the session in seconds.
     pub duration_secs: u32,
-    /// ISO 8601 UTC timestamp of when the session was completed, `None` if not yet completed.
-    pub completed_at: Option<String>,
+    /// UTC timestamp of when the session started, `None` if not yet started.
+    pub started_at: Option<String>,
+    /// UTC timestamp of when the session ended, `None` if not yet completed.
+    pub ended_at: Option<String>,
     /// Associated todo id, if any.
     pub todo_id: Option<i32>,
 }
 
 impl Session {
     /// Creates a new completed session for the given phase and duration.
-    pub fn new(phase: &Phase, duration_millis: u32, todo_id: Option<i32>) -> Self {
+    pub fn new(phase: &Phase, duration_millis: u32, started_at: Option<String>, todo_id: Option<i32>) -> Self {
         Self {
             id: None,
             phase: phase.to_db_str().to_string(),
             duration_secs: duration_millis / 1000,
-            completed_at: Some(now_utc_str()),
+            started_at,
+            ended_at: Some(now_utc_str()),
             todo_id,
         }
     }
 
     /// Creates and persists a completed session to the database.
-    pub fn record(db: &DatabaseConnection, phase: &Phase, duration_millis: u32, todo_id: Option<i32>) {
-        Self::new(phase, duration_millis, todo_id).save(db);
+    pub fn record(db: &DatabaseConnection, phase: &Phase, duration_millis: u32, started_at: Option<String>, todo_id: Option<i32>) {
+        Self::new(phase, duration_millis, started_at, todo_id).save(db);
     }
 
     /// Returns aggregated work session stats for the given todo.
     pub fn stat(db: &DatabaseConnection, todo_id: i32) -> Stat {
         let sessions: Vec<_> = Self::get(db, todo_id)
             .into_iter()
-            .filter(|s| s.completed_at.is_some() && s.phase == Phase::Work.to_db_str())
+            .filter(|s| s.ended_at.is_some() && s.phase == Phase::Work.to_db_str())
             .collect();
 
         let completed_sessions = sessions.len() as u32;
@@ -128,13 +132,15 @@ impl Session {
                 id: Set(id),
                 phase: Set(self.phase.clone()),
                 duration_secs: Set(self.duration_secs as i32),
-                completed_at: Set(self.completed_at.clone()),
+                started_at: Set(self.started_at.clone()),
+                ended_at: Set(self.ended_at.clone()),
                 todo_id: Set(self.todo_id),
             },
             None => ActiveModel {
                 phase: Set(self.phase.clone()),
                 duration_secs: Set(self.duration_secs as i32),
-                completed_at: Set(self.completed_at.clone()),
+                started_at: Set(self.started_at.clone()),
+                ended_at: Set(self.ended_at.clone()),
                 todo_id: Set(self.todo_id),
                 ..Default::default()
             },
@@ -148,7 +154,8 @@ impl From<Model> for Session {
             id: Some(m.id),
             phase: m.phase,
             duration_secs: m.duration_secs.max(0) as u32,
-            completed_at: m.completed_at,
+            started_at: m.started_at,
+            ended_at: m.ended_at,
             todo_id: m.todo_id,
         }
     }

@@ -54,7 +54,7 @@ impl App {
 
         Self {
             alive: true,
-            selected: 0,
+            selected: 1,
             tabs: vec![
                 Box::new(TodosTab::new(db.clone(), Arc::clone(&timer_cache))),
                 Box::new(TimerTab::new(sender, config.timer, timer_cache, db)),

@@ -93,15 +93,14 @@ impl TimerTab {
     /// Toggles the timer between running and paused.
     fn toggle_running(&self) {
         if let Ok(mut s) = self.state.lock() {
-            s.is_running = !s.is_running;
+            s.toggle_running();
         }
     }
 
     /// Resets the timer to the full duration of the current phase without advancing.
     fn reset_timer(&self) {
         if let Ok(mut s) = self.state.lock() {
-            s.time_millis = s.cycle_phase.duration(&s.config);
-            s.is_running = false;
+            s.reset();
         }
     }
 
@@ -203,7 +202,7 @@ impl Tab for TimerTab {
         let long_break_interval = state.config.long_break_interval();
         let phase_label = state.cycle_phase.label().to_string();
         let show_millis = state.show_millis;
-        let time_millis = state.time_millis;
+        let time_millis = state.current_millis();
 
         drop(state);
 

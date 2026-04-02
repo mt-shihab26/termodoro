@@ -1,21 +1,34 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    sync::{Arc, Mutex},
+    time::Instant,
+};
 
 use sea_orm::DatabaseConnection;
 
-use crate::{caches::timer::TimerCache, config::timer::TimerConfig, kinds::phase::Phase, models::session::Session};
+use crate::{
+    caches::timer::TimerCache,
+    config::timer::TimerConfig,
+    kinds::phase::Phase,
+    models::session::Session,
+    utils::date::now_utc_str,
+};
 
 /// Runtime state for the pomodoro timer, owned by the timer worker thread.
 pub struct TimerState {
     /// Database connection used to persist sessions.
-    pub db: DatabaseConnection,
+    db: DatabaseConnection,
     /// Timer configuration (durations, intervals, display options).
     pub config: TimerConfig,
     /// Shared cache reference, used to invalidate stats after a session completes.
-    pub cache: Arc<Mutex<TimerCache>>,
+    cache: Arc<Mutex<TimerCache>>,
     /// Whether the timer is actively counting down.
     pub is_running: bool,
-    /// Remaining time in the current phase, in milliseconds.
-    pub time_millis: u32,
+    /// Remaining time captured at the last pause or resume.
+    remaining_millis: u32,
+    /// Wall-clock anchor set when the timer was last resumed, `None` when paused.
+    started_at: Option<Instant>,
+    /// UTC timestamp of when the current phase was first started, `None` before first resume.
+    phase_started_at: Option<String>,
     /// Current phase of the pomodoro cycle (work, break, or long break).
     pub cycle_phase: Phase,
     /// Number of completed work sessions since the timer started.
@@ -30,10 +43,13 @@ impl TimerState {
     /// Creates a new `TimerState` in the initial paused work phase.
     pub fn new(config: TimerConfig, cache: Arc<Mutex<TimerCache>>, db: DatabaseConnection) -> Self {
         let show_millis = config.show_millis();
+        let remaining_millis = config.work_duration();
 
         Self {
             cycle_phase: Phase::Work,
-            time_millis: config.work_duration(),
+            remaining_millis,
+            started_at: None,
+            phase_started_at: None,
             sessions_count: 0,
             is_running: false,
             config,
@@ -44,17 +60,40 @@ impl TimerState {
         }
     }
 
-    /// Called every tick interval — decrements the timer or advances the phase when it expires.
-    pub fn tick(&mut self) {
-        if !self.is_running {
-            return;
+    /// Returns the current remaining time derived from the wall clock.
+    pub fn current_millis(&self) -> u32 {
+        match self.started_at {
+            Some(t) => self.remaining_millis.saturating_sub(t.elapsed().as_millis() as u32),
+            None => self.remaining_millis,
         }
+    }
 
-        let step = TimerConfig::tick_interval(self.show_millis);
-
-        if self.time_millis >= step {
-            self.time_millis -= step;
+    /// Toggles between running and paused, anchoring to the wall clock on resume.
+    pub fn toggle_running(&mut self) {
+        if self.is_running {
+            self.remaining_millis = self.current_millis();
+            self.started_at = None;
+            self.is_running = false;
         } else {
+            if self.phase_started_at.is_none() {
+                self.phase_started_at = Some(now_utc_str());
+            }
+            self.started_at = Some(Instant::now());
+            self.is_running = true;
+        }
+    }
+
+    /// Resets the timer to the full duration of the current phase without advancing.
+    pub fn reset(&mut self) {
+        self.remaining_millis = self.cycle_phase.duration(&self.config);
+        self.started_at = None;
+        self.phase_started_at = None;
+        self.is_running = false;
+    }
+
+    /// Called every tick — advances the phase if time has expired.
+    pub fn tick(&mut self) {
+        if self.is_running && self.current_millis() == 0 {
             self.advance();
         }
     }
@@ -62,8 +101,9 @@ impl TimerState {
     /// Records the current session and moves to the next phase.
     pub fn advance(&mut self) {
         let duration = self.cycle_phase.duration(&self.config);
+        let started_at = self.phase_started_at.take();
 
-        Session::record(&self.db, &self.cycle_phase, duration, self.todo_id);
+        Session::record(&self.db, &self.cycle_phase, duration, started_at, self.todo_id);
 
         match self.cycle_phase {
             Phase::Work => {
@@ -78,7 +118,10 @@ impl TimerState {
                 self.cycle_phase = Phase::Work;
             }
         }
-        self.time_millis = self.cycle_phase.duration(&self.config);
+
+        self.remaining_millis = self.cycle_phase.duration(&self.config);
+        self.started_at = None;
+        self.phase_started_at = None;
         self.is_running = false;
 
         if let Ok(mut c) = self.cache.lock() {
