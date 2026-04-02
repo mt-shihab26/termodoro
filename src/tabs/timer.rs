@@ -203,7 +203,7 @@ impl Tab for TimerTab {
 
         let sessions = state.sessions_count();
         let running = state.is_running();
-        let long_break_interval = state.long_break_interval();
+        let daily_session_goal = state.daily_session_goal();
         let show_millis = state.show_millis();
         let time_millis = state.current_millis();
 
@@ -226,7 +226,7 @@ impl Tab for TimerTab {
         ])
         .areas(inner);
 
-        SessionWidget::new(&SessionProps::new(sessions, long_break_interval)).render(session_row, buf);
+        SessionWidget::new(&SessionProps::new(sessions, daily_session_goal)).render(session_row, buf);
         PhaseWidget::new(&PhaseProps::new(phase_label, phase_color)).render(phase_row, buf);
         ClockWidget::new(&ClockProps::new(show_millis, time_millis, phase_color)).render(time_row, buf);
         StatusWidget::new(&StatusProps::new(running)).render(status_row, buf);

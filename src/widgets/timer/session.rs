@@ -5,14 +5,14 @@ use ratatui::{
 
 pub struct SessionProps {
     sessions: u32,
-    long_break_interval: u32,
+    daily_session_goal: u32,
 }
 
 impl SessionProps {
-    pub fn new(sessions: u32, long_break_interval: u32) -> Self {
+    pub fn new(sessions: u32, daily_session_goal: u32) -> Self {
         Self {
             sessions,
-            long_break_interval,
+            daily_session_goal,
         }
     }
 }
@@ -32,7 +32,7 @@ impl Widget for &SessionWidget<'_> {
         Paragraph::new(format!(
             "Session {} / {}",
             self.props.sessions + 1,
-            self.props.long_break_interval
+            self.props.daily_session_goal
         ))
         .centered()
         .fg(Color::DarkGray)

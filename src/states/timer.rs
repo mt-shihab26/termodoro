@@ -87,6 +87,11 @@ impl TimerState {
         self.config.long_break_interval()
     }
 
+    /// Returns the configured daily session goal.
+    pub fn daily_session_goal(&self) -> u32 {
+        self.config.daily_session_goal()
+    }
+
     /// Sets the currently associated todo on the timer state.
     pub fn set_todo_id(&mut self, todo_id: Option<i32>) {
         self.todo_id = todo_id;

@@ -18,6 +18,9 @@ pub struct TimerConfig {
     /// Number of work sessions before a long break.
     #[serde(default)]
     long_break_interval: u32,
+    /// Target number of work sessions to complete each day.
+    #[serde(default)]
+    daily_session_goal: u32,
 }
 
 impl Default for TimerConfig {
@@ -28,6 +31,7 @@ impl Default for TimerConfig {
             break_duration: 5,
             long_break_duration: 15,
             long_break_interval: 4,
+            daily_session_goal: 16,
         }
     }
 }
@@ -56,6 +60,11 @@ impl TimerConfig {
     /// Returns the number of work sessions between long breaks. Min: 1, max: 10.
     pub fn long_break_interval(&self) -> u32 {
         self.long_break_interval.clamp(1, 10)
+    }
+
+    /// Returns the daily session goal. Min: 1, max: 24.
+    pub fn daily_session_goal(&self) -> u32 {
+        self.daily_session_goal.clamp(1, 24)
     }
 
     /// Returns the tick interval in milliseconds — 10ms when showing millis, 1000ms otherwise.
