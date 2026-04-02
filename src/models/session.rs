@@ -36,6 +36,7 @@ pub struct Stat {
 }
 
 impl Stat {
+    /// Creates a new `Stat` with the given session count and total seconds.
     pub fn new(completed_sessions: u32, completed_secs: u32) -> Self {
         Self {
             completed_sessions,

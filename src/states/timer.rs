@@ -6,8 +6,11 @@ use crate::{caches::timer::TimerCache, config::timer::TimerConfig, kinds::phase:
 
 /// Runtime state for the pomodoro timer, owned by the timer worker thread.
 pub struct TimerState {
+    /// Database connection used to persist sessions.
     pub db: DatabaseConnection,
+    /// Timer configuration (durations, intervals, display options).
     pub config: TimerConfig,
+    /// Shared cache reference, used to invalidate stats after a session completes.
     pub cache: Arc<Mutex<TimerCache>>,
     /// Whether the timer is actively counting down.
     pub is_running: bool,
@@ -22,6 +25,7 @@ pub struct TimerState {
 }
 
 impl TimerState {
+    /// Creates a new `TimerState` in the initial paused work phase.
     pub fn new(config: TimerConfig, cache: Arc<Mutex<TimerCache>>, db: DatabaseConnection) -> Self {
         Self {
             cycle_phase: Phase::Work,
