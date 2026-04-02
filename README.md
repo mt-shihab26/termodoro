@@ -9,7 +9,7 @@ A terminal-based Todos + Pomodoro timer written in Rust
 ## Installation
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/mt-shihab26/orivo/main/bin/install.sh | bash
+curl -fsSL https://github.com/mt-shihab26/orivo/releases/latest/download/install.sh | bash
 ```
 
 The script will:
@@ -24,7 +24,7 @@ Options:
 
 ```sh
 # Choose terminal for the desktop entry (default: kitty)
-curl -fsSL https://raw.githubusercontent.com/mt-shihab26/orivo/main/bin/install.sh | bash -s -- --terminal alacritty
+curl -fsSL https://github.com/mt-shihab26/orivo/releases/latest/download/install.sh | bash -s -- --terminal alacritty
 ```
 
 ## Configuration
