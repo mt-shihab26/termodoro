@@ -203,8 +203,8 @@ impl App {
             Some(Event::Key(key)) => match key.code {
                 KeyCode::Char('c' | 'q') if ctrl(&key) => self.quit(),
                 KeyCode::Char('f') if ctrl(&key) => self.toggle_fps(),
-                KeyCode::Char('1') if ctrl(&key) => self.select_tab(0),
-                KeyCode::Char('2') if ctrl(&key) => self.select_tab(1),
+                KeyCode::Char('t') if ctrl(&key) => self.select_tab(0),
+                KeyCode::Char('x') if ctrl(&key) => self.select_tab(1),
                 KeyCode::Tab => self.next_tab(),
                 _ => self.handle_key(key)?,
             },

@@ -9,8 +9,8 @@ use ratatui::style::{Color, Stylize};
 use ratatui::widgets::{Block, Widget};
 use sea_orm::DatabaseConnection;
 
-use crate::kinds::{page::Page, todos_mode::TodosMode};
 use crate::caches::timer::TimerCache;
+use crate::kinds::{page::Page, todos_mode::TodosMode};
 use crate::widgets::todos::hint::HintWidget;
 use crate::widgets::todos::input::{InputAction, InputWidget};
 use crate::widgets::todos::{list::ListWidget, status::StatusWidget, tabs::TabsWidget};
@@ -58,7 +58,7 @@ impl TodosTab {
 
 impl Tab for TodosTab {
     fn name(&self) -> &str {
-        "Todos [^1]"
+        "Todos [^t]"
     }
 
     fn color(&self) -> Color {
