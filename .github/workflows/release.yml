@@ -142,7 +142,7 @@ jobs:
 
       - name: Stamp install script tag
         run: |
-          sed -i "s|__ORIVO_RELEASE_TAG__|${GITHUB_REF_NAME}|g" bin/install.sh
+          sed -i "s|^INSTALL_SCRIPT_TAG=\"__ORIVO_RELEASE_TAG__\"$|INSTALL_SCRIPT_TAG=\"${GITHUB_REF_NAME}\"|" bin/install.sh
 
       - name: Prepare release assets
         run: |

@@ -70,12 +70,16 @@ resolve_current_version() {
 }
 
 resolve_version() {
-    local version="${INSTALL_SCRIPT_TAG:-__ORIVO_RELEASE_TAG__}"
-    [ "$version" != "__ORIVO_RELEASE_TAG__" ] || {
+    local version="${INSTALL_SCRIPT_TAG:-}"
+    case "$version" in
+    "" | __ORIVO_RELEASE_*)
         echo "ERROR: Install script is not stamped with a release tag." >&2
         exit 1
-    }
-    echo "$version"
+        ;;
+    *)
+        echo "$version"
+        ;;
+    esac
 }
 
 resolve_asset_tag() {
@@ -219,7 +223,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 main() {
-    echo "Install script: __ORIVO_RELEASE_TAG__"
+    echo "Install script: ${INSTALL_SCRIPT_TAG}"
 
     local fetch os_tag arch_tag version current_version
     read -r os_tag arch_tag < <(detect_platform)
