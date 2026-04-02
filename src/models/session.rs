@@ -54,7 +54,7 @@ impl Session {
     pub fn stat(db: &DatabaseConnection, todo_id: i32) -> Stat {
         let sessions: Vec<_> = Self::get(db, todo_id)
             .into_iter()
-            .filter(|s| s.completed_at.is_some())
+            .filter(|s| s.completed_at.is_some() && s.phase == Phase::Work.to_db_str())
             .collect();
 
         Stat {
