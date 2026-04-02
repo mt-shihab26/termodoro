@@ -72,17 +72,42 @@ resolve_version() {
     echo "$version"
 }
 
+verify_checksum() {
+    local file="$1" archive="$2" checksums="$3"
+    echo "Verifying checksum..."
+    local expected
+    expected=$(grep "${archive}" "$checksums" | awk '{print $1}')
+    [ -z "$expected" ] && { echo "ERROR: No checksum found for ${archive}" >&2; exit 1; }
+
+    local actual
+    if command -v sha256sum &>/dev/null; then
+        actual=$(sha256sum "$file" | awk '{print $1}')
+    elif command -v shasum &>/dev/null; then
+        actual=$(shasum -a 256 "$file" | awk '{print $1}')
+    else
+        echo "WARNING: No sha256 tool found, skipping verification." >&2
+        return
+    fi
+
+    [ "$actual" = "$expected" ] || { echo "ERROR: Checksum mismatch for ${archive}" >&2; exit 1; }
+    echo "Checksum OK."
+}
+
 install_binary() {
     local fetch="$1" repo="$2" binary="$3" version="$4" os_tag="$5" arch_tag="$6" bin_dir="$7"
     local archive="${binary}-${version}-${os_tag}-${arch_tag}.tar.gz"
+    local base="https://github.com/${repo}/releases/download/${version}"
     echo "Installing ${binary} ${version} (${os_tag}/${arch_tag}) -> ${bin_dir}..."
 
     local tmp
     tmp=$(mktemp -d)
     trap 'rm -rf "$tmp"' EXIT
-    ${fetch} "https://github.com/${repo}/releases/download/${version}/${archive}" >"$tmp/$archive"
-    tar xzf "$tmp/$archive" -C "$tmp"
+    ${fetch} "${base}/${archive}"       >"$tmp/$archive"
+    ${fetch} "${base}/SHA256SUMS.txt"   >"$tmp/SHA256SUMS.txt"
 
+    verify_checksum "$tmp/$archive" "$archive" "$tmp/SHA256SUMS.txt"
+
+    tar xzf "$tmp/$archive" -C "$tmp"
     mkdir -p "$bin_dir"
     install -m 755 "$tmp/$binary" "$bin_dir/$binary"
     echo "Binary:  $bin_dir/$binary"
