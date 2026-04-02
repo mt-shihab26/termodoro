@@ -1,7 +1,7 @@
 use std::io::Result;
 use std::sync::OnceLock;
 
-use sea_orm::{Database, DatabaseConnection};
+use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 
 use crate::migration::{Migrator, MigratorTrait};
 use crate::utils::path::db_path;
@@ -23,10 +23,16 @@ pub fn connect() -> Result<DatabaseConnection> {
         std::fs::create_dir_all(parent)?;
     }
 
+    crate::utils::log::init();
+
     rt().block_on(async {
         let url = format!("sqlite://{}?mode=rwc", path.to_str().unwrap());
 
-        let db = Database::connect(&url).await.map_err(io_err)?;
+        let mut opts = ConnectOptions::new(url);
+        opts.sqlx_logging(true)
+            .sqlx_logging_level(log::LevelFilter::Info);
+
+        let db = Database::connect(opts).await.map_err(io_err)?;
 
         Migrator::up(&db, None).await.map_err(io_err)?;
 

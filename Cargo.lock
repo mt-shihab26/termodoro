@@ -1614,6 +1614,7 @@ dependencies = [
 name = "orivo"
 version = "0.1.0"
 dependencies = [
+ "log",
  "ratatui",
  "ratatui-textarea",
  "sea-orm",

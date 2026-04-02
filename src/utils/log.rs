@@ -66,6 +66,29 @@ pub fn write(level: &str, msg: &str) {
     }
 }
 
+struct DbLogger;
+
+impl log::Log for DbLogger {
+    fn enabled(&self, metadata: &log::Metadata) -> bool {
+        metadata.target().starts_with("sqlx") && metadata.level() <= log::Level::Info
+    }
+
+    fn log(&self, record: &log::Record) {
+        if self.enabled(record.metadata()) {
+            write("DB", &format!("{}", record.args()));
+        }
+    }
+
+    fn flush(&self) {}
+}
+
+static LOGGER: DbLogger = DbLogger;
+
+pub fn init() {
+    let _ = log::set_logger(&LOGGER);
+    log::set_max_level(log::LevelFilter::Info);
+}
+
 #[macro_export]
 macro_rules! log_error {
     ($($arg:tt)*) => { $crate::utils::log::write("ERROR", &format!($($arg)*)) };
