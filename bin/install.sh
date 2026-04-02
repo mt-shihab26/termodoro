@@ -130,6 +130,9 @@ install_desktop() {
     ${fetch} "${base}/${desktop_src}" >"$apps_dir/orivo.desktop"
     ${fetch} "${base}/orivo.svg" >"$icon_dir/orivo.svg"
 
+    # Patch Icon to absolute path
+    sed -i "s|Icon=orivo|Icon=${icon_dir}/orivo.svg|" "$apps_dir/orivo.desktop"
+
     command -v update-desktop-database &>/dev/null && update-desktop-database "$apps_dir" 2>/dev/null || true
     echo "Terminal: $terminal"
     echo "Desktop:  $apps_dir/orivo.desktop"
@@ -145,19 +148,10 @@ check_path() {
 # ------------------------------------------------------------------ #
 #  Argument parsing                                                    #
 # ------------------------------------------------------------------ #
-PREFIX="${HOME}/.local"
 TERMINAL=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-    --prefix)
-        PREFIX="$2"
-        shift 2
-        ;;
-    --prefix=*)
-        PREFIX="${1#--prefix=}"
-        shift
-        ;;
     --terminal)
         TERMINAL="$2"
         shift 2
@@ -167,8 +161,7 @@ while [[ $# -gt 0 ]]; do
         shift
         ;;
     -h | --help)
-        echo "Usage: $0 [--prefix DIR] [--terminal kitty|alacritty]"
-        echo "  --prefix DIR                Install to DIR/bin (default: ~/.local)"
+        echo "Usage: $0 [--terminal kitty|alacritty]"
         echo "  --terminal kitty|alacritty  Terminal for the desktop entry"
         exit 0
         ;;
@@ -181,9 +174,9 @@ done
 
 REPO="mt-shihab26/orivo"
 BINARY="orivo"
-BIN_DIR="$PREFIX/bin"
-ICON_DIR="$PREFIX/share/icons/hicolor/scalable/apps"
-APPS_DIR="$PREFIX/share/applications"
+BIN_DIR="${HOME}/.local/bin"
+ICON_DIR="${HOME}/.local/share/icons/hicolor/scalable/apps"
+APPS_DIR="${HOME}/.local/share/applications"
 
 # ------------------------------------------------------------------ #
 #  Main                                                                #

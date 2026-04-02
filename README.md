@@ -25,9 +25,6 @@ Options:
 ```sh
 # Choose terminal for the desktop entry (default: kitty)
 curl -fsSL https://raw.githubusercontent.com/mt-shihab26/orivo/main/bin/install.sh | bash -s -- --terminal alacritty
-
-# Install system-wide
-curl -fsSL https://raw.githubusercontent.com/mt-shihab26/orivo/main/bin/install.sh | bash -s -- --prefix /usr/local
 ```
 
 ## Configuration
