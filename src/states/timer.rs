@@ -6,10 +6,7 @@ use std::{
 use sea_orm::DatabaseConnection;
 
 use crate::{
-    caches::timer::TimerCache,
-    config::timer::TimerConfig,
-    kinds::phase::Phase,
-    models::session::Session,
+    caches::timer::TimerCache, config::timer::TimerConfig, kinds::phase::Phase, models::session::Session,
     utils::date::now_utc_str,
 };
 
@@ -18,11 +15,11 @@ pub struct TimerState {
     /// Database connection used to persist sessions.
     db: DatabaseConnection,
     /// Timer configuration (durations, intervals, display options).
-    pub config: TimerConfig,
+    config: TimerConfig,
     /// Shared cache reference, used to invalidate stats after a session completes.
     cache: Arc<Mutex<TimerCache>>,
     /// Whether the timer is actively counting down.
-    pub is_running: bool,
+    is_running: bool,
     /// Remaining time captured at the last pause or resume.
     remaining_millis: u32,
     /// Wall-clock anchor set when the timer was last resumed, `None` when paused.
@@ -30,13 +27,13 @@ pub struct TimerState {
     /// UTC timestamp of when the current phase was first started, `None` before first resume.
     phase_started_at: Option<String>,
     /// Current phase of the pomodoro cycle (work, break, or long break).
-    pub cycle_phase: Phase,
+    cycle_phase: Phase,
     /// Number of completed work sessions since the timer started.
-    pub sessions_count: u32,
+    sessions_count: u32,
     /// The currently selected todo id, used to associate sessions.
-    pub todo_id: Option<i32>,
+    todo_id: Option<i32>,
     /// Whether to display milliseconds on the clock, toggleable at runtime.
-    pub show_millis: bool,
+    show_millis: bool,
 }
 
 impl TimerState {
@@ -60,6 +57,36 @@ impl TimerState {
         }
     }
 
+    /// Sets the currently associated todo on the timer state.
+    pub fn todo_id(&self) -> Option<i32> {
+        self.todo_id
+    }
+
+    pub fn cycle_phase(&self) -> &Phase {
+        &self.cycle_phase
+    }
+
+    pub fn sessions_count(&self) -> u32 {
+        self.sessions_count
+    }
+
+    pub fn is_running(&self) -> bool {
+        self.is_running
+    }
+
+    pub fn show_millis(&self) -> bool {
+        self.show_millis
+    }
+
+    pub fn long_break_interval(&self) -> u32 {
+        self.config.long_break_interval()
+    }
+
+    /// Sets the currently associated todo on the timer state.
+    pub fn set_todo_id(&mut self, todo_id: Option<i32>) {
+        self.todo_id = todo_id;
+    }
+
     /// Returns the current remaining time derived from the wall clock.
     pub fn current_millis(&self) -> u32 {
         match self.started_at {
@@ -81,6 +108,11 @@ impl TimerState {
             self.started_at = Some(Instant::now());
             self.is_running = true;
         }
+    }
+
+    /// Toggles whether milliseconds are shown on the clock.
+    pub fn toggle_show_millis(&mut self) {
+        self.show_millis = !self.show_millis;
     }
 
     /// Resets the timer to the full duration of the current phase without advancing.
@@ -127,10 +159,5 @@ impl TimerState {
         if let Ok(mut c) = self.cache.lock() {
             c.invalidate_stats();
         }
-    }
-
-    /// Toggles whether milliseconds are shown on the clock.
-    pub fn toggle_show_millis(&mut self) {
-        self.show_millis = !self.show_millis;
     }
 }

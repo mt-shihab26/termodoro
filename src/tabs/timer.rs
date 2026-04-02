@@ -74,8 +74,8 @@ impl TimerTab {
 
     /// Sets the currently associated todo on the timer state.
     fn set_todo(&mut self, todo_id: Option<i32>) {
-        if let Ok(mut s) = self.state.lock() {
-            s.todo_id = todo_id;
+        if let Ok(mut state) = self.state.lock() {
+            state.set_todo_id(todo_id);
         }
     }
 
@@ -92,30 +92,30 @@ impl TimerTab {
 
     /// Toggles the timer between running and paused.
     fn toggle_running(&self) {
-        if let Ok(mut s) = self.state.lock() {
-            s.toggle_running();
+        if let Ok(mut state) = self.state.lock() {
+            state.toggle_running();
         }
     }
 
     /// Resets the timer to the full duration of the current phase without advancing.
     fn reset_timer(&self) {
-        if let Ok(mut s) = self.state.lock() {
-            s.reset();
+        if let Ok(mut state) = self.state.lock() {
+            state.reset();
         }
     }
 
     /// Records the current session and advances to the next phase.
     fn skip_session(&self) {
-        if let Ok(mut s) = self.state.lock() {
-            s.advance();
+        if let Ok(mut state) = self.state.lock() {
+            state.advance();
         }
     }
 
     /// Opens the todo picker, loading todos and stats from the cache.
     fn open_picker(&mut self) {
-        if let Ok(mut c) = self.cache.lock() {
-            let todos = c.get_todos().to_vec();
-            let stats = c.get_stats().to_vec();
+        if let Ok(mut cache) = self.cache.lock() {
+            let todos = cache.get_todos().to_vec();
+            let stats = cache.get_stats().to_vec();
             self.picker = Some(TodoPickerState::new(todos, stats));
         }
     }
@@ -127,8 +127,8 @@ impl TimerTab {
 
     /// Toggles millisecond display on the clock.
     fn toggle_millis(&self) {
-        if let Ok(mut s) = self.state.lock() {
-            s.toggle_show_millis();
+        if let Ok(mut state) = self.state.lock() {
+            state.toggle_show_millis();
         }
     }
 
@@ -141,7 +141,7 @@ impl TimerTab {
 
     /// Returns the todo and stat for the currently selected todo id, if any.
     fn todo_info(&self) -> (Option<Todo>, Option<Stat>) {
-        let Some(id) = self.state.lock().ok().and_then(|s| s.todo_id) else {
+        let Some(id) = self.state.lock().ok().and_then(|state| state.todo_id()) else {
             return (None, None);
         };
         let Ok(mut cache) = self.cache.lock() else {
@@ -196,12 +196,15 @@ impl Tab for TimerTab {
             }
         };
 
-        let color = state.cycle_phase.color();
-        let sessions = state.sessions_count;
-        let running = state.is_running;
-        let long_break_interval = state.config.long_break_interval();
-        let phase_label = state.cycle_phase.label().to_string();
-        let show_millis = state.show_millis;
+        let cycle_phase = state.cycle_phase();
+
+        let phase_color = cycle_phase.color();
+        let phase_label = cycle_phase.label().to_string();
+
+        let sessions = state.sessions_count();
+        let running = state.is_running();
+        let long_break_interval = state.long_break_interval();
+        let show_millis = state.show_millis();
         let time_millis = state.current_millis();
 
         drop(state);
@@ -224,8 +227,8 @@ impl Tab for TimerTab {
         .areas(inner);
 
         SessionWidget::new(&SessionProps::new(sessions, long_break_interval)).render(session_row, buf);
-        PhaseWidget::new(&PhaseProps::new(phase_label, color)).render(phase_row, buf);
-        ClockWidget::new(&ClockProps::new(show_millis, time_millis, color)).render(time_row, buf);
+        PhaseWidget::new(&PhaseProps::new(phase_label, phase_color)).render(phase_row, buf);
+        ClockWidget::new(&ClockProps::new(show_millis, time_millis, phase_color)).render(time_row, buf);
         StatusWidget::new(&StatusProps::new(running)).render(status_row, buf);
 
         let [todo_row, hint_row] = Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).areas(bottom);
