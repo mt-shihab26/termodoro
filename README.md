@@ -8,6 +8,8 @@ A terminal-based Todos + Pomodoro timer written in Rust
 
 ## Installation
 
+### Linux and macOS
+
 ```sh
 curl -fsSL https://github.com/mt-shihab26/orivo/releases/latest/download/install.sh | bash
 ```
@@ -18,6 +20,7 @@ The script will:
 - **Download the binary** — fetches the latest release for your OS and architecture
 - **Install the binary** — places `orivo` in `~/.local/bin`
 - **Install the desktop entry** *(Linux only)* — registers orivo as an app so it appears in your launcher
+- **Support desktop terminal selection** *(Linux only)* — use `--terminal kitty` or `--terminal alacritty` for the desktop entry
 - **Install the icon** *(Linux only)* — installs the app icon to the hicolor theme
 
 Running the same command again will **upgrade** to the latest version, or do nothing if already up to date.
@@ -27,6 +30,19 @@ Options:
 ```sh
 # Choose terminal for the desktop entry (default: kitty)
 curl -fsSL https://github.com/mt-shihab26/orivo/releases/latest/download/install.sh | bash -s -- --terminal alacritty
+```
+
+### Windows
+
+Download the Windows release binary from the latest GitHub Release:
+
+- `orivo-vX.Y.Z-windows-x86_64.exe`
+- `orivo-vX.Y.Z-windows-aarch64.exe`
+
+Then place it somewhere on your `PATH`, or keep it in a directory of your choice and run it directly:
+
+```powershell
+.\orivo-v0.1.3-windows-x86_64.exe
 ```
 
 ## Configuration
