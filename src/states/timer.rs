@@ -164,9 +164,6 @@ impl TimerState {
             }
             Phase::Break | Phase::LongBreak => {
                 self.cycle_phase = Phase::Work;
-                if let Ok(mut c) = self.cache.lock() {
-                    c.invalidate_stats();
-                }
             }
         }
 
