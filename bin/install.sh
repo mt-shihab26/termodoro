@@ -202,6 +202,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 main() {
+    echo "Install script: __ORIVO_RELEASE_TAG__"
+
     local fetch os_tag arch_tag version current_version
     read -r os_tag arch_tag < <(detect_platform)
     fetch=$(detect_fetch)

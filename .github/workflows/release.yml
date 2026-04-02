@@ -118,6 +118,10 @@ jobs:
           sha256sum *.tar.gz > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
+      - name: Stamp install script tag
+        run: |
+          sed -i "s|__ORIVO_RELEASE_TAG__|${GITHUB_REF_NAME}|g" bin/install.sh
+
       - name: Create release and upload assets
         uses: softprops/action-gh-release@v2
         with:
