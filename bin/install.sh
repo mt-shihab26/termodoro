@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+INSTALL_SCRIPT_TAG="__ORIVO_RELEASE_TAG__"
+
 detect_platform() {
     local os arch os_tag arch_tag
     os=$(uname -s)
@@ -68,23 +70,16 @@ resolve_current_version() {
 }
 
 resolve_version() {
-    local fetch="$1" repo="$2"
-    local version
-    version=$(${fetch} "https://api.github.com/repos/${repo}/releases/latest" |
-        grep '"tag_name"' | sed 's/.*"\([^"]*\)".*/\1/')
-    [ -z "$version" ] && {
-        echo "ERROR: Could not fetch latest version." >&2
+    local version="${INSTALL_SCRIPT_TAG:-__ORIVO_RELEASE_TAG__}"
+    [ "$version" != "__ORIVO_RELEASE_TAG__" ] || {
+        echo "ERROR: Install script is not stamped with a release tag." >&2
         exit 1
     }
     echo "$version"
 }
 
 resolve_asset_tag() {
-    if [ "$INSTALL_SCRIPT_TAG" = "__ORIVO_RELEASE_TAG__" ]; then
-        echo ""
-    else
-        echo "$INSTALL_SCRIPT_TAG"
-    fi
+    resolve_version
 }
 
 verify_checksum() {
