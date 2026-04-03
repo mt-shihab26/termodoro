@@ -31,8 +31,7 @@ impl Widget for &SessionWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         Paragraph::new(format!(
             "Session {} / {}",
-            self.props.sessions + 1,
-            self.props.daily_session_goal
+            self.props.sessions, self.props.daily_session_goal
         ))
         .centered()
         .fg(Color::DarkGray)
