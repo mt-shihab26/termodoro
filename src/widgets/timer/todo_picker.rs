@@ -6,7 +6,10 @@ use ratatui::{
     widgets::{Block, Clear, List, ListItem, Paragraph, Widget},
 };
 
-use crate::models::{session::Stat, todo::Todo};
+use crate::{
+    kinds::phase::COLOR,
+    models::{session::Stat, todo::Todo},
+};
 
 pub struct TodoPickerProps {
     todos: Vec<Todo>,
@@ -83,14 +86,15 @@ impl<'a> TodoPickerWidget<'a> {
 impl Widget for &TodoPickerWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let list_height = (self.props.todos.len().min(5) as u16).max(1);
-        let popup = centered_rect(area, 52, list_height + 4);
+
+        let popup = centered_rect(area, 60, list_height + 20);
 
         Clear.render(popup, buf);
 
         let block = Block::bordered()
             .title(" Select Todo ")
             .title_bottom(" [j/k] ↑↓  [Enter] confirm  [Esc] cancel ")
-            .border_style(Style::default().fg(Color::Yellow).bold());
+            .border_style(Style::default().fg(COLOR).bold());
 
         let inner = block.inner(popup);
         block.render(popup, buf);
@@ -124,9 +128,9 @@ impl Widget for &TodoPickerWidget<'_> {
                     todo.text.clone()
                 };
                 if i == self.props.cursor {
-                    ListItem::new(format!("> {label}")).style(Style::new().fg(Color::Yellow).bold())
+                    ListItem::new(format!("> {label}")).style(Style::new().fg(COLOR).bold())
                 } else {
-                    ListItem::new(format!("  {label}")).style(Style::new().fg(Color::DarkGray))
+                    ListItem::new(format!("  {label}")).style(Style::new().fg(Color::White))
                 }
             })
             .collect();
