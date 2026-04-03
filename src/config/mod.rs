@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     config::{db::DBConfig, timer::TimerConfig},
-    utils::path::config_path,
+    utils::path::config_toml_path,
 };
 
 /// Top-level application configuration, loaded from `~/.config/orivo/config.toml`.
@@ -40,7 +40,7 @@ impl Default for Config {
 impl Config {
     /// Loads the config from disk, returning the default if the file does not exist.
     pub fn load() -> Result<Self> {
-        let path = config_path();
+        let path = config_toml_path();
         if !path.exists() {
             return Ok(Self::default());
         }
