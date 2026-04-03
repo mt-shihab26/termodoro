@@ -28,7 +28,7 @@ impl Widget for &HintWidget<'_> {
         let text = if self.props.selecting_todo {
             "[j/k] Navigate   [Enter] Select   [Esc] Cancel"
         } else {
-            "[Space] Toggle   [r] Reset   [n] Skip   [t] Todo   [T] Clear todo   [m] Millis"
+            "[Space] Toggle   [r] Reset   [n] Skip   [t] Select Todo   [T] Clear todo   [m] Millis"
         };
         Paragraph::new(text).centered().fg(Color::DarkGray).render(area, buf);
     }
