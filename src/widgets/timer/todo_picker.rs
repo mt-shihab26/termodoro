@@ -85,9 +85,7 @@ impl<'a> TodoPickerWidget<'a> {
 
 impl Widget for &TodoPickerWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let list_height = (self.props.todos.len().min(5) as u16).max(1);
-
-        let popup = centered_rect(area, 60, list_height + 20);
+        let popup = centered_rect(area, 60, area.height.saturating_sub(4));
 
         Clear.render(popup, buf);
 
@@ -107,11 +105,13 @@ impl Widget for &TodoPickerWidget<'_> {
             return;
         }
 
+        let visible = inner.height as usize;
+
         let start = self
             .props
             .cursor
-            .saturating_sub(2)
-            .min(self.props.todos.len().saturating_sub(5));
+            .saturating_sub(visible / 2)
+            .min(self.props.todos.len().saturating_sub(visible));
 
         let items: Vec<ListItem> = self
             .props
@@ -120,7 +120,7 @@ impl Widget for &TodoPickerWidget<'_> {
             .zip(self.props.stats.iter())
             .enumerate()
             .skip(start)
-            .take(5)
+            .take(visible)
             .map(|(i, (todo, stat))| {
                 let label = if stat.completed_sessions > 0 {
                     format!("{}  ·  {} sessions", todo.text, stat.completed_sessions)

@@ -2,7 +2,8 @@ use std::io;
 
 use sea_orm::{ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, DatabaseConnection, QuerySelect};
 use sea_orm::{ColumnTrait, Condition, DeriveEntityModel, DerivePrimaryKey, QueryFilter};
-use sea_orm::{DeriveRelation, EntityTrait, EnumIter, PaginatorTrait, PrimaryKeyTrait, QueryOrder};
+use sea_orm::{DeriveRelation, EntityTrait, EnumIter, Order, PaginatorTrait, PrimaryKeyTrait, QueryOrder};
+use sea_orm::sea_query::Expr;
 use time::Date;
 
 use crate::{
@@ -226,6 +227,7 @@ fn base_query(page: Page) -> sea_orm::Select<Entity> {
                     .add(Column::DueDate.is_null())
                     .add(Column::DueDate.gte(today)),
             )
+            .order_by(Expr::col(Column::DueDate).is_null(), Order::Desc)
             .order_by_desc(Column::DueDate)
             .order_by_desc(Column::CreatedAt),
         Page::History => Entity::find()
