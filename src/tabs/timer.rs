@@ -236,7 +236,7 @@ impl Tab for TimerTab {
             Constraint::Length(1),
             Constraint::Length(1),
             Constraint::Fill(1),
-            Constraint::Min(1),
+            Constraint::Length(1),
         ])
         .areas(inner);
 
