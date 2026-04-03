@@ -33,12 +33,12 @@ pub fn db_path() -> PathBuf {
 }
 
 /// Returns the path to the persisted timer state file.
-pub fn state_path() -> PathBuf {
+pub fn store_path() -> PathBuf {
     #[cfg(debug_assertions)]
-    return local().join("state.json");
+    return local().join("store.json");
 
     #[cfg(not(debug_assertions))]
-    local_state_path().join("state.json")
+    local_state_path().join("store.json")
 }
 
 /// the base directory for runtime state files

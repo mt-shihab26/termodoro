@@ -2,7 +2,7 @@ use std::fs;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{kinds::phase::Phase, utils::path::state_path};
+use crate::{kinds::phase::Phase, utils::path::store_path};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Store {
@@ -21,7 +21,7 @@ impl Default for Store {
 
 impl Store {
     pub fn load() -> Self {
-        let path = state_path();
+        let path = store_path();
         fs::read_to_string(path)
             .ok()
             .and_then(|s| serde_json::from_str(&s).ok())
@@ -29,7 +29,7 @@ impl Store {
     }
 
     pub fn save(&self) {
-        let path = state_path();
+        let path = store_path();
         if let Some(parent) = path.parent() {
             let _ = fs::create_dir_all(parent);
         }
