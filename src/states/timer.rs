@@ -153,7 +153,10 @@ impl TimerState {
 
     /// Records the current session and moves to the next phase.
     pub fn advance(&mut self) {
-        notify_for_phase(&self.cycle_phase);
+        let todo_name = self
+            .todo_id
+            .and_then(|id| self.cache.lock().ok()?.get_todo(id).map(|t| t.text.clone()));
+        notify_for_phase(&self.cycle_phase, todo_name.as_deref());
 
         let duration = self.cycle_phase.duration(&self.config);
         let started_at = self.phase_started_at.take();
@@ -192,11 +195,14 @@ impl TimerState {
     }
 }
 
-fn notify_for_phase(phase: &Phase) {
-    let (summary, body) = match phase {
-        Phase::Work => ("Work Session Complete", "Time for a break!"),
-        Phase::Break => ("Break Complete", "Ready to focus?"),
-        Phase::LongBreak => ("Long Break Complete", "Ready to focus?"),
+fn notify_for_phase(phase: &Phase, todo: Option<&str>) {
+    let (summary, body) = match (phase, todo) {
+        (Phase::Work, Some(name)) => ("Work Session Complete", format!("{name} — Time for a break!")),
+        (Phase::Work, None) => ("Work Session Complete", "Time for a break!".to_string()),
+        (Phase::Break, Some(name)) => ("Break Complete", format!("{name} — Ready to focus?")),
+        (Phase::Break, None) => ("Break Complete", "Ready to focus?".to_string()),
+        (Phase::LongBreak, Some(name)) => ("Long Break Complete", format!("{name} — Ready to focus?")),
+        (Phase::LongBreak, None) => ("Long Break Complete", "Ready to focus?".to_string()),
     };
-    notify(summary, body);
+    notify(&summary, &body);
 }
