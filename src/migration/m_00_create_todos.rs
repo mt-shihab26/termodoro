@@ -10,6 +10,8 @@ enum Todos {
     Done,
     DueDate,
     Repeat,
+    CreatedAt,
+    UpdatedAt,
 }
 
 impl MigrationName for Migration {
@@ -37,6 +39,8 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Todos::Done).boolean().not_null().default(false))
                     .col(ColumnDef::new(Todos::DueDate).string().null())
                     .col(ColumnDef::new(Todos::Repeat).string().null())
+                    .col(ColumnDef::new(Todos::CreatedAt).string().not_null().default(""))
+                    .col(ColumnDef::new(Todos::UpdatedAt).string().not_null().default(""))
                     .to_owned(),
             )
             .await

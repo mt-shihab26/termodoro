@@ -1,15 +1,18 @@
 use std::io;
 
-use sea_orm::QuerySelect;
-use sea_orm::{ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, DatabaseConnection};
+use sea_orm::{ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, DatabaseConnection, QuerySelect};
 use sea_orm::{ColumnTrait, Condition, DeriveEntityModel, DerivePrimaryKey, QueryFilter};
 use sea_orm::{DeriveRelation, EntityTrait, EnumIter, PaginatorTrait, PrimaryKeyTrait, QueryOrder};
 use time::Date;
 
-use crate::kinds::{page::Page, repeat::Repeat};
-use crate::utils::date::{format_date, parse_date, today};
-use crate::utils::db::rt;
-use crate::{log_error, log_warn};
+use crate::{
+    kinds::{page::Page, repeat::Repeat},
+    log_error, log_warn,
+    utils::{
+        date::{format_date, now_utc_str, parse_date, today},
+        db::rt,
+    },
+};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "todos")]
@@ -20,6 +23,8 @@ pub struct Model {
     done: bool,
     due_date: Option<String>,
     repeat: Option<String>,
+    created_at: String,
+    updated_at: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -32,16 +37,21 @@ pub struct Todo {
     pub done: bool,
     pub due_date: Option<Date>,
     pub repeat: Option<Repeat>,
+    pub created_at: String,
+    pub updated_at: String,
 }
 
 impl Todo {
     pub fn new(text: String, due_date: Option<Date>, repeat: Option<Repeat>) -> Self {
+        let now = now_utc_str();
         Self {
             id: None,
             text,
             done: false,
             due_date,
             repeat,
+            created_at: now.clone(),
+            updated_at: now,
         }
     }
 
@@ -154,6 +164,7 @@ impl Todo {
     fn to_model(&self) -> ActiveModel {
         let due_date = self.due_date.map(format_date);
         let repeat = self.repeat.as_ref().map(|r| r.to_db_str().to_string());
+        let now = now_utc_str();
         match self.id {
             Some(id) => ActiveModel {
                 id: Set(id),
@@ -161,12 +172,16 @@ impl Todo {
                 done: Set(self.done),
                 due_date: Set(due_date),
                 repeat: Set(repeat),
+                created_at: Set(self.created_at.clone()),
+                updated_at: Set(now),
             },
             None => ActiveModel {
                 text: Set(self.text.clone()),
                 done: Set(self.done),
                 due_date: Set(due_date),
                 repeat: Set(repeat),
+                created_at: Set(now.clone()),
+                updated_at: Set(now),
                 ..Default::default()
             },
         }
@@ -181,6 +196,8 @@ impl From<Model> for Todo {
             done: m.done,
             due_date: m.due_date.as_deref().and_then(parse_date),
             repeat: m.repeat.as_deref().and_then(Repeat::from_db_str),
+            created_at: m.created_at,
+            updated_at: m.updated_at,
         }
     }
 }
@@ -198,19 +215,19 @@ fn base_query(page: Page) -> sea_orm::Select<Entity> {
         Page::Due => Entity::find()
             .filter(Column::Done.eq(false))
             .filter(Column::DueDate.lt(today))
-            .order_by_asc(Column::DueDate)
-            .order_by_asc(Column::Id),
+            .order_by_desc(Column::DueDate)
+            .order_by_desc(Column::CreatedAt),
         Page::Today => Entity::find()
             .filter(Column::DueDate.eq(today))
-            .order_by_asc(Column::Id),
+            .order_by_desc(Column::CreatedAt),
         Page::Index => Entity::find()
             .filter(
                 Condition::any()
                     .add(Column::DueDate.is_null())
                     .add(Column::DueDate.gte(today)),
             )
-            .order_by_asc(Column::DueDate)
-            .order_by_asc(Column::Id),
+            .order_by_desc(Column::DueDate)
+            .order_by_desc(Column::CreatedAt),
         Page::History => Entity::find()
             .filter(Column::Done.eq(true))
             .order_by_desc(Column::DueDate)

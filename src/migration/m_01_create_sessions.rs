@@ -11,6 +11,8 @@ enum Sessions {
     StartedAt,
     EndedAt,
     TodoId,
+    CreatedAt,
+    UpdatedAt,
 }
 
 impl MigrationName for Migration {
@@ -39,6 +41,8 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Sessions::StartedAt).string().null())
                     .col(ColumnDef::new(Sessions::EndedAt).string().null())
                     .col(ColumnDef::new(Sessions::TodoId).integer().null())
+                    .col(ColumnDef::new(Sessions::CreatedAt).string().not_null().default(""))
+                    .col(ColumnDef::new(Sessions::UpdatedAt).string().not_null().default(""))
                     .to_owned(),
             )
             .await

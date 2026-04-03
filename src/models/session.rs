@@ -1,13 +1,17 @@
 use std::io;
 
-use sea_orm::{ActiveModelBehavior, DeriveEntityModel, QueryFilter, QueryOrder};
-use sea_orm::{ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection};
-use sea_orm::{DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait};
+use sea_orm::{
+    ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, DeriveEntityModel,
+    DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait, QueryFilter, QueryOrder,
+};
 
 use crate::{
     kinds::phase::Phase,
     log_error,
-    utils::{date::{format_date, now_utc_str, today}, db::rt},
+    utils::{
+        date::{format_date, now_utc_str, today},
+        db::rt,
+    },
 };
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
@@ -20,6 +24,8 @@ pub struct Model {
     started_at: Option<String>,
     ended_at: Option<String>,
     todo_id: Option<i32>,
+    created_at: String,
+    updated_at: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -61,23 +67,36 @@ pub struct Session {
     pub ended_at: Option<String>,
     /// Associated todo id, if any.
     pub todo_id: Option<i32>,
+    /// UTC timestamp of when the record was created.
+    pub created_at: String,
+    /// UTC timestamp of when the record was last updated.
+    pub updated_at: String,
 }
 
 impl Session {
     /// Creates a new completed session for the given phase and duration.
     pub fn new(phase: &Phase, duration_millis: u32, started_at: Option<String>, todo_id: Option<i32>) -> Self {
+        let now = now_utc_str();
         Self {
             id: None,
             phase: phase.to_db_str().to_string(),
             duration_secs: duration_millis / 1000,
             started_at,
-            ended_at: Some(now_utc_str()),
+            ended_at: Some(now.clone()),
             todo_id,
+            created_at: now.clone(),
+            updated_at: now,
         }
     }
 
     /// Creates and persists a completed session to the database.
-    pub fn record(db: &DatabaseConnection, phase: &Phase, duration_millis: u32, started_at: Option<String>, todo_id: Option<i32>) {
+    pub fn record(
+        db: &DatabaseConnection,
+        phase: &Phase,
+        duration_millis: u32,
+        started_at: Option<String>,
+        todo_id: Option<i32>,
+    ) {
         Self::new(phase, duration_millis, started_at, todo_id).save(db);
     }
 
@@ -146,6 +165,7 @@ impl Session {
     }
 
     fn to_model(&self) -> ActiveModel {
+        let now = now_utc_str();
         match self.id {
             Some(id) => ActiveModel {
                 id: Set(id),
@@ -154,6 +174,8 @@ impl Session {
                 started_at: Set(self.started_at.clone()),
                 ended_at: Set(self.ended_at.clone()),
                 todo_id: Set(self.todo_id),
+                created_at: Set(self.created_at.clone()),
+                updated_at: Set(now),
             },
             None => ActiveModel {
                 phase: Set(self.phase.clone()),
@@ -161,6 +183,8 @@ impl Session {
                 started_at: Set(self.started_at.clone()),
                 ended_at: Set(self.ended_at.clone()),
                 todo_id: Set(self.todo_id),
+                created_at: Set(self.created_at.clone()),
+                updated_at: Set(self.updated_at.clone()),
                 ..Default::default()
             },
         }
@@ -176,6 +200,8 @@ impl From<Model> for Session {
             started_at: m.started_at,
             ended_at: m.ended_at,
             todo_id: m.todo_id,
+            created_at: m.created_at,
+            updated_at: m.updated_at,
         }
     }
 }
