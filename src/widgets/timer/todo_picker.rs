@@ -106,6 +106,7 @@ impl Widget for &TodoPickerWidget<'_> {
         }
 
         let visible = inner.height as usize;
+        let serial_width = self.props.todos.len().max(1).to_string().len();
 
         let start = self
             .props
@@ -122,15 +123,16 @@ impl Widget for &TodoPickerWidget<'_> {
             .skip(start)
             .take(visible)
             .map(|(i, (todo, stat))| {
+                let serial = i + 1;
                 let label = if stat.completed_sessions > 0 {
-                    format!("{}  ·  {} sessions", todo.text, stat.completed_sessions)
+                    format!("{}  ·  {}× {}m", todo.text, stat.completed_sessions, stat.completed_secs / 60)
                 } else {
                     todo.text.clone()
                 };
                 if i == self.props.cursor {
-                    ListItem::new(format!("> {label}")).style(Style::new().fg(COLOR).bold())
+                    ListItem::new(format!("> {serial:>serial_width$}. {label}")).style(Style::new().fg(COLOR).bold())
                 } else {
-                    ListItem::new(format!("  {label}")).style(Style::new().fg(Color::White))
+                    ListItem::new(format!("  {serial:>serial_width$}. {label}")).style(Style::new().fg(Color::White))
                 }
             })
             .collect();
