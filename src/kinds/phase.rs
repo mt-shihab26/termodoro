@@ -1,4 +1,5 @@
 use ratatui::style::Color;
+use serde::{Deserialize, Serialize};
 
 use crate::config::timer::TimerConfig;
 
@@ -6,6 +7,7 @@ use crate::config::timer::TimerConfig;
 pub const COLOR: Color = Color::Red;
 
 /// A phase in the pomodoro cycle.
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub enum Phase {
     /// A focused work session.
     Work,

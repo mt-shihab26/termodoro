@@ -25,6 +25,7 @@ use crate::{
     kinds::event::Event,
     log_error, log_info,
     tabs::{Tab, timer::TimerTab, todos::TodosTab},
+    utils::store::Store,
     widgets::layout::fps::{FpsState, FpsWidget},
     workers::term,
 };
@@ -51,13 +52,14 @@ impl App {
         term::spawn(sender.clone());
 
         let timer_cache = Arc::new(Mutex::new(TimerCache::new(db.clone())));
+        let store = Store::load();
 
         Self {
             alive: true,
             selected: 1,
             tabs: vec![
                 Box::new(TodosTab::new(db.clone(), Arc::clone(&timer_cache))),
-                Box::new(TimerTab::new(sender, config.timer, timer_cache, db)),
+                Box::new(TimerTab::new(sender, db, config.timer, timer_cache, store)),
             ],
             events,
             fps_state: config.show_fps.then(FpsState::new),

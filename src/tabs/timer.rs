@@ -24,6 +24,7 @@ use crate::{
     log_warn,
     models::{session::Stat, todo::Todo},
     states::timer::TimerState,
+    utils::store::Store,
     widgets::{
         layout::border::{BorderProps, BorderWidget},
         timer::{
@@ -57,12 +58,13 @@ impl TimerTab {
     /// Creates a new `TimerTab`, spawning the timer worker thread.
     pub fn new(
         sender: Sender<Event>,
+        db: DatabaseConnection,
         config: TimerConfig,
         cache: Arc<Mutex<TimerCache>>,
-        db: DatabaseConnection,
+        store: Store,
     ) -> Self {
         let count = Arc::new(AtomicU8::new(1));
-        let state = spawn(Arc::clone(&count), sender, config, Arc::clone(&cache), db);
+        let state = spawn(Arc::clone(&count), sender, db, config, Arc::clone(&cache), store);
 
         Self {
             count,

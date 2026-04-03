@@ -10,7 +10,7 @@ use crate::{
     config::timer::TimerConfig,
     kinds::phase::Phase,
     models::session::Session,
-    utils::{date::now_utc_str, state::State},
+    utils::{date::now_utc_str, store::Store},
 };
 
 /// Runtime state for the pomodoro timer, owned by the timer worker thread.
@@ -35,26 +35,28 @@ pub struct TimerState {
     todo_id: Option<i32>,
     /// Whether to display milliseconds on the clock, toggleable at runtime.
     show_millis: bool,
+    /// Persisted state, synced to disk on change.
+    store: Store,
 }
 
 impl TimerState {
     /// Creates a new `TimerState` in the initial paused work phase.
-    pub fn new(config: TimerConfig, cache: Arc<Mutex<TimerCache>>, db: DatabaseConnection) -> Self {
+    pub fn new(db: DatabaseConnection, config: TimerConfig, cache: Arc<Mutex<TimerCache>>, store: Store) -> Self {
         let show_millis = config.show_millis();
-        let remaining_millis = config.work_duration();
-        let todo_id = State::load().todo_id;
+        let remaining_millis = store.timer_cycle_phase().duration(&config);
 
         Self {
-            cycle_phase: Phase::Work,
+            cycle_phase: store.timer_cycle_phase().clone(),
             remaining_millis,
             started_at: None,
             phase_started_at: None,
             is_running: false,
             config,
             db,
-            todo_id,
+            todo_id: store.timer_todo_id(),
             cache,
             show_millis,
+            store,
         }
     }
 
@@ -100,8 +102,11 @@ impl TimerState {
     /// Sets the currently associated todo on the timer state and persists it to disk.
     pub fn set_todo_id(&mut self, todo_id: Option<i32>) {
         self.todo_id = todo_id;
-        State::new(todo_id).save();
+        self.store.set_timer_todo_id(self.todo_id).save();
     }
+
+    // fn persist(&self) {
+    // }
 
     /// Returns the current remaining time derived from the wall clock.
     pub fn current_millis(&self) -> u32 {
@@ -176,5 +181,6 @@ impl TimerState {
         self.started_at = None;
         self.phase_started_at = None;
         self.is_running = false;
+        self.store.set_timer_cycle_phase(self.cycle_phase.clone()).save();
     }
 }

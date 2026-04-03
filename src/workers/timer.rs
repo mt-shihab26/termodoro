@@ -12,7 +12,7 @@ use sea_orm::DatabaseConnection;
 
 use crate::{
     caches::timer::TimerCache, config::timer::TimerConfig, kinds::event::Event, log_error, log_warn,
-    states::timer::TimerState,
+    states::timer::TimerState, utils::store::Store,
 };
 
 /// Spawns the timer worker thread and returns a shared handle to its state.
@@ -23,11 +23,12 @@ use crate::{
 pub fn spawn(
     count: Arc<AtomicU8>,
     sender: Sender<Event>,
+    db: DatabaseConnection,
     config: TimerConfig,
     cache: Arc<Mutex<TimerCache>>,
-    db: DatabaseConnection,
+    store: Store,
 ) -> Arc<Mutex<TimerState>> {
-    let state = Arc::new(Mutex::new(TimerState::new(config, cache, db)));
+    let state = Arc::new(Mutex::new(TimerState::new(db, config, cache, store)));
 
     let thread_state = Arc::clone(&state);
 
