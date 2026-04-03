@@ -4,7 +4,7 @@ use crate::kinds::repeat::Repeat;
 use crate::models::todo::Todo;
 use crate::utils::date::today;
 
-pub fn seed_todos() -> Vec<Todo> {
+pub fn seed_todos(count: usize) -> Vec<Todo> {
     let base = today();
     let projects = [
         "Inbox",
@@ -33,7 +33,7 @@ pub fn seed_todos() -> Vec<Todo> {
 
     let mut todos = Vec::new();
 
-    for i in 0..1000 {
+    for i in 0..count {
         let text = format!(
             "{} {} {}",
             projects[i % projects.len()],

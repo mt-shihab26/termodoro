@@ -1,7 +1,9 @@
 use ratatui::{
-    prelude::{Buffer, Color, Rect, Stylize, Widget},
+    prelude::{Buffer, Rect, Stylize, Widget},
     widgets::Paragraph,
 };
+
+use crate::kinds::phase::COLOR;
 
 pub struct SessionProps {
     sessions: u32,
@@ -34,7 +36,7 @@ impl Widget for &SessionWidget<'_> {
             self.props.sessions, self.props.daily_session_goal
         ))
         .centered()
-        .fg(Color::DarkGray)
+        .fg(COLOR)
         .render(area, buf);
     }
 }

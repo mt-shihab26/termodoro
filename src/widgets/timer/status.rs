@@ -3,6 +3,8 @@ use ratatui::{
     widgets::Paragraph,
 };
 
+use crate::kinds::phase::COLOR;
+
 pub struct StatusProps {
     running: bool,
 }
@@ -26,7 +28,7 @@ impl<'a> StatusWidget<'a> {
 impl Widget for &StatusWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let (label, color) = if self.props.running {
-            ("Running", Color::Green)
+            ("Running", COLOR)
         } else {
             ("Paused", Color::DarkGray)
         };

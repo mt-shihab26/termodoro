@@ -20,7 +20,7 @@ impl Cmd for Seed {
     fn run(self: Box<Self>) -> Result<()> {
         db::reset()?;
         let db = db::connect()?;
-        let items = seed_todos();
+        let items = seed_todos(100);
         let total = items.len();
         let mut inserted = 0usize;
 

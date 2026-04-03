@@ -1,9 +1,12 @@
 use ratatui::{
-    prelude::{Buffer, Color, Rect, Stylize, Widget},
+    prelude::{Buffer, Rect, Stylize, Widget},
     widgets::Paragraph,
 };
 
-use crate::models::{session::Stat, todo::Todo};
+use crate::{
+    kinds::phase::COLOR,
+    models::{session::Stat, todo::Todo},
+};
 
 pub struct TodoShowProps<'a> {
     todo: Option<&'a Todo>,
@@ -42,6 +45,6 @@ impl Widget for &TodoShowWidget<'_> {
             },
             None => "No todo selected  [t] pick".to_string(),
         };
-        Paragraph::new(text).centered().fg(Color::DarkGray).render(area, buf);
+        Paragraph::new(text).centered().fg(COLOR).render(area, buf);
     }
 }
