@@ -7,7 +7,9 @@ use crate::{kinds::phase::Phase, utils::path::store_path};
 /// Persisted runtime state, loaded from and saved to disk on change.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Store {
+    /// The currently selected todo id.
     timer_todo_id: Option<i32>,
+    /// The current pomodoro cycle phase.
     timer_cycle_phase: Phase,
 }
 
@@ -21,6 +23,7 @@ impl Default for Store {
 }
 
 impl Store {
+    /// Loads the store from disk, returning the default if the file does not exist.
     pub fn load() -> Self {
         let path = store_path();
         fs::read_to_string(path)
@@ -29,6 +32,7 @@ impl Store {
             .unwrap_or_default()
     }
 
+    /// Saves the store to disk.
     pub fn save(&self) {
         let path = store_path();
         if let Some(parent) = path.parent() {
@@ -39,23 +43,25 @@ impl Store {
         }
     }
 
+    /// Returns the persisted todo id.
     pub fn timer_todo_id(&self) -> Option<i32> {
         self.timer_todo_id
     }
 
+    /// Sets the todo id and returns `&Self` for chaining.
     pub fn set_timer_todo_id(&mut self, todo_id: Option<i32>) -> &Self {
         self.timer_todo_id = todo_id;
-
         self
     }
 
+    /// Returns the persisted cycle phase.
     pub fn timer_cycle_phase(&self) -> &Phase {
         &self.timer_cycle_phase
     }
 
+    /// Sets the cycle phase and returns `&Self` for chaining.
     pub fn set_timer_cycle_phase(&mut self, cycle_phase: Phase) -> &Self {
         self.timer_cycle_phase = cycle_phase;
-
         self
     }
 }
