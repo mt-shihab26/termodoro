@@ -215,16 +215,29 @@ impl Tab for TimerTab {
 
         let inner = BorderWidget::new(&BorderProps::new(self.color()), area).render(area, buf);
 
-        let [session_row, _, phase_row, _, time_row, _, status_row, _, bottom] = Layout::vertical([
+        let [
+            session_row,
+            _,
+            status_row,
+            phase_row,
+            _,
+            time_row,
+            _,
+            todo_row,
+            _,
+            hint_row,
+        ] = Layout::vertical([
             Constraint::Length(1),
             Constraint::Fill(1),
+            Constraint::Length(1),
             Constraint::Length(1),
             Constraint::Length(1),
             Constraint::Length(8),
             Constraint::Length(1),
             Constraint::Length(1),
+            Constraint::Length(1),
             Constraint::Fill(1),
-            Constraint::Min(2),
+            Constraint::Min(1),
         ])
         .areas(inner);
 
@@ -232,8 +245,6 @@ impl Tab for TimerTab {
         PhaseWidget::new(&PhaseProps::new(phase_label, phase_color)).render(phase_row, buf);
         ClockWidget::new(&ClockProps::new(show_millis, time_millis, phase_color)).render(time_row, buf);
         StatusWidget::new(&StatusProps::new(running)).render(status_row, buf);
-
-        let [todo_row, hint_row] = Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).areas(bottom);
 
         let (todo, stat) = self.todo_info();
 
