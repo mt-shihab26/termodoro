@@ -153,10 +153,7 @@ impl TimerState {
 
     /// Records the current session and moves to the next phase.
     pub fn advance(&mut self) {
-        let todo_name = self
-            .todo_id
-            .and_then(|id| self.cache.lock().ok()?.get_todo(id).map(|t| t.text.clone()));
-        notify_for_phase(&self.cycle_phase, todo_name.as_deref());
+        self.phase_notifiction();
 
         let duration = self.cycle_phase.duration(&self.config);
         let started_at = self.phase_started_at.take();
@@ -186,6 +183,22 @@ impl TimerState {
         self.store.set_timer_cycle_phase(self.cycle_phase.clone()).save();
     }
 
+    fn phase_notifiction(&self) {
+        let todo_name = self
+            .todo_id
+            .and_then(|id| self.cache.lock().ok()?.get_todo(id).map(|t| t.text.clone()));
+
+        let (summary, body) = match (&self.cycle_phase, todo_name.as_deref()) {
+            (Phase::Work, Some(name)) => ("Work Session Complete", format!("{name} — Time for a break!")),
+            (Phase::Work, None) => ("Work Session Complete", "Time for a break!".to_string()),
+            (Phase::Break, Some(name)) => ("Break Complete", format!("{name} — Ready to focus?")),
+            (Phase::Break, None) => ("Break Complete", "Ready to focus?".to_string()),
+            (Phase::LongBreak, Some(name)) => ("Long Break Complete", format!("{name} — Ready to focus?")),
+            (Phase::LongBreak, None) => ("Long Break Complete", "Ready to focus?".to_string()),
+        };
+        notify(&summary, &body);
+    }
+
     fn which_break_phase(&self, sessions_count: u32) -> Phase {
         if sessions_count % self.config.long_break_interval() == 0 {
             Phase::LongBreak
@@ -193,16 +206,4 @@ impl TimerState {
             Phase::Break
         }
     }
-}
-
-fn notify_for_phase(phase: &Phase, todo: Option<&str>) {
-    let (summary, body) = match (phase, todo) {
-        (Phase::Work, Some(name)) => ("Work Session Complete", format!("{name} — Time for a break!")),
-        (Phase::Work, None) => ("Work Session Complete", "Time for a break!".to_string()),
-        (Phase::Break, Some(name)) => ("Break Complete", format!("{name} — Ready to focus?")),
-        (Phase::Break, None) => ("Break Complete", "Ready to focus?".to_string()),
-        (Phase::LongBreak, Some(name)) => ("Long Break Complete", format!("{name} — Ready to focus?")),
-        (Phase::LongBreak, None) => ("Long Break Complete", "Ready to focus?".to_string()),
-    };
-    notify(&summary, &body);
 }
