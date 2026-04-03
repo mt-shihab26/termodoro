@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{kinds::phase::Phase, utils::path::store_path};
 
+/// Persisted runtime state, loaded from and saved to disk on change.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Store {
     timer_todo_id: Option<i32>,
