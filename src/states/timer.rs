@@ -10,7 +10,7 @@ use crate::{
     config::timer::TimerConfig,
     kinds::phase::Phase,
     models::session::Session,
-    utils::{date::now_utc_str, store::Store},
+    utils::{date::now_utc_str, notify::notify, store::Store},
 };
 
 /// Runtime state for the pomodoro timer, owned by the timer worker thread.
@@ -153,6 +153,8 @@ impl TimerState {
 
     /// Records the current session and moves to the next phase.
     pub fn advance(&mut self) {
+        notify_for_phase(&self.cycle_phase);
+
         let duration = self.cycle_phase.duration(&self.config);
         let started_at = self.phase_started_at.take();
 
@@ -166,21 +168,35 @@ impl TimerState {
                 } else {
                     0
                 };
-                self.cycle_phase = if sessions_count % self.config.long_break_interval() == 0 {
-                    Phase::LongBreak
-                } else {
-                    Phase::Break
-                };
+                self.cycle_phase = self.which_break_phase(sessions_count);
+                self.is_running = true;
             }
             Phase::Break | Phase::LongBreak => {
                 self.cycle_phase = Phase::Work;
+                self.is_running = false;
             }
         }
 
         self.remaining_millis = self.cycle_phase.duration(&self.config);
         self.started_at = None;
         self.phase_started_at = None;
-        self.is_running = false;
         self.store.set_timer_cycle_phase(self.cycle_phase.clone()).save();
     }
+
+    fn which_break_phase(&self, sessions_count: u32) -> Phase {
+        if sessions_count % self.config.long_break_interval() == 0 {
+            Phase::LongBreak
+        } else {
+            Phase::Break
+        }
+    }
+}
+
+fn notify_for_phase(phase: &Phase) {
+    let (summary, body) = match phase {
+        Phase::Work => ("Work Session Complete", "Time for a break!"),
+        Phase::Break => ("Break Complete", "Ready to focus?"),
+        Phase::LongBreak => ("Long Break Complete", "Ready to focus?"),
+    };
+    notify(summary, body);
 }
