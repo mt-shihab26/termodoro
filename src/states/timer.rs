@@ -6,8 +6,11 @@ use std::{
 use sea_orm::DatabaseConnection;
 
 use crate::{
-    caches::timer::TimerCache, config::timer::TimerConfig, kinds::phase::Phase, models::session::Session,
-    utils::date::now_utc_str,
+    caches::timer::TimerCache,
+    config::timer::TimerConfig,
+    kinds::phase::Phase,
+    models::session::Session,
+    utils::{date::now_utc_str, state::State},
 };
 
 /// Runtime state for the pomodoro timer, owned by the timer worker thread.
@@ -39,6 +42,7 @@ impl TimerState {
     pub fn new(config: TimerConfig, cache: Arc<Mutex<TimerCache>>, db: DatabaseConnection) -> Self {
         let show_millis = config.show_millis();
         let remaining_millis = config.work_duration();
+        let todo_id = State::load().todo_id;
 
         Self {
             cycle_phase: Phase::Work,
@@ -48,7 +52,7 @@ impl TimerState {
             is_running: false,
             config,
             db,
-            todo_id: None,
+            todo_id,
             cache,
             show_millis,
         }
@@ -93,9 +97,10 @@ impl TimerState {
         self.config.daily_session_goal()
     }
 
-    /// Sets the currently associated todo on the timer state.
+    /// Sets the currently associated todo on the timer state and persists it to disk.
     pub fn set_todo_id(&mut self, todo_id: Option<i32>) {
         self.todo_id = todo_id;
+        State::new(todo_id).save();
     }
 
     /// Returns the current remaining time derived from the wall clock.

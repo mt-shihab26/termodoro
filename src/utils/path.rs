@@ -32,6 +32,15 @@ pub fn db_path() -> PathBuf {
     local_state_path().join("orivo.sqlite")
 }
 
+/// Returns the path to the persisted timer state file.
+pub fn state_path() -> PathBuf {
+    #[cfg(debug_assertions)]
+    return local().join("state.json");
+
+    #[cfg(not(debug_assertions))]
+    local_state_path().join("state.json")
+}
+
 /// the base directory for runtime state files
 #[cfg_attr(debug_assertions, allow(dead_code))]
 fn local_state_path() -> PathBuf {
