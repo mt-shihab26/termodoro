@@ -157,7 +157,7 @@ impl TimerState {
         self.phase_notifiction();
 
         let duration = self.cycle_phase.duration(&self.config);
-        let started_at = self.phase_started_at.take();
+        let started_at = self.phase_started_at.take().unwrap_or_else(now);
 
         Session::record(&self.db, &self.cycle_phase, duration, started_at, self.todo_id);
 

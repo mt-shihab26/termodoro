@@ -57,12 +57,12 @@ pub struct Session {
 
 impl Session {
     /// Creates a new completed session for the given phase and duration.
-    pub fn new(phase: Phase, duration_millis: u32, started_at: OffsetDateTime, todo_id: Option<i32>) -> Self {
+    pub fn new(phase: &Phase, duration_millis: u32, started_at: OffsetDateTime, todo_id: Option<i32>) -> Self {
         let now = now();
 
         Self {
             id: None,
-            phase: phase,
+            phase: phase.clone(),
             duration_secs: duration_millis / 1000,
             started_at,
             ended_at: now,
@@ -75,7 +75,7 @@ impl Session {
     /// Creates and persists a completed session to the database.
     pub fn record(
         db: &DatabaseConnection,
-        phase: Phase,
+        phase: &Phase,
         duration_millis: u32,
         started_at: OffsetDateTime,
         todo_id: Option<i32>,
