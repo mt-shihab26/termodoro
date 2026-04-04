@@ -1,7 +1,6 @@
 use ratatui::{
     prelude::{Buffer, Color, Modifier, Rect, Style, Widget},
-    text::{Line, Span},
-    widgets::{ListItem, Paragraph},
+    widgets::Paragraph,
 };
 
 use crate::{
@@ -12,11 +11,32 @@ use crate::{
 pub struct ItemProps<'a> {
     todo: &'a Todo,
     stats: Option<Stat>,
+    serial: usize,
+    serial_width: usize,
+    dimmed: bool,
+    selected: bool,
+    color: Color,
 }
 
 impl<'a> ItemProps<'a> {
-    pub fn new(todo: &'a Todo, stats: Option<Stat>) -> Self {
-        Self { todo, stats }
+    pub fn new(
+        todo: &'a Todo,
+        stats: Option<Stat>,
+        serial: usize,
+        serial_width: usize,
+        dimmed: bool,
+        selected: bool,
+        color: Color,
+    ) -> Self {
+        Self {
+            todo,
+            stats,
+            serial,
+            serial_width,
+            dimmed,
+            selected,
+            color,
+        }
     }
 }
 
@@ -32,9 +52,9 @@ impl<'a> ItemWidget<'a> {
     fn label(&self) -> String {
         let check = if self.props.todo.done { "[✓]" } else { "[ ]" };
         let repeat_icon = if self.props.todo.repeat.is_some() {
-            &format!("{} ", Repeat::icon())
+            format!("{} ", Repeat::icon())
         } else {
-            ""
+            String::new()
         };
 
         let mut label = format!("{} {}{}", check, repeat_icon, self.props.todo.text);
@@ -55,35 +75,26 @@ impl<'a> ItemWidget<'a> {
         label
     }
 
-    fn style(&self, dimmed: bool) -> Style {
-        if dimmed || self.props.todo.done {
+    fn base_style(&self) -> Style {
+        if self.props.dimmed || self.props.todo.done {
             Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)
         } else {
             Style::default().fg(Color::White)
         }
     }
-
-    fn list_item(&self, dimmed: bool, serial: usize, width: usize) -> ListItem<'static> {
-        ListItem::new(format!(" {serial:>width$}. {}", self.label())).style(self.style(dimmed))
-    }
-
-    fn line(&self, selected: bool, color: Color, serial: usize, width: usize) -> Line<'static> {
-        let prefix = if selected { "> " } else { "  " };
-        let style = if selected {
-            self.style(false).fg(color).add_modifier(Modifier::BOLD)
-        } else {
-            self.style(false)
-        };
-
-        Line::from(vec![Span::styled(
-            format!("{prefix}{serial:>width$}. {}", self.label()),
-            style,
-        )])
-    }
 }
 
 impl Widget for &ItemWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        Paragraph::new(self.label()).style(self.style(false)).render(area, buf);
+        let serial = self.props.serial;
+        let width = self.props.serial_width;
+        let prefix = if self.props.selected { "> " } else { "  " };
+        let text = format!("{prefix}{serial:>width$}. {}", self.label());
+        let style = if self.props.selected {
+            self.base_style().fg(self.props.color).add_modifier(Modifier::BOLD)
+        } else {
+            self.base_style()
+        };
+        Paragraph::new(text).style(style).render(area, buf);
     }
 }

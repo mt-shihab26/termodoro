@@ -1,6 +1,6 @@
 use ratatui::{
-    prelude::{Buffer, Color, Line, Modifier, Rect, Span, StatefulWidget, Style, Widget},
-    widgets::{List, ListState, Paragraph},
+    prelude::{Buffer, Color, Line, Modifier, Rect, Span, Style, Widget},
+    widgets::Paragraph,
 };
 use time::Duration;
 
@@ -60,80 +60,8 @@ impl<'a> ListWidget<'a> {
     }
 }
 
-impl ListWidget<'_> {
-    fn render_flat(&self, area: Rect, buf: &mut Buffer, state: &mut ListState) {
-        let dimmed = matches!(self.props.page, Page::History);
-        let serial_width = (self.props.offset + self.props.items.len()).max(1).to_string().len();
-        let items = self
-            .props
-            .items
-            .iter()
-            .enumerate()
-            .map(|(index, todo)| {
-                let stats = self.props.stats.get(index).cloned().flatten();
-                ItemWidget::new(&ItemProps::new(todo, stats)).list_item(
-                    dimmed,
-                    self.props.offset + index + 1,
-                    serial_width,
-                )
-            })
-            .collect::<Vec<_>>();
-
-        let list = List::new(items)
-            .highlight_style(Style::default().fg(self.props.color).bold())
-            .highlight_symbol(">");
-
-        StatefulWidget::render(list, area, buf, state);
-    }
-
-    fn render_index(&self, area: Rect, buf: &mut Buffer) {
-        let (rows, selected_row) = self.index_rows(area.width as usize);
-        let visible_rows = area.height as usize;
-        let start = if rows.len() <= visible_rows {
-            0
-        } else {
-            selected_row
-                .saturating_sub(visible_rows.saturating_sub(1))
-                .min(rows.len().saturating_sub(visible_rows))
-        };
-        let end = (start + visible_rows).min(rows.len());
-
-        Paragraph::new(rows[start..end].to_vec()).render(area, buf);
-    }
-
-    fn index_rows(&self, width: usize) -> (Vec<Line<'static>>, usize) {
-        let mut rows = Vec::new();
-        let mut selected_row = 0;
-        let mut last_date = None;
-        let serial_width = (self.props.offset + self.props.items.len()).max(1).to_string().len();
-
-        for (index, todo) in self.props.items.iter().enumerate() {
-            if todo.due_date != last_date {
-                rows.push(section_line(todo.due_date, width, self.props.color));
-                last_date = todo.due_date;
-            }
-
-            if index == self.props.selected {
-                selected_row = rows.len();
-            }
-
-            let stats = self.props.stats.get(index).cloned().flatten();
-            rows.push(ItemWidget::new(&ItemProps::new(todo, stats)).line(
-                index == self.props.selected,
-                self.props.color,
-                self.props.offset + index + 1,
-                serial_width,
-            ));
-        }
-
-        (rows, selected_row)
-    }
-}
-
-impl StatefulWidget for &ListWidget<'_> {
-    type State = ListState;
-
-    fn render(self, area: Rect, buf: &mut Buffer, state: &mut ListState) {
+impl Widget for &ListWidget<'_> {
+    fn render(self, area: Rect, buf: &mut Buffer) {
         let horizontal_padding = 2;
         let top_padding = 1;
         let bottom_padding = 1;
@@ -150,7 +78,7 @@ impl StatefulWidget for &ListWidget<'_> {
 
         match self.props.page {
             Page::Index => self.render_index(padded_area, buf),
-            Page::Due | Page::Today | Page::History => self.render_flat(padded_area, buf, state),
+            Page::Due | Page::Today | Page::History => self.render_flat(padded_area, buf),
         }
 
         IndicatorWidget::new(&IndicatorProps::new(
@@ -158,6 +86,96 @@ impl StatefulWidget for &ListWidget<'_> {
             self.props.show_more_below,
         ))
         .render(area, buf);
+    }
+}
+
+impl ListWidget<'_> {
+    fn render_flat(&self, area: Rect, buf: &mut Buffer) {
+        let dimmed = matches!(self.props.page, Page::History);
+        let serial_width = (self.props.offset + self.props.items.len()).max(1).to_string().len();
+
+        for (index, todo) in self.props.items.iter().enumerate() {
+            let y = area.y + index as u16;
+            if y >= area.y + area.height {
+                break;
+            }
+            let stats = self.props.stats.get(index).cloned().flatten();
+            ItemWidget::new(&ItemProps::new(
+                todo,
+                stats,
+                self.props.offset + index + 1,
+                serial_width,
+                dimmed,
+                index == self.props.selected,
+                self.props.color,
+            ))
+            .render(Rect { y, height: 1, ..area }, buf);
+        }
+    }
+
+    fn render_index(&self, area: Rect, buf: &mut Buffer) {
+        let serial_width = (self.props.offset + self.props.items.len()).max(1).to_string().len();
+
+        enum Row {
+            Header(Line<'static>),
+            Item(usize),
+        }
+
+        let mut rows: Vec<Row> = Vec::new();
+        let mut selected_row = 0;
+        let mut last_date = None;
+
+        for (index, todo) in self.props.items.iter().enumerate() {
+            if todo.due_date != last_date {
+                rows.push(Row::Header(section_line(
+                    todo.due_date,
+                    area.width as usize,
+                    self.props.color,
+                )));
+                last_date = todo.due_date;
+            }
+            if index == self.props.selected {
+                selected_row = rows.len();
+            }
+            rows.push(Row::Item(index));
+        }
+
+        let visible = area.height as usize;
+        let start = if rows.len() <= visible {
+            0
+        } else {
+            selected_row
+                .saturating_sub(visible.saturating_sub(1))
+                .min(rows.len().saturating_sub(visible))
+        };
+        let end = (start + visible).min(rows.len());
+
+        for (row_idx, row) in rows[start..end].iter().enumerate() {
+            let row_rect = Rect {
+                y: area.y + row_idx as u16,
+                height: 1,
+                ..area
+            };
+            match row {
+                Row::Header(line) => {
+                    Paragraph::new(line.clone()).render(row_rect, buf);
+                }
+                Row::Item(index) => {
+                    let todo = &self.props.items[*index];
+                    let stats = self.props.stats.get(*index).cloned().flatten();
+                    ItemWidget::new(&ItemProps::new(
+                        todo,
+                        stats,
+                        self.props.offset + index + 1,
+                        serial_width,
+                        false,
+                        *index == self.props.selected,
+                        self.props.color,
+                    ))
+                    .render(row_rect, buf);
+                }
+            }
+        }
     }
 }
 

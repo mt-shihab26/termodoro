@@ -174,7 +174,7 @@ impl Tab for TodosTab {
             tabs_area,
         );
 
-        frame.render_stateful_widget(
+        frame.render_widget(
             &ListWidget::new(&ListProps::new(
                 &items,
                 &stats,
@@ -186,7 +186,6 @@ impl Tab for TodosTab {
                 self.state.show_more_below(items.len()),
             )),
             list_area,
-            &mut self.state.list_state_mut(),
         );
 
         HintWidget::new(&HintProps::new(self.mode, self.state.can_delete(self.page, &items)))
