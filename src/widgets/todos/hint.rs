@@ -14,11 +14,13 @@ pub struct HintWidget {
 impl Widget for &HintWidget {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let hint = match self.ui_mode {
-            TodosMode::Normal => match self.page {
-                Page::History => "[[/]]Page  [j/k]Navigate",
-                _ if self.can_delete => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^d]Delete",
-                _ => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit",
-            },
+            TodosMode::Normal => {
+                if self.can_delete {
+                    "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^d]Delete"
+                } else {
+                    "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit"
+                }
+            }
             TodosMode::Adding | TodosMode::Editing => "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char",
         };
 

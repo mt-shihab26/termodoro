@@ -11,6 +11,7 @@ use sea_orm::DatabaseConnection;
 
 use crate::caches::timer::TimerCache;
 use crate::kinds::{page::Page, todos_mode::TodosMode};
+use crate::utils::date::today;
 use crate::widgets::todos::hint::HintWidget;
 use crate::widgets::todos::input::{InputAction, InputWidget};
 use crate::widgets::todos::{list::ListWidget, status::StatusWidget, tabs::TabsWidget};
@@ -85,17 +86,14 @@ impl Tab for TodosTab {
                     self.state.delete_selected(self.page)
                 }
                 KeyCode::Char('a') => {
-                    if !matches!(self.page, Page::History) {
-                        self.mode = TodosMode::Adding;
-                        self.input_widget = Some(InputWidget::new(None, None, None));
-                    }
+                    self.mode = TodosMode::Adding;
+                    let date = if self.page == Page::Today { Some(today()) } else { None };
+                    self.input_widget = Some(InputWidget::new(None, date, None));
                 }
                 KeyCode::Char('e') => {
-                    if !matches!(self.page, Page::History) {
-                        if let Some((text, due_date, repeat)) = self.state.edit_values(self.page) {
-                            self.mode = TodosMode::Editing;
-                            self.input_widget = Some(InputWidget::new(Some(&text), due_date, repeat.as_ref()));
-                        }
+                    if let Some((text, due_date, repeat)) = self.state.edit_values(self.page) {
+                        self.mode = TodosMode::Editing;
+                        self.input_widget = Some(InputWidget::new(Some(&text), due_date, repeat.as_ref()));
                     }
                 }
                 _ => {}
