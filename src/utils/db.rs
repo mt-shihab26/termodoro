@@ -1,4 +1,4 @@
-//! Database connection helpers: opens the SQLite file, runs migrations, and provides the Tokio runtime.
+//! Opens the SQLite file, runs migrations, and provides the Tokio runtime.
 
 use std::{io::Result, sync::OnceLock};
 

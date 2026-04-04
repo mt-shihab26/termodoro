@@ -1,7 +1,11 @@
+//! Migration that creates the `sessions` table used to persist pomodoro history.
+
 use sea_orm_migration::prelude::*;
 
+/// SeaORM migration for creating and dropping the `sessions` table.
 pub struct Migration;
 
+/// Column identifiers for the `sessions` table schema.
 #[derive(DeriveIden)]
 enum Sessions {
     Table,
@@ -16,6 +20,7 @@ enum Sessions {
 }
 
 impl MigrationName for Migration {
+    /// Returns the stable migration identifier.
     fn name(&self) -> &str {
         "m_01_create_sessions"
     }
@@ -23,6 +28,7 @@ impl MigrationName for Migration {
 
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
+    /// Creates the `sessions` table if it does not already exist.
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
             .create_table(
@@ -48,6 +54,7 @@ impl MigrationTrait for Migration {
             .await
     }
 
+    /// Drops the `sessions` table, rolling back this migration.
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
             .drop_table(Table::drop().table(Sessions::Table).to_owned())
