@@ -1,5 +1,3 @@
-//! Todos-tab cache for paginated todo items and total counts.
-
 use std::cell::{Ref, RefCell};
 
 use sea_orm::DatabaseConnection;

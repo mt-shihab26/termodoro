@@ -1,5 +1,3 @@
-//! Timer-tab cache for today's todos and aggregated session statistics.
-
 use sea_orm::DatabaseConnection;
 
 use crate::{
