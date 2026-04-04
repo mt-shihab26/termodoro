@@ -5,11 +5,6 @@ pub fn now_utc() -> OffsetDateTime {
     OffsetDateTime::now_utc()
 }
 
-/// Returns the current UTC time formatted as an ISO 8601 string (e.g. `"2024-01-15T10:30:00Z"`).
-// fn now_utc_str() -> String {
-//     format_datetime(now_utc())
-// }
-
 /// Returns today's local date, falling back to UTC if the local offset is unavailable.
 pub fn today() -> Date {
     OffsetDateTime::now_local()

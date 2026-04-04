@@ -45,6 +45,16 @@ impl Phase {
         }
     }
 
+    /// Parses a database string into a `Phase`, returning `None` if unrecognized.
+    pub fn from_db_str(s: &str) -> Option<Phase> {
+        match s {
+            "work" => Some(Phase::Work),
+            "break" => Some(Phase::Break),
+            "long_break" => Some(Phase::LongBreak),
+            _ => None,
+        }
+    }
+
     /// Returns the configured duration for this phase in milliseconds.
     pub fn duration(&self, timer_config: &TimerConfig) -> u32 {
         match self {

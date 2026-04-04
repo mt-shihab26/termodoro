@@ -178,15 +178,17 @@ impl Session {
 
 impl From<Model> for Session {
     fn from(m: Model) -> Self {
+        let now = now_utc();
+
         Self {
             id: Some(m.id),
-            phase: m.phase,
+            phase: Phase::from_db_str(&m.phase).unwrap_or(Phase::Work),
             duration_secs: m.duration_secs.max(0) as u32,
-            started_at: m.started_at,
-            ended_at: m.ended_at,
+            started_at: parse_datetime(&m.started_at).unwrap_or(now),
+            ended_at: parse_datetime(&m.ended_at).unwrap_or(now),
             todo_id: m.todo_id,
-            created_at: parse_datetime(&m.created_at).unwrap_or_else(now_utc),
-            updated_at: parse_datetime(&m.updated_at).unwrap_or_else(now_utc),
+            created_at: parse_datetime(&m.created_at).unwrap_or(now),
+            updated_at: parse_datetime(&m.updated_at).unwrap_or(now),
         }
     }
 }
