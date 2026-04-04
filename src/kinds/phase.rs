@@ -1,3 +1,5 @@
+//! Pomodoro phase types, display metadata, and duration helpers.
+
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
 

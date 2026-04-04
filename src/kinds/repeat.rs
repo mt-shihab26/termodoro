@@ -1,3 +1,5 @@
+//! Todo repeat rules and utilities for serialization and date progression.
+
 use time::{Date, Duration};
 
 /// A recurrence rule for a todo item.
