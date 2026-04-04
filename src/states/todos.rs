@@ -207,6 +207,15 @@ impl TodosState {
         self.offset = 0;
         self.selected = 0;
         self.clear_caches();
+
+        if page == Page::Index {
+            let before = Todo::count_before_today(&self.db);
+            let page_size = self.page_size();
+            self.offset = (before / page_size) * page_size;
+            self.selected = before - self.offset;
+            self.invalidate_items();
+        }
+
         self.clamp_selected(page);
     }
 

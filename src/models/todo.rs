@@ -5,7 +5,7 @@ use sea_orm::{
     DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, Order, PaginatorTrait, PrimaryKeyTrait,
     QueryFilter, QueryOrder, QuerySelect, sea_query::Expr,
 };
-use time::Date;
+use time::{Date, Duration};
 
 use crate::{
     kinds::{page::Page, repeat::Repeat},
@@ -134,9 +134,27 @@ impl Todo {
         }
     }
 
+    /// Counts items that appear before today in the Index sort order (past dates + no-date).
+    pub fn count_before_today(db: &DatabaseConnection) -> usize {
+        let today = format_date(today());
+        let query = Entity::find().filter(
+            Condition::any()
+                .add(Column::DueDate.lt(today))
+                .add(Column::DueDate.is_null()),
+        );
+        match rt().block_on(async { query.count(db).await.map_err(io_err) }) {
+            Ok(count) => count as usize,
+            Err(e) => {
+                log_error!("failed to count index items before today: {e}");
+                0
+            }
+        }
+    }
+
     /// Builds the base ORM query for the given page filter.
     fn base_query(page: Page) -> sea_orm::Select<Entity> {
-        let today = format_date(today());
+        let today_date = today();
+        let today = format_date(today_date);
 
         match page {
             Page::Due => Entity::find()
@@ -147,15 +165,18 @@ impl Todo {
             Page::Today => Entity::find()
                 .filter(Column::DueDate.eq(today))
                 .order_by_desc(Column::CreatedAt),
-            Page::Index => Entity::find()
-                .filter(
-                    Condition::any()
-                        .add(Column::DueDate.is_null())
-                        .add(Column::DueDate.gte(today)),
-                )
-                .order_by(Expr::col(Column::DueDate).is_null(), Order::Desc)
-                .order_by_desc(Column::DueDate)
-                .order_by_desc(Column::CreatedAt),
+            Page::Index => {
+                let null_key = format!("{}~", format_date(today_date - Duration::days(1)));
+                Entity::find()
+                    .order_by(
+                        Expr::cust_with_values(
+                            "CASE WHEN due_date IS NULL THEN ? ELSE due_date END",
+                            [null_key],
+                        ),
+                        Order::Asc,
+                    )
+                    .order_by_asc(Column::CreatedAt)
+            }
             Page::History => Entity::find()
                 .filter(Column::Done.eq(true))
                 .order_by_desc(Column::DueDate)
