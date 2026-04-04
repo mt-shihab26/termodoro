@@ -1,13 +1,15 @@
-use std::io::Result;
-use std::sync::OnceLock;
+use std::{io::Result, sync::OnceLock};
 
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 
-use crate::migration::{Migrator, MigratorTrait};
-use crate::utils::path::db_path;
+use crate::{
+    migration::{Migrator, MigratorTrait},
+    utils::path::db_path,
+};
 
 static RUNTIME: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
 
+/// Returns the global Tokio runtime, initializing it on first call.
 pub fn rt() -> &'static tokio::runtime::Runtime {
     RUNTIME.get_or_init(|| {
         tokio::runtime::Builder::new_multi_thread()
@@ -17,6 +19,7 @@ pub fn rt() -> &'static tokio::runtime::Runtime {
     })
 }
 
+/// Opens (or creates) the SQLite database and runs any pending migrations.
 pub fn connect() -> Result<DatabaseConnection> {
     let path = db_path();
     if let Some(parent) = path.parent() {
@@ -39,6 +42,7 @@ pub fn connect() -> Result<DatabaseConnection> {
     })
 }
 
+/// Deletes the database file, effectively resetting all stored data.
 pub fn reset() -> Result<()> {
     let path = db_path();
     if path.exists() {
@@ -47,6 +51,7 @@ pub fn reset() -> Result<()> {
     Ok(())
 }
 
+/// Converts any displayable error into a standard `std::io::Error`.
 fn io_err(e: impl std::fmt::Display) -> std::io::Error {
     std::io::Error::new(std::io::ErrorKind::Other, e.to_string())
 }
