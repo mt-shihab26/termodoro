@@ -45,12 +45,15 @@ pub enum InputAction {
 
 pub struct InputState {
     props: InputProps,
-    calendar: Option<CalendarState>,
+    calendar_state: Option<CalendarState>,
 }
 
 impl InputState {
     pub fn new(props: InputProps) -> Self {
-        Self { props, calendar: None }
+        Self {
+            props,
+            calendar_state: None,
+        }
     }
 
     pub fn props(&self) -> &InputProps {
@@ -58,14 +61,14 @@ impl InputState {
     }
 
     pub fn handle(&mut self, key: KeyEvent) -> InputAction {
-        if let Some(cal) = &mut self.calendar {
+        if let Some(cal) = &mut self.calendar_state {
             match cal.handle(key) {
                 CalendarAction::Confirm { date, repeat } => {
                     self.props.date = date;
                     self.props.repeat = repeat;
-                    self.calendar = None;
+                    self.calendar_state = None;
                 }
-                CalendarAction::Cancel => self.calendar = None,
+                CalendarAction::Cancel => self.calendar_state = None,
                 CalendarAction::None => {}
             }
             return InputAction::None;
@@ -84,7 +87,7 @@ impl InputState {
             }
             KeyCode::Esc => return InputAction::Escape,
             KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                self.calendar = Some(CalendarState::new(CalendarProps::new(
+                self.calendar_state = Some(CalendarState::new(CalendarProps::new(
                     self.props.date,
                     self.props.repeat.as_ref(),
                 )));
@@ -97,7 +100,7 @@ impl InputState {
     }
 
     pub fn render_calendar(&self, frame: &mut Frame, area: Rect) {
-        if let Some(cal) = &self.calendar {
+        if let Some(cal) = &self.calendar_state {
             frame.render_widget(&CalendarWidget::new(cal.props()), area);
         }
     }
