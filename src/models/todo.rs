@@ -154,6 +154,19 @@ impl Todo {
         }
     }
 
+    pub fn update(&mut self, db: &DatabaseConnection) -> bool {
+        match rt().block_on(async { self.to_model().update(db).await.map_err(io_err) }) {
+            Ok(model) => {
+                *self = model.into();
+                true
+            }
+            Err(e) => {
+                log_error!("failed to update todo: {e}");
+                false
+            }
+        }
+    }
+
     pub fn toggle(&mut self, db: &DatabaseConnection) -> Option<Todo> {
         self.done = !self.done;
 
@@ -183,19 +196,6 @@ impl Todo {
             Ok(()) => true,
             Err(e) => {
                 log_error!("failed to delete todo: {e}");
-                false
-            }
-        }
-    }
-
-    pub fn update(&mut self, db: &DatabaseConnection) -> bool {
-        match rt().block_on(async { self.to_model().update(db).await.map_err(io_err) }) {
-            Ok(model) => {
-                *self = model.into();
-                true
-            }
-            Err(e) => {
-                log_error!("failed to update todo: {e}");
                 false
             }
         }
