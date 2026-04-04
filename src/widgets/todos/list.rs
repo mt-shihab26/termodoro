@@ -1,8 +1,7 @@
-use ratatui::buffer::Buffer;
-use ratatui::layout::Rect;
-use ratatui::style::{Color, Modifier, Style};
-use ratatui::text::{Line, Span};
-use ratatui::widgets::{List, ListState, Paragraph, StatefulWidget, Widget};
+use ratatui::{
+    prelude::{Buffer, Color, Line, Modifier, Rect, Span, StatefulWidget, Style, Widget},
+    widgets::{List, ListState, Paragraph},
+};
 use time::Duration;
 
 use crate::kinds::page::Page;

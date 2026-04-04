@@ -1,15 +1,13 @@
-use ratatui::Frame;
-use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use ratatui::layout::{Constraint, Layout};
-use ratatui::prelude::{Buffer, Rect, Widget};
-use ratatui::style::{Color, Style, Stylize};
-use ratatui::text::Span;
-use ratatui::widgets::{Block, Paragraph};
+use ratatui::{
+    crossterm::event::{KeyCode, KeyEvent, KeyModifiers},
+    prelude::{Buffer, Color, Constraint, Frame, Layout, Rect, Style, Stylize, Widget},
+    text::Span,
+    widgets::{Block, Paragraph},
+};
 use ratatui_textarea::TextArea;
 use time::Date;
 
-use crate::kinds::repeat::Repeat;
-use crate::tabs::todos::COLOR;
+use crate::{kinds::repeat::Repeat, tabs::todos::COLOR};
 
 use super::calendar::{CalendarAction, CalendarProps, CalendarState, CalendarWidget};
 

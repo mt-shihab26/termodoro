@@ -1,11 +1,10 @@
-use ratatui::crossterm::event::{KeyCode, KeyEvent};
-use ratatui::layout::{Constraint, Layout};
-use ratatui::prelude::{Buffer, Rect, Widget};
-use ratatui::style::{Color, Style, Stylize};
-use ratatui::widgets::{Block, Borders, List, ListItem, Paragraph};
+use ratatui::{
+    crossterm::event::{KeyCode, KeyEvent},
+    prelude::{Buffer, Color, Constraint, Layout, Rect, Style, Stylize, Widget},
+    widgets::{Block, Borders, List, ListItem, Paragraph},
+};
 
-use crate::kinds::repeat::Repeat;
-use crate::tabs::todos::COLOR;
+use crate::{kinds::repeat::Repeat, tabs::todos::COLOR};
 
 pub enum RepeatAction {
     Confirm(Option<Repeat>),

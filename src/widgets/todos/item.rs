@@ -1,10 +1,13 @@
-use ratatui::style::{Color, Modifier, Style};
-use ratatui::text::{Line, Span};
-use ratatui::widgets::ListItem;
+use ratatui::{
+    prelude::{Color, Modifier, Style},
+    text::{Line, Span},
+    widgets::ListItem,
+};
 
-use crate::kinds::repeat::Repeat;
-use crate::models::session::Stat;
-use crate::models::todo::Todo;
+use crate::{
+    kinds::repeat::Repeat,
+    models::{session::Stat, todo::Todo},
+};
 
 pub struct ItemWidget<'a> {
     pub todo: &'a Todo,

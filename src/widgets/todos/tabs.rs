@@ -1,7 +1,7 @@
-use ratatui::buffer::Buffer;
-use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::style::{Color, Style};
-use ratatui::widgets::{Tabs, Widget};
+use ratatui::{
+    prelude::{Buffer, Color, Constraint, Layout, Rect, Style, Widget},
+    widgets::Tabs,
+};
 
 use crate::kinds::page::Page;
 
