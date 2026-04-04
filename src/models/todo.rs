@@ -99,6 +99,7 @@ impl Todo {
         if next.save(db) { Some(next) } else { None }
     }
 
+    /// Returns a paginated list of todos for the given page filter.
     pub fn list(db: &DatabaseConnection, page: Page, offset: usize, limit: usize) -> Vec<Todo> {
         if limit == 0 {
             return vec![];

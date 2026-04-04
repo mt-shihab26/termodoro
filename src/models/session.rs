@@ -4,34 +4,16 @@ use sea_orm::{
     ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, DeriveEntityModel,
     DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait, QueryFilter, QueryOrder,
 };
+use time::Date;
 
 use crate::{
     kinds::phase::Phase,
     log_error,
     utils::{
-        date::{format_date, now_utc_str, today},
+        date::{format_date, now_utc_str, parse_date, today},
         db::rt,
     },
 };
-
-#[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
-#[sea_orm(table_name = "sessions")]
-pub struct Model {
-    #[sea_orm(primary_key, auto_increment = true)]
-    id: i32,
-    phase: String,
-    duration_secs: i32,
-    started_at: Option<String>,
-    ended_at: Option<String>,
-    todo_id: Option<i32>,
-    created_at: String,
-    updated_at: String,
-}
-
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
-
-impl ActiveModelBehavior for ActiveModel {}
 
 /// Aggregated work session statistics for a single todo.
 #[derive(Clone)]
@@ -67,25 +49,24 @@ pub struct Session {
     pub ended_at: Option<String>,
     /// Associated todo id, if any.
     pub todo_id: Option<i32>,
-    /// UTC timestamp of when the record was created.
-    pub created_at: String,
-    /// UTC timestamp of when the record was last updated.
-    pub updated_at: String,
+    /// Date when the record was created.
+    pub created_at: Date,
+    /// Date when the record was last updated.
+    pub updated_at: Date,
 }
 
 impl Session {
     /// Creates a new completed session for the given phase and duration.
     pub fn new(phase: &Phase, duration_millis: u32, started_at: Option<String>, todo_id: Option<i32>) -> Self {
-        let now = now_utc_str();
         Self {
             id: None,
             phase: phase.to_db_str().to_string(),
             duration_secs: duration_millis / 1000,
             started_at,
-            ended_at: Some(now.clone()),
+            ended_at: Some(now_utc_str()),
             todo_id,
-            created_at: now.clone(),
-            updated_at: now,
+            created_at: today(),
+            updated_at: today(),
         }
     }
 
@@ -165,7 +146,7 @@ impl Session {
     }
 
     fn to_model(&self) -> ActiveModel {
-        let now = now_utc_str();
+        let today = format_date(today());
         match self.id {
             Some(id) => ActiveModel {
                 id: Set(id),
@@ -174,8 +155,8 @@ impl Session {
                 started_at: Set(self.started_at.clone()),
                 ended_at: Set(self.ended_at.clone()),
                 todo_id: Set(self.todo_id),
-                created_at: Set(self.created_at.clone()),
-                updated_at: Set(now),
+                created_at: Set(format_date(self.created_at)),
+                updated_at: Set(today),
             },
             None => ActiveModel {
                 phase: Set(self.phase.clone()),
@@ -183,8 +164,8 @@ impl Session {
                 started_at: Set(self.started_at.clone()),
                 ended_at: Set(self.ended_at.clone()),
                 todo_id: Set(self.todo_id),
-                created_at: Set(self.created_at.clone()),
-                updated_at: Set(self.updated_at.clone()),
+                created_at: Set(today.clone()),
+                updated_at: Set(today),
                 ..Default::default()
             },
         }
@@ -200,11 +181,30 @@ impl From<Model> for Session {
             started_at: m.started_at,
             ended_at: m.ended_at,
             todo_id: m.todo_id,
-            created_at: m.created_at,
-            updated_at: m.updated_at,
+            created_at: parse_date(&m.created_at).unwrap_or_else(today),
+            updated_at: parse_date(&m.updated_at).unwrap_or_else(today),
         }
     }
 }
+
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
+#[sea_orm(table_name = "sessions")]
+pub struct Model {
+    #[sea_orm(primary_key, auto_increment = true)]
+    id: i32,
+    phase: String,
+    duration_secs: i32,
+    started_at: Option<String>,
+    ended_at: Option<String>,
+    todo_id: Option<i32>,
+    created_at: String,
+    updated_at: String,
+}
+
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {}
+
+impl ActiveModelBehavior for ActiveModel {}
 
 fn io_err(e: impl std::fmt::Display) -> io::Error {
     io::Error::new(io::ErrorKind::Other, e.to_string())
