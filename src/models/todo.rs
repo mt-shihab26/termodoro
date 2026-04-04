@@ -121,6 +121,7 @@ impl Todo {
         }
     }
 
+    /// Returns the total number of todos for the given page filter.
     pub fn count(db: &DatabaseConnection, page: Page) -> usize {
         let query = Self::base_query(page);
 
@@ -133,6 +134,7 @@ impl Todo {
         }
     }
 
+    /// Builds the base ORM query for the given page filter.
     fn base_query(page: Page) -> sea_orm::Select<Entity> {
         let today = format_date(today());
 
@@ -161,6 +163,7 @@ impl Todo {
         }
     }
 
+    /// Persists the current field values to the database, returning whether it succeeded.
     pub fn update(&mut self, db: &DatabaseConnection) -> bool {
         match rt().block_on(async { self.to_model().update(db).await.map_err(io_err) }) {
             Ok(model) => {
@@ -174,6 +177,7 @@ impl Todo {
         }
     }
 
+    /// Toggles the done state and spawns the next repeat occurrence when marked done.
     pub fn toggle(&mut self, db: &DatabaseConnection) -> Option<Todo> {
         self.done = !self.done;
 
@@ -193,6 +197,7 @@ impl Todo {
         self.save_next(db)
     }
 
+    /// Deletes this todo from the database, returning whether it succeeded.
     pub fn delete(&self, db: &DatabaseConnection) -> bool {
         let Some(id) = self.id else {
             log_warn!("todo has no id, skipping db delete");
@@ -208,6 +213,7 @@ impl Todo {
         }
     }
 
+    /// Converts this todo into a SeaORM active model for insert or update.
     fn to_model(&self) -> ActiveModel {
         let due_date = self.due_date.map(format_date);
         let repeat = self.repeat.as_ref().map(|r| r.to_db_str().to_string());
