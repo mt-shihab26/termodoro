@@ -1,7 +1,7 @@
-use ratatui::buffer::Buffer;
-use ratatui::layout::Rect;
-use ratatui::style::{Color, Stylize};
-use ratatui::widgets::{Paragraph, Widget};
+use ratatui::{
+    prelude::{Buffer, Color, Rect, Stylize, Widget},
+    widgets::Paragraph,
+};
 
 use crate::kinds::{page::Page, todos_mode::TodosMode};
 
