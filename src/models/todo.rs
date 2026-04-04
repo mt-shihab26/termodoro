@@ -46,6 +46,7 @@ pub struct Todo {
 }
 
 impl Todo {
+    /// Creates an unsaved in-memory Todo with default values.
     fn new(text: String, due_date: Option<Date>, repeat: Option<Repeat>, parent_id: Option<i32>) -> Self {
         let now = now_utc_str();
         Self {
@@ -60,11 +61,13 @@ impl Todo {
         }
     }
 
+    /// Creates and persists a new todo, returning it on success.
     pub fn add(db: &DatabaseConnection, text: String, due_date: Option<Date>, repeat: Option<Repeat>) -> Option<Todo> {
         let mut todo = Todo::new(text, due_date, repeat, None);
         if todo.save(db) { Some(todo) } else { None }
     }
 
+    /// Creates the next repeated occurrence of this todo, skipping if one already exists.
     pub fn add_next(&self, db: &DatabaseConnection) -> Option<Todo> {
         let (Some(repeat), Some(due_date)) = (self.repeat.as_ref(), self.due_date) else {
             return None;
@@ -92,6 +95,7 @@ impl Todo {
         if next.save(db) { Some(next) } else { None }
     }
 
+    /// Inserts or updates the todo in the database, returning whether it succeeded.
     fn save(&mut self, db: &DatabaseConnection) -> bool {
         match self.id {
             Some(_) => self.update(db),
