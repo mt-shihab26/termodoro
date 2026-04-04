@@ -1,5 +1,5 @@
 use std::{
-    cell::{Cell, Ref, RefCell},
+    cell::{Cell, Ref, RefCell, RefMut},
     sync::{Arc, Mutex},
 };
 
@@ -49,7 +49,7 @@ impl TodosState {
         self.offset
     }
 
-    pub fn list_state_mut(&self) -> std::cell::RefMut<'_, ListState> {
+    pub fn list_state_mut(&self) -> RefMut<'_, ListState> {
         self.list_state.borrow_mut()
     }
 
