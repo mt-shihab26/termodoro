@@ -1,7 +1,7 @@
 use ratatui::{
-    prelude::{Color, Modifier, Style},
+    prelude::{Buffer, Color, Modifier, Rect, Style, Widget},
     text::{Line, Span},
-    widgets::ListItem,
+    widgets::{ListItem, Paragraph},
 };
 
 use crate::{
@@ -29,7 +29,7 @@ impl<'a> ItemWidget<'a> {
         Self { props }
     }
 
-    pub fn label(&self) -> String {
+    fn label(&self) -> String {
         let check = if self.props.todo.done { "[✓]" } else { "[ ]" };
         let repeat_icon = if self.props.todo.repeat.is_some() {
             &format!("{} ", Repeat::icon())
@@ -55,7 +55,7 @@ impl<'a> ItemWidget<'a> {
         label
     }
 
-    pub fn style(&self, dimmed: bool) -> Style {
+    fn style(&self, dimmed: bool) -> Style {
         if dimmed || self.props.todo.done {
             Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)
         } else {
@@ -63,11 +63,11 @@ impl<'a> ItemWidget<'a> {
         }
     }
 
-    pub fn list_item(&self, dimmed: bool, serial: usize, width: usize) -> ListItem<'static> {
+    fn list_item(&self, dimmed: bool, serial: usize, width: usize) -> ListItem<'static> {
         ListItem::new(format!(" {serial:>width$}. {}", self.label())).style(self.style(dimmed))
     }
 
-    pub fn line(&self, selected: bool, color: Color, serial: usize, width: usize) -> Line<'static> {
+    fn line(&self, selected: bool, color: Color, serial: usize, width: usize) -> Line<'static> {
         let prefix = if selected { "> " } else { "  " };
         let style = if selected {
             self.style(false).fg(color).add_modifier(Modifier::BOLD)
@@ -79,5 +79,11 @@ impl<'a> ItemWidget<'a> {
             format!("{prefix}{serial:>width$}. {}", self.label()),
             style,
         )])
+    }
+}
+
+impl Widget for &ItemWidget<'_> {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        Paragraph::new(self.label()).style(self.style(false)).render(area, buf);
     }
 }
