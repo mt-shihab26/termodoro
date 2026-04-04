@@ -12,7 +12,7 @@ use sea_orm::DatabaseConnection;
 use crate::caches::timer::TimerCache;
 use crate::kinds::{page::Page, todos_mode::TodosMode};
 use crate::utils::date::today;
-use crate::widgets::todos::hint::HintWidget;
+use crate::widgets::todos::hint::{HintProps, HintWidget};
 use crate::widgets::todos::input::{InputAction, InputWidget};
 use crate::widgets::todos::{list::ListWidget, status::StatusWidget, tabs::TabsWidget};
 use crate::{models::todo::Todo, states::todos::TodosState};
@@ -187,14 +187,8 @@ impl Tab for TodosTab {
             &mut self.state.list_state_mut(),
         );
 
-        frame.render_widget(
-            &HintWidget {
-                page: self.page,
-                ui_mode: self.mode,
-                can_delete: self.state.can_delete(self.page, &items),
-            },
-            hint_area,
-        );
+        HintWidget::new(&HintProps::new(self.mode, self.state.can_delete(self.page, &items)))
+            .render(hint_area, frame.buffer_mut());
 
         if let Some(input_rect) = input_area {
             if let Some(input_area_widget) = &self.input_widget {

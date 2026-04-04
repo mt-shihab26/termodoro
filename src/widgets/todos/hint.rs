@@ -3,19 +3,34 @@ use ratatui::{
     widgets::Paragraph,
 };
 
-use crate::kinds::{page::Page, todos_mode::TodosMode};
+use crate::kinds::todos_mode::TodosMode;
 
-pub struct HintWidget {
-    pub page: Page,
-    pub ui_mode: TodosMode,
-    pub can_delete: bool,
+pub struct HintProps {
+    ui_mode: TodosMode,
+    can_delete: bool,
 }
 
-impl Widget for &HintWidget {
+impl HintProps {
+    pub fn new(ui_mode: TodosMode, can_delete: bool) -> Self {
+        Self { ui_mode, can_delete }
+    }
+}
+
+pub struct HintWidget<'a> {
+    props: &'a HintProps,
+}
+
+impl<'a> HintWidget<'a> {
+    pub fn new(props: &'a HintProps) -> Self {
+        Self { props }
+    }
+}
+
+impl Widget for &HintWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let hint = match self.ui_mode {
+        let hint = match self.props.ui_mode {
             TodosMode::Normal => {
-                if self.can_delete {
+                if self.props.can_delete {
                     "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^d]Delete"
                 } else {
                     "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit"
