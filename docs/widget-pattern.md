@@ -8,6 +8,26 @@ Every UI component follows a three-part split: **Action(optional) → Props → 
 
 ## The four parts
 
+### Props
+
+Holds the data a widget needs to render one frame.
+It is a plain struct with no behaviour — just fields.
+The widget borrows `&Props`, it never owns or mutates it.
+
+```rust
+pub struct MyProps {
+    items: Vec<(i32, String)>,
+    cursor: usize,
+}
+
+impl MyProps {
+    pub fn new(items: Vec<(i32, String)>) -> Self {
+        Self { items, cursor: 0 }
+    }
+}
+```
+
+
 ### Action *(optional)*
 
 An enum returned by `State::handle()` to communicate events back to the caller.
@@ -22,18 +42,6 @@ pub enum MyAction {
 }
 ```
 
-### Props
-
-Holds the data a widget needs to render one frame.
-It is a plain struct with no behaviour — just fields.
-The widget borrows `&Props`, it never owns or mutates it.
-
-```rust
-pub struct MyProps<'a> {
-    items: &'a [(i32, String)],
-    cursor: usize,
-}
-```
 
 ### State *(optional)*
 
@@ -77,11 +85,11 @@ Borrows `&Props` for the duration of one render call, then is dropped.
 
 ```rust
 pub struct MyWidget<'a> {
-    props: &'a MyProps<'a>,
+    props: &'a MyProps,
 }
 
 impl<'a> MyWidget<'a> {
-    pub fn new(props: &'a MyProps<'a>) -> Self { Self { props } }
+    pub fn new(props: &'a MyProps) -> Self { Self { props } }
 }
 
 impl Widget for &MyWidget<'_> {
