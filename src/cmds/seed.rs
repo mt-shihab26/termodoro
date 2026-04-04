@@ -1,6 +1,6 @@
 use std::io::Result;
 
-use crate::{cmds::Cmd, domains::seed::seed_todos, models::todo::Todo, utils::db};
+use crate::{cmds::Cmd, domains::seed::seed_todos, utils::db};
 
 pub struct Seed;
 
@@ -22,8 +22,8 @@ impl Cmd for Seed {
         let total = items.len();
         let mut inserted = 0usize;
 
-        for item in items {
-            if Todo::add(&db, item.text, item.due_date, item.repeat).is_some() {
+        for mut item in items {
+            if item.save(&db) {
                 inserted += 1;
             }
         }

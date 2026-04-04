@@ -56,7 +56,7 @@ pub struct Todo {
 
 impl Todo {
     /// Creates an unsaved in-memory Todo with default values.
-    fn new(text: String, due_date: Option<Date>, repeat: Option<Repeat>, parent_id: Option<i32>) -> Self {
+    pub fn new(text: String, due_date: Option<Date>, repeat: Option<Repeat>, parent_id: Option<i32>) -> Self {
         let now = now_utc_str();
         Self {
             id: None,
@@ -70,14 +70,25 @@ impl Todo {
         }
     }
 
-    /// Creates and persists a new todo, returning it on success.
-    pub fn add(db: &DatabaseConnection, text: String, due_date: Option<Date>, repeat: Option<Repeat>) -> Option<Todo> {
-        let mut todo = Todo::new(text, due_date, repeat, None);
-        if todo.save(db) { Some(todo) } else { None }
+    /// Inserts or updates the todo in the database, returning whether it succeeded.
+    pub fn save(&mut self, db: &DatabaseConnection) -> bool {
+        match self.id {
+            Some(_) => self.update(db),
+            None => match rt().block_on(async { self.to_model().insert(db).await.map_err(io_err) }) {
+                Ok(model) => {
+                    *self = model.into();
+                    true
+                }
+                Err(e) => {
+                    log_error!("failed to insert todo: {e}");
+                    false
+                }
+            },
+        }
     }
 
     /// Creates the next repeated occurrence of this todo, skipping if one already exists.
-    pub fn add_next(&self, db: &DatabaseConnection) -> Option<Todo> {
+    pub fn save_next(&self, db: &DatabaseConnection) -> Option<Todo> {
         let (Some(repeat), Some(due_date)) = (self.repeat.as_ref(), self.due_date) else {
             return None;
         };
@@ -102,23 +113,6 @@ impl Todo {
         let mut next = Todo::new(self.text.clone(), Some(next_date), Some(Repeat::of(repeat)), parent_id);
 
         if next.save(db) { Some(next) } else { None }
-    }
-
-    /// Inserts or updates the todo in the database, returning whether it succeeded.
-    fn save(&mut self, db: &DatabaseConnection) -> bool {
-        match self.id {
-            Some(_) => self.update(db),
-            None => match rt().block_on(async { self.to_model().insert(db).await.map_err(io_err) }) {
-                Ok(model) => {
-                    *self = model.into();
-                    true
-                }
-                Err(e) => {
-                    log_error!("failed to insert todo: {e}");
-                    false
-                }
-            },
-        }
     }
 
     pub fn list(db: &DatabaseConnection, page: Page, offset: usize, limit: usize) -> Vec<Todo> {
@@ -183,7 +177,7 @@ impl Todo {
             return None;
         }
 
-        self.add_next(db)
+        self.save_next(db)
     }
 
     pub fn delete(&self, db: &DatabaseConnection) -> bool {

@@ -1,24 +1,8 @@
 use time::{Date, Duration};
 
-use crate::{kinds::repeat::Repeat, utils::date::today};
+use crate::{kinds::repeat::Repeat, models::todo::Todo, utils::date::today};
 
-pub struct SeedTodo {
-    pub text: String,
-    pub due_date: Option<Date>,
-    pub repeat: Option<Repeat>,
-}
-
-impl SeedTodo {
-    fn new(text: &str, due_date: Option<Date>, repeat: Option<Repeat>) -> SeedTodo {
-        SeedTodo {
-            text: text.to_string(),
-            due_date,
-            repeat,
-        }
-    }
-}
-
-pub fn seed_todos(count: usize) -> Vec<SeedTodo> {
+pub fn seed_todos(count: usize) -> Vec<Todo> {
     let base = today();
     let projects = [
         "Inbox",
@@ -45,7 +29,7 @@ pub fn seed_todos(count: usize) -> Vec<SeedTodo> {
         "practice rust",
     ];
 
-    let mut todos: Vec<SeedTodo> = (0..count)
+    let mut todos: Vec<Todo> = (0..count)
         .map(|i| {
             let text = format!(
                 "{} {} {}",
@@ -70,7 +54,7 @@ pub fn seed_todos(count: usize) -> Vec<SeedTodo> {
                 _ => None,
             };
 
-            SeedTodo { text, due_date, repeat }
+            Todo::new(text, due_date, repeat, None)
         })
         .collect();
 
@@ -78,17 +62,33 @@ pub fn seed_todos(count: usize) -> Vec<SeedTodo> {
     todos
 }
 
-fn focused_examples(base: Date) -> Vec<SeedTodo> {
+fn focused_examples(base: Date) -> Vec<Todo> {
     vec![
-        SeedTodo::new("Today: pay electricity bill", Some(base), None),
-        SeedTodo::new("Today: call mom", Some(base), Some(Repeat::WeeklySameDay)),
-        SeedTodo::new("Overdue: renew passport", Some(base - Duration::days(2)), None),
-        SeedTodo::new("Upcoming: draft Q2 plan", Some(base + Duration::days(3)), None),
-        SeedTodo::new(
-            "Upcoming: yearly health check",
+        Todo::new("Today: pay electricity bill".to_string(), Some(base), None, None),
+        Todo::new(
+            "Today: call mom".to_string(),
+            Some(base),
+            Some(Repeat::WeeklySameDay),
+            None,
+        ),
+        Todo::new(
+            "Overdue: renew passport".to_string(),
+            Some(base - Duration::days(2)),
+            None,
+            None,
+        ),
+        Todo::new(
+            "Upcoming: draft Q2 plan".to_string(),
+            Some(base + Duration::days(3)),
+            None,
+            None,
+        ),
+        Todo::new(
+            "Upcoming: yearly health check".to_string(),
             Some(base + Duration::days(30)),
             Some(Repeat::YearlyOnDay),
+            None,
         ),
-        SeedTodo::new("No date: reorganize bookshelf", None, None),
+        Todo::new("No date: reorganize bookshelf".to_string(), None, None, None),
     ]
 }
