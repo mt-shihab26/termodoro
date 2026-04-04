@@ -77,8 +77,8 @@ impl Widget for &ListWidget<'_> {
         }
 
         match self.props.page {
-            Page::Index => self.render_index(padded_area, buf),
-            Page::Due | Page::Today | Page::History => self.render_flat(padded_area, buf),
+            Page::Index | Page::History => self.render_index(padded_area, buf),
+            Page::Due | Page::Today => self.render_flat(padded_area, buf),
         }
 
         IndicatorWidget::new(&IndicatorProps::new(
