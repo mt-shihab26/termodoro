@@ -1,5 +1,5 @@
 use std::{
-    cell::{Cell, Ref, RefCell, RefMut},
+    cell::{Cell, Ref, RefCell},
     sync::{Arc, Mutex},
 };
 
@@ -8,7 +8,7 @@ use sea_orm::DatabaseConnection;
 use time::Date;
 
 use crate::{
-    caches::timer::TimerCache,
+    caches::{timer::TimerCache, todos::TodosCache},
     kinds::{page::Page, repeat::Repeat},
     models::{
         session::{Session, Stat},
@@ -23,22 +23,20 @@ pub struct TodosState {
     offset: usize,
     page_size: Cell<usize>,
     list_state: RefCell<ListState>,
-    items: RefCell<Option<Vec<Todo>>>,
-    count: RefCell<Option<usize>>,
+    todos_cache: TodosCache,
     timer_cache: Arc<Mutex<TimerCache>>,
 }
 
 impl TodosState {
     pub fn new(db: DatabaseConnection, timer_cache: Arc<Mutex<TimerCache>>) -> Self {
         Self {
+            todos_cache: TodosCache::new(db.clone()),
             db,
             pending_g: false,
             selected: 0,
             offset: 0,
             page_size: Cell::new(1),
             list_state: RefCell::new(ListState::default()),
-            items: RefCell::new(None),
-            count: RefCell::new(None),
             timer_cache,
         }
     }
@@ -51,7 +49,7 @@ impl TodosState {
         self.offset
     }
 
-    pub fn list_state_mut(&self) -> RefMut<'_, ListState> {
+    pub fn list_state_mut(&self) -> std::cell::RefMut<'_, ListState> {
         self.list_state.borrow_mut()
     }
 
@@ -82,49 +80,23 @@ impl TodosState {
     }
 
     pub fn stats(&self, page: Page) -> Vec<Option<Stat>> {
-        if self.items.borrow().is_none() {
-            let mut guard = self.items.borrow_mut();
-            if guard.is_none() {
-                *guard = Some(Todo::list(&self.db, page, self.offset, self.page_size()));
-            }
-        }
-
-        self.items
-            .borrow()
-            .as_deref()
-            .unwrap_or(&[])
+        self.todos_cache
+            .get_items(page, self.offset, self.page_size())
             .iter()
             .map(|t| t.id.map(|id| Session::stat(&self.db, id)))
             .collect()
     }
 
     pub fn items(&self, page: Page) -> Ref<'_, [Todo]> {
-        let mut items = self.items.borrow_mut();
-        if items.is_none() {
-            *items = Some(Todo::list(&self.db, page, self.offset, self.page_size()));
-        }
-        drop(items);
-
-        Ref::map(self.items.borrow(), |cache| cache.as_deref().unwrap_or(&[]))
+        self.todos_cache.get_items(page, self.offset, self.page_size())
     }
 
     pub fn count(&self, page: Page) -> usize {
-        let mut count = self.count.borrow_mut();
-        if count.is_none() {
-            *count = Some(Todo::count(&self.db, page));
-        }
-        count.unwrap_or(0)
+        self.todos_cache.get_count(page)
     }
 
     pub fn selected_item(&self, page: Page) -> Option<Ref<'_, Todo>> {
-        self.items(page);
-
-        let cache = self.items.borrow();
-        if cache.as_ref().and_then(|items| items.get(self.selected)).is_none() {
-            return None;
-        }
-
-        Some(Ref::map(cache, |cache| &cache.as_ref().unwrap()[self.selected]))
+        self.todos_cache.get_item_at(page, self.offset, self.page_size(), self.selected)
     }
 
     pub fn set_visible_capacity(&self, list_area: Rect) {
@@ -143,8 +115,7 @@ impl TodosState {
     }
 
     fn clear_caches(&self) {
-        self.invalidate_items();
-        self.invalidate_count();
+        self.todos_cache.invalidate_all();
     }
 
     fn invalidate_timer_todos(&self) {
@@ -154,11 +125,7 @@ impl TodosState {
     }
 
     fn invalidate_items(&self) {
-        *self.items.borrow_mut() = None;
-    }
-
-    fn invalidate_count(&self) {
-        *self.count.borrow_mut() = None;
+        self.todos_cache.invalidate_items();
     }
 
     pub fn can_delete(&self, page: Page, items: &[Todo]) -> bool {
