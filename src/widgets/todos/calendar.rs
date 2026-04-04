@@ -15,12 +15,12 @@ use crate::{
     utils::date::{shift_month, today},
 };
 
-use super::repeat::{RepeatAction, RepeatWidget};
+use super::repeat::{RepeatAction, RepeatProps, RepeatState, RepeatWidget};
 
 pub struct CalendarProps {
     date: Date,
     repeat: Option<Repeat>,
-    repeat_picker: Option<RepeatWidget>,
+    repeat_state: Option<RepeatState>,
 }
 
 impl CalendarProps {
@@ -28,7 +28,7 @@ impl CalendarProps {
         Self {
             date: date.unwrap_or_else(today),
             repeat: repeat.map(Repeat::of),
-            repeat_picker: None,
+            repeat_state: None,
         }
     }
 }
@@ -53,18 +53,18 @@ impl CalendarState {
     }
 
     pub fn handle(&mut self, key: KeyEvent) -> CalendarAction {
-        if let Some(ref mut repeat_picker) = self.props.repeat_picker {
+        if let Some(ref mut repeat_picker) = self.props.repeat_state {
             match repeat_picker.handle(key) {
                 RepeatAction::Confirm(repeat) => {
                     self.props.repeat = repeat;
-                    self.props.repeat_picker = None;
+                    self.props.repeat_state = None;
                     return CalendarAction::Confirm {
                         date: Some(self.props.date),
                         repeat: self.props.repeat.as_ref().map(Repeat::of),
                     };
                 }
                 RepeatAction::Cancel => {
-                    self.props.repeat_picker = None;
+                    self.props.repeat_state = None;
                 }
                 RepeatAction::None => {}
             }
@@ -83,7 +83,7 @@ impl CalendarState {
             KeyCode::Char('H') => self.navigate(Some(shift_month(self.props.date, -1))),
             KeyCode::Char('L') => self.navigate(Some(shift_month(self.props.date, 1))),
             KeyCode::Char('r') => {
-                self.props.repeat_picker = Some(RepeatWidget::new(self.props.repeat.as_ref()));
+                self.props.repeat_state = Some(RepeatState::new(RepeatProps::new(self.props.repeat.as_ref())));
             }
             KeyCode::Enter => {
                 return CalendarAction::Confirm {
@@ -132,8 +132,8 @@ impl Widget for &CalendarWidget<'_> {
         let mut events = CalendarEventStore::today(Style::default().fg(Color::Yellow).bold());
         events.add(self.props.date, Style::default().bg(COLOR).fg(Color::Black));
 
-        if let Some(repeat_picker) = &self.props.repeat_picker {
-            repeat_picker.render(inner, buf);
+        if let Some(repeat_state) = &self.props.repeat_state {
+            RepeatWidget::new(repeat_state.props()).render(inner, buf);
             return;
         }
 
