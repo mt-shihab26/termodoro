@@ -1,3 +1,5 @@
+//! Todo picker overlay for linking a todo to the current timer session.
+
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
     prelude::{Buffer, Color, Rect, Style, Stylize, Widget},

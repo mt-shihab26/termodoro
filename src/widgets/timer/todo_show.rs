@@ -1,3 +1,5 @@
+//! Active-todo display bar shown at the bottom of the timer screen.
+
 use ratatui::{
     prelude::{Buffer, Rect, Stylize, Widget},
     widgets::Paragraph,

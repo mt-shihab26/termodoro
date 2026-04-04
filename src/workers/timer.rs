@@ -1,3 +1,5 @@
+//! Timer worker that ticks the pomodoro state and emits `TimerTick` events in sync with the render loop.
+
 use std::{
     sync::{
         Arc, Mutex,

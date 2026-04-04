@@ -1,3 +1,5 @@
+//! Pagination status bar showing the current page, item range, and total count.
+
 use ratatui::{
     prelude::{Buffer, Color, Rect, Stylize, Widget},
     widgets::Paragraph,

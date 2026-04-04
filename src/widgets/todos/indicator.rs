@@ -1,3 +1,5 @@
+//! Scroll overflow indicator that shows "^ more" or "v more" when items are hidden.
+
 use ratatui::{
     prelude::{Buffer, Rect, Stylize, Widget},
     widgets::Paragraph,

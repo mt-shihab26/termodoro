@@ -1,25 +1,31 @@
-use std::cell::Ref;
-use std::io::Result;
-use std::sync::{Arc, Mutex};
+use std::{
+    cell::Ref,
+    io::Result,
+    sync::{Arc, Mutex},
+};
 
-use ratatui::Frame;
-use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::style::{Color, Stylize};
-use ratatui::widgets::{Block, Widget};
+use ratatui::{
+    Frame,
+    crossterm::event::{KeyCode, KeyEvent, KeyModifiers},
+    prelude::{Color, Constraint, Layout, Rect, Stylize, Widget},
+    widgets::Block,
+};
 use sea_orm::DatabaseConnection;
 
-use crate::caches::timer::TimerCache;
-use crate::kinds::{page::Page, todos_mode::TodosMode};
-use crate::utils::date::today;
-use crate::widgets::todos::hint::{HintProps, HintWidget};
-use crate::widgets::todos::input::{InputAction, InputProps, InputState, InputWidget};
-use crate::widgets::todos::{
-    list::{ListProps, ListWidget},
-    status::{StatusProps, StatusWidget},
-    tabs::{TabsProps, TabsWidget},
+use crate::{
+    caches::timer::TimerCache,
+    kinds::{page::Page, todos_mode::TodosMode},
+    models::todo::Todo,
+    states::todos::TodosState,
+    utils::date::today,
+    widgets::todos::{
+        hint::{HintProps, HintWidget},
+        input::{InputAction, InputProps, InputState, InputWidget},
+        list::{ListProps, ListWidget},
+        status::{StatusProps, StatusWidget},
+        tabs::{TabsProps, TabsWidget},
+    },
 };
-use crate::{models::todo::Todo, states::todos::TodosState};
 
 use super::Tab;
 

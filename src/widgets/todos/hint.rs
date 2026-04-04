@@ -1,3 +1,5 @@
+//! Context-sensitive keyboard hint bar for the todos tab.
+
 use ratatui::{
     prelude::{Buffer, Color, Rect, Stylize, Widget},
     widgets::Paragraph,

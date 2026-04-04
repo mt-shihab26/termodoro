@@ -1,3 +1,5 @@
+//! Repeat-rule picker overlay for selecting how often a todo recurs.
+
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
     prelude::{Buffer, Color, Constraint, Layout, Rect, Style, Stylize, Widget},

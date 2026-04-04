@@ -1,3 +1,5 @@
+//! Calendar popup for picking a todo due date and optional repeat rule.
+
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Layout, Rect},

@@ -1,3 +1,5 @@
+//! Colored outer border widget that renders a box and returns the inner rect.
+
 use ratatui::{
     prelude::{Buffer, Color, Rect, Stylize, Widget},
     widgets::Block,

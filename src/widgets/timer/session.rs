@@ -1,3 +1,5 @@
+//! Session progress widget that renders the completed vs daily goal count.
+
 use ratatui::{
     prelude::{Buffer, Rect, Stylize, Widget},
     widgets::Paragraph,

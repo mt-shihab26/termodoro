@@ -1,3 +1,5 @@
+//! Context-sensitive keyboard hint bar for the timer tab.
+
 use ratatui::{
     prelude::{Buffer, Color, Rect, Stylize, Widget},
     widgets::Paragraph,
