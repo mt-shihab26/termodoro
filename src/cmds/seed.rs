@@ -18,17 +18,8 @@ impl Cmd for Seed {
     fn run(self: Box<Self>) -> Result<()> {
         db::reset()?;
         let db = db::connect()?;
-        let items = seed_todos(100);
-        let total = items.len();
-        let mut inserted = 0usize;
-
-        for mut item in items {
-            if item.save(&db) {
-                inserted += 1;
-            }
-        }
-
-        println!("inserted {inserted}/{total} todos");
+        let inserted = seed_todos(100, &db);
+        println!("inserted {inserted} todos");
         Ok(())
     }
 }
