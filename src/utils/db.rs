@@ -1,3 +1,5 @@
+//! Database connection helpers: opens the SQLite file, runs migrations, and provides the Tokio runtime.
+
 use std::{io::Result, sync::OnceLock};
 
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};

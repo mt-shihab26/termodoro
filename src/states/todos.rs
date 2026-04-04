@@ -1,14 +1,20 @@
-use std::cell::{Cell, Ref, RefCell, RefMut};
-use std::sync::{Arc, Mutex};
+use std::{
+    cell::{Cell, Ref, RefCell, RefMut},
+    sync::{Arc, Mutex},
+};
 
 use ratatui::{layout::Rect, widgets::ListState};
 use sea_orm::DatabaseConnection;
 use time::Date;
 
-use crate::caches::timer::TimerCache;
-use crate::kinds::{page::Page, repeat::Repeat};
-use crate::models::session::Stat;
-use crate::models::{session::Session, todo::Todo};
+use crate::{
+    caches::timer::TimerCache,
+    kinds::{page::Page, repeat::Repeat},
+    models::{
+        session::{Session, Stat},
+        todo::Todo,
+    },
+};
 
 pub struct TodosState {
     db: DatabaseConnection,

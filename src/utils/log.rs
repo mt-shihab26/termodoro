@@ -1,3 +1,5 @@
+//! File-based logger and log macros (log_error!, log_warn!, log_info!) for the app.
+
 use std::{
     fs::{self, OpenOptions},
     io::Write,

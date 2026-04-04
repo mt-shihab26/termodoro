@@ -1,3 +1,5 @@
+//! Persistent JSON store for saving and loading timer state across sessions.
+
 use std::fs;
 
 use serde::{Deserialize, Serialize};

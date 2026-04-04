@@ -1,3 +1,5 @@
+//! Date and time helpers for getting today's date and shifting calendar months.
+
 use time::{Date, Month, OffsetDateTime, PrimitiveDateTime, Time};
 
 /// Returns the current local time, falling back to UTC if the local offset is unavailable.
