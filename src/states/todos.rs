@@ -6,14 +6,13 @@ use sea_orm::DatabaseConnection;
 use time::Date;
 
 use crate::caches::timer::TimerCache;
-use crate::kinds::{direction::Direction, page::Page, repeat::Repeat};
+use crate::kinds::{page::Page, repeat::Repeat};
 use crate::models::session::Stat;
 use crate::models::{session::Session, todo::Todo};
 
 pub struct TodosState {
     db: DatabaseConnection,
     pending_g: bool,
-    direction: Option<Direction>,
     selected: usize,
     offset: usize,
     page_size: Cell<usize>,
@@ -28,7 +27,6 @@ impl TodosState {
         Self {
             db,
             pending_g: false,
-            direction: None,
             selected: 0,
             offset: 0,
             page_size: Cell::new(1),
@@ -54,7 +52,6 @@ impl TodosState {
     pub fn begin_input(&mut self) -> bool {
         let pending_g = self.pending_g;
         self.pending_g = false;
-        self.direction = None;
         pending_g
     }
 
@@ -78,22 +75,7 @@ impl TodosState {
         loaded_len == self.page_size()
     }
 
-    pub fn should_tick(&self) -> bool {
-        self.direction.is_some()
-    }
-
-    pub fn is_animating(&self) -> bool {
-        self.direction.is_some()
-    }
-
-    pub fn stop_animation(&mut self) {
-        self.direction = None;
-    }
-
     pub fn stats(&self, page: Page) -> Vec<Option<Stat>> {
-        // Only call borrow_mut when the cache is empty. If the caller already
-        // holds a Ref from items(), the cache is populated and we skip straight
-        // to the immutable borrow below — two simultaneous Refs are allowed.
         if self.items.borrow().is_none() {
             let mut guard = self.items.borrow_mut();
             if guard.is_none() {
@@ -203,7 +185,6 @@ impl TodosState {
 
     pub fn reset_page(&mut self, page: Page) {
         self.pending_g = false;
-        self.direction = None;
         self.offset = 0;
         self.selected = 0;
         self.clear_caches();
@@ -226,15 +207,22 @@ impl TodosState {
 
     pub fn go_to_start(&mut self, pending_g: bool) {
         if pending_g {
-            self.direction = Some(Direction::Start);
-        } else {
-            self.direction = None;
+            self.offset = 0;
+            self.selected = 0;
+            self.invalidate_items();
         }
         self.pending_g = !pending_g;
     }
 
-    pub fn go_to_end(&mut self) {
-        self.direction = Some(Direction::End);
+    pub fn go_to_end(&mut self, page: Page) {
+        let total = Todo::count(&self.db, page);
+        if total == 0 {
+            return;
+        }
+        let page_size = self.page_size();
+        self.offset = total.saturating_sub(page_size);
+        self.selected = (total - 1) - self.offset;
+        self.invalidate_items();
     }
 
     pub fn refresh(&mut self, page: Page) {
@@ -297,18 +285,6 @@ impl TodosState {
                 }
             }
         }
-    }
-
-    pub fn step_animation(&mut self, page: Page) -> bool {
-        let position = (self.offset, self.selected);
-
-        match self.direction {
-            Some(Direction::Start) => self.move_selection(page, -1),
-            Some(Direction::End) => self.move_selection(page, 1),
-            None => {}
-        }
-
-        (self.offset, self.selected) != position
     }
 
     pub fn toggle_selected(&mut self, page: Page) {
