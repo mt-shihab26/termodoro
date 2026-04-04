@@ -1,9 +1,10 @@
 use std::io;
 
-use sea_orm::sea_query::Expr;
-use sea_orm::{ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, DatabaseConnection, QuerySelect};
-use sea_orm::{ColumnTrait, Condition, DeriveEntityModel, DerivePrimaryKey, QueryFilter};
-use sea_orm::{DeriveRelation, EntityTrait, EnumIter, Order, PaginatorTrait, PrimaryKeyTrait, QueryOrder};
+use sea_orm::{
+    ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, ColumnTrait, Condition, DatabaseConnection,
+    DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, Order, PaginatorTrait, PrimaryKeyTrait,
+    QueryFilter, QueryOrder, QuerySelect, sea_query::Expr,
+};
 use time::Date;
 
 use crate::{

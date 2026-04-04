@@ -1,10 +1,24 @@
 use time::{Date, Duration};
 
-use crate::kinds::repeat::Repeat;
-use crate::models::todo::Todo;
-use crate::utils::date::today;
+use crate::{kinds::repeat::Repeat, utils::date::today};
 
-pub fn seed_todos(count: usize) -> Vec<Todo> {
+pub struct SeedTodo {
+    pub text: String,
+    pub due_date: Option<Date>,
+    pub repeat: Option<Repeat>,
+}
+
+impl SeedTodo {
+    fn new(text: &str, due_date: Option<Date>, repeat: Option<Repeat>) -> SeedTodo {
+        SeedTodo {
+            text: text.to_string(),
+            due_date,
+            repeat,
+        }
+    }
+}
+
+pub fn seed_todos(count: usize) -> Vec<SeedTodo> {
     let base = today();
     let projects = [
         "Inbox",
@@ -31,63 +45,50 @@ pub fn seed_todos(count: usize) -> Vec<Todo> {
         "practice rust",
     ];
 
-    let mut todos = Vec::new();
+    let mut todos: Vec<SeedTodo> = (0..count)
+        .map(|i| {
+            let text = format!(
+                "{} {} {}",
+                projects[i % projects.len()],
+                i + 1,
+                actions[(i * 7) % actions.len()]
+            );
 
-    for i in 0..count {
-        let text = format!(
-            "{} {} {}",
-            projects[i % projects.len()],
-            i + 1,
-            actions[(i * 7) % actions.len()]
-        );
+            let due_date = match i % 6 {
+                0 => Some(base - Duration::days((i % 9 + 1) as i64)),
+                1 => Some(base),
+                2 | 3 => Some(base + Duration::days((i % 14 + 1) as i64)),
+                4 => Some(base + Duration::days((i % 45 + 15) as i64)),
+                _ => None,
+            };
 
-        let due_date = match i % 6 {
-            0 => Some(base - Duration::days((i % 9 + 1) as i64)),
-            1 => Some(base),
-            2 | 3 => Some(base + Duration::days((i % 14 + 1) as i64)),
-            4 => Some(base + Duration::days((i % 45 + 15) as i64)),
-            _ => None,
-        };
+            let repeat = match i % 10 {
+                0 => Some(Repeat::Daily),
+                1 => Some(Repeat::WeeklySameDay),
+                2 => Some(Repeat::WeekdaysMonFri),
+                3 => Some(Repeat::MonthlyOnDay),
+                _ => None,
+            };
 
-        let repeat = match i % 10 {
-            0 => Some(Repeat::Daily),
-            1 => Some(Repeat::WeeklySameDay),
-            2 => Some(Repeat::WeekdaysMonFri),
-            3 => Some(Repeat::MonthlyOnDay),
-            _ => None,
-        };
-
-        let mut todo = Todo::new(text, due_date, repeat, None);
-        if i % 8 == 0 {
-            todo.done = true;
-        }
-        todos.push(todo);
-    }
+            SeedTodo { text, due_date, repeat }
+        })
+        .collect();
 
     todos.extend(focused_examples(base));
     todos
 }
 
-fn focused_examples(base: Date) -> Vec<Todo> {
+fn focused_examples(base: Date) -> Vec<SeedTodo> {
     vec![
-        make("Today: pay electricity bill", Some(base), None, false),
-        make("Today: call mom", Some(base), Some(Repeat::WeeklySameDay), false),
-        make("Overdue: renew passport", Some(base - Duration::days(2)), None, false),
-        make("Upcoming: draft Q2 plan", Some(base + Duration::days(3)), None, false),
-        make(
+        SeedTodo::new("Today: pay electricity bill", Some(base), None),
+        SeedTodo::new("Today: call mom", Some(base), Some(Repeat::WeeklySameDay)),
+        SeedTodo::new("Overdue: renew passport", Some(base - Duration::days(2)), None),
+        SeedTodo::new("Upcoming: draft Q2 plan", Some(base + Duration::days(3)), None),
+        SeedTodo::new(
             "Upcoming: yearly health check",
             Some(base + Duration::days(30)),
             Some(Repeat::YearlyOnDay),
-            false,
         ),
-        make("No date: reorganize bookshelf", None, None, false),
-        make("Done today: clear inbox", Some(base), None, true),
-        make("Done no date: migrate notes", None, None, true),
+        SeedTodo::new("No date: reorganize bookshelf", None, None),
     ]
-}
-
-fn make(text: &str, due_date: Option<Date>, repeat: Option<Repeat>, done: bool) -> Todo {
-    let mut todo = Todo::new(text.to_string(), due_date, repeat, None);
-    todo.done = done;
-    todo
 }
