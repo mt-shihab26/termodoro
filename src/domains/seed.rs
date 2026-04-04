@@ -7,11 +7,28 @@ use crate::{kinds::repeat::Repeat, models::todo::Todo, utils::date::today};
 pub fn seed_todos(count: usize, db: &DatabaseConnection) -> usize {
     let base = today();
     let projects = [
-        "Inbox", "Home", "Health", "Study", "Reading", "Work", "Finance", "Errands", "Writing", "Deep Work",
+        "Inbox",
+        "Home",
+        "Health",
+        "Study",
+        "Reading",
+        "Work",
+        "Finance",
+        "Errands",
+        "Writing",
+        "Deep Work",
     ];
     let actions = [
-        "review notes", "clean desk", "send update", "write summary", "fix bug",
-        "call dentist", "plan sprint", "buy groceries", "archive receipts", "practice rust",
+        "review notes",
+        "clean desk",
+        "send update",
+        "write summary",
+        "fix bug",
+        "call dentist",
+        "plan sprint",
+        "buy groceries",
+        "archive receipts",
+        "practice rust",
     ];
 
     let mut inserted = 0usize;
@@ -68,9 +85,24 @@ pub fn seed_todos(count: usize, db: &DatabaseConnection) -> usize {
 fn seed_focused(base: Date, db: &DatabaseConnection) -> usize {
     let items = [
         Todo::new("Today: pay electricity bill".to_string(), Some(base), None, None),
-        Todo::new("Today: call mom".to_string(), Some(base), Some(Repeat::WeeklySameDay), None),
-        Todo::new("Overdue: renew passport".to_string(), Some(base - Duration::days(2)), None, None),
-        Todo::new("Upcoming: draft Q2 plan".to_string(), Some(base + Duration::days(3)), None, None),
+        Todo::new(
+            "Today: call mom".to_string(),
+            Some(base),
+            Some(Repeat::WeeklySameDay),
+            None,
+        ),
+        Todo::new(
+            "Overdue: renew passport".to_string(),
+            Some(base - Duration::days(2)),
+            None,
+            None,
+        ),
+        Todo::new(
+            "Upcoming: draft Q2 plan".to_string(),
+            Some(base + Duration::days(3)),
+            None,
+            None,
+        ),
         Todo::new(
             "Upcoming: yearly health check".to_string(),
             Some(base + Duration::days(30)),
@@ -82,7 +114,9 @@ fn seed_focused(base: Date, db: &DatabaseConnection) -> usize {
 
     let mut count = 0;
     for mut t in items {
-        if t.save(db) { count += 1; }
+        if t.save(db) {
+            count += 1;
+        }
     }
     count
 }

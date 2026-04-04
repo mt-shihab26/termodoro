@@ -74,8 +74,7 @@ impl<'a> RepeatWidget<'a> {
 
 impl Widget for &RepeatWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let [list_area, hint_area] =
-            Layout::vertical([Constraint::Fill(1), Constraint::Length(3)]).areas(area);
+        let [list_area, hint_area] = Layout::vertical([Constraint::Fill(1), Constraint::Length(3)]).areas(area);
 
         let options = std::iter::once("None").chain(Repeat::ALL.iter().map(|r| r.label()));
 

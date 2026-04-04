@@ -18,7 +18,7 @@ impl Cmd for Seed {
     fn run(self: Box<Self>) -> Result<()> {
         db::reset()?;
         let db = db::connect()?;
-        let inserted = seed_todos(100, &db);
+        let inserted = seed_todos(200, &db);
         println!("inserted {inserted} todos");
         Ok(())
     }

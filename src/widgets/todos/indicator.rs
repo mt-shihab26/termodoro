@@ -12,7 +12,10 @@ pub struct IndicatorProps {
 
 impl IndicatorProps {
     pub fn new(show_more_above: bool, show_more_below: bool) -> Self {
-        Self { show_more_above, show_more_below }
+        Self {
+            show_more_above,
+            show_more_below,
+        }
     }
 }
 

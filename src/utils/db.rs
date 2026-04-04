@@ -29,8 +29,7 @@ pub fn connect() -> Result<DatabaseConnection> {
         let url = format!("sqlite://{}?mode=rwc", path.to_str().unwrap());
 
         let mut opts = ConnectOptions::new(url);
-        opts.sqlx_logging(true)
-            .sqlx_logging_level(log::LevelFilter::Info);
+        opts.sqlx_logging(true).sqlx_logging_level(log::LevelFilter::Info);
 
         let db = Database::connect(opts).await.map_err(io_err)?;
 

@@ -30,11 +30,9 @@ impl Widget for &TabsWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let tab_titles: Vec<&str> = Page::ALL.iter().map(|p| p.label()).collect();
         let tabs_width: u16 =
-            Page::ALL.iter().map(|p| p.label().len() as u16 + 2).sum::<u16>()
-                + (Page::ALL.len() as u16 - 1) * 3;
+            Page::ALL.iter().map(|p| p.label().len() as u16 + 2).sum::<u16>() + (Page::ALL.len() as u16 - 1) * 3;
 
-        let [area, _] =
-            Layout::horizontal([Constraint::Length(tabs_width), Constraint::Fill(1)]).areas(area);
+        let [area, _] = Layout::horizontal([Constraint::Length(tabs_width), Constraint::Fill(1)]).areas(area);
 
         Tabs::new(tab_titles)
             .select(self.props.page.index())
