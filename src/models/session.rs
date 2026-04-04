@@ -10,7 +10,7 @@ use crate::{
     kinds::phase::Phase,
     log_error,
     utils::{
-        date::{format_date, format_datetime, now_utc, parse_datetime, today},
+        date::{format_date, format_datetime, now, parse_datetime, today},
         db::rt,
     },
 };
@@ -43,22 +43,22 @@ pub struct Session {
     pub phase: Phase,
     /// Duration of the session in seconds.
     pub duration_secs: u32,
-    /// UTC timestamp of when the session started, `None` if not yet started.
+    /// Local timestamp of when the session started, `None` if not yet started.
     pub started_at: OffsetDateTime,
-    /// UTC timestamp of when the session ended, `None` if not yet completed.
+    /// Local timestamp of when the session ended, `None` if not yet completed.
     pub ended_at: OffsetDateTime,
     /// Associated todo id, if any.
     pub todo_id: Option<i32>,
-    /// UTC datetime when the record was created.
+    /// Local datetime when the record was created.
     pub created_at: OffsetDateTime,
-    /// UTC datetime when the record was last updated.
+    /// Local datetime when the record was last updated.
     pub updated_at: OffsetDateTime,
 }
 
 impl Session {
     /// Creates a new completed session for the given phase and duration.
     pub fn new(phase: Phase, duration_millis: u32, started_at: OffsetDateTime, todo_id: Option<i32>) -> Self {
-        let now = now_utc();
+        let now = now();
 
         Self {
             id: None,
@@ -149,7 +149,7 @@ impl Session {
 
     /// Converts this session into a SeaORM active model for insert or update.
     fn to_model(&self) -> ActiveModel {
-        let now = now_utc();
+        let now = now();
 
         match self.id {
             Some(id) => ActiveModel {
@@ -178,7 +178,7 @@ impl Session {
 
 impl From<Model> for Session {
     fn from(m: Model) -> Self {
-        let now = now_utc();
+        let now = now();
 
         Self {
             id: Some(m.id),

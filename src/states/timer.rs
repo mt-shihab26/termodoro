@@ -11,7 +11,7 @@ use crate::{
     config::timer::TimerConfig,
     kinds::phase::Phase,
     models::session::Session,
-    utils::{date::now_utc, notify::notify, store::Store},
+    utils::{date::now, notify::notify, store::Store},
 };
 
 /// Runtime state for the pomodoro timer, owned by the timer worker thread.
@@ -125,7 +125,7 @@ impl TimerState {
             self.is_running = false;
         } else {
             if self.phase_started_at.is_none() {
-                self.phase_started_at = Some(now_utc());
+                self.phase_started_at = Some(now());
             }
             self.started_at = Some(Instant::now());
             self.is_running = true;

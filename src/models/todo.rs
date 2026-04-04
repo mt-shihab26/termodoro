@@ -11,7 +11,7 @@ use crate::{
     kinds::{page::Page, repeat::Repeat},
     log_error, log_warn,
     utils::{
-        date::{format_date, format_datetime, now_utc, parse_date, parse_datetime, today},
+        date::{format_date, format_datetime, now, parse_date, parse_datetime, today},
         db::rt,
     },
 };
@@ -31,16 +31,16 @@ pub struct Todo {
     pub repeat: Option<Repeat>,
     /// Id of the todo this was spawned from, if it is a repeated occurrence.
     pub parent_id: Option<i32>,
-    /// UTC datetime when the todo was created.
+    /// Local datetime when the todo was created.
     pub created_at: OffsetDateTime,
-    /// UTC datetime when the todo was last updated.
+    /// Local datetime when the todo was last updated.
     pub updated_at: OffsetDateTime,
 }
 
 impl Todo {
     /// Creates an unsaved in-memory Todo with default values.
     pub fn new(text: String, due_date: Option<Date>, repeat: Option<Repeat>, parent_id: Option<i32>) -> Self {
-        let now = now_utc();
+        let now = now();
 
         Self {
             id: None,
@@ -243,7 +243,7 @@ impl Todo {
     fn to_model(&self) -> ActiveModel {
         let due_date = self.due_date.map(format_date);
         let repeat = self.repeat.as_ref().map(|r| r.to_db_str().to_string());
-        let now = format_datetime(now_utc());
+        let now = format_datetime(now());
         match self.id {
             Some(id) => ActiveModel {
                 id: Set(id),
@@ -278,8 +278,8 @@ impl From<Model> for Todo {
             due_date: m.due_date.as_deref().and_then(parse_date),
             repeat: m.repeat.as_deref().and_then(Repeat::from_db_str),
             parent_id: m.parent_id,
-            created_at: parse_datetime(&m.created_at).unwrap_or_else(now_utc),
-            updated_at: parse_datetime(&m.updated_at).unwrap_or_else(now_utc),
+            created_at: parse_datetime(&m.created_at).unwrap_or_else(now),
+            updated_at: parse_datetime(&m.updated_at).unwrap_or_else(now),
         }
     }
 }
