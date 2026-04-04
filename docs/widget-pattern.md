@@ -47,7 +47,6 @@ Optionally exposes a `handle()` method that processes input and returns an `Acti
 ```rust
 pub struct MyState {
     props: MyProps,  // private
-    cursor: usize,              // private tracking fields
 }
 
 impl MyState {
@@ -55,7 +54,7 @@ impl MyState {
         Self { props }
     }
 
-    pub fn props(&self) -> MyProps<'_> {
+    pub fn props(&self) -> &MyProps {
         &self.props
     }
 

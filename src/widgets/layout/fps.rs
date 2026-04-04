@@ -8,10 +8,10 @@ pub struct FpsProps {
 }
 
 impl FpsProps {
-    pub fn new(per_second: f64, per_lifetime: u64) -> Self {
+    pub fn new() -> Self {
         Self {
-            per_second,
-            per_lifetime,
+            per_second: 0.0,
+            per_lifetime: 0,
         }
     }
 }
@@ -25,7 +25,7 @@ pub struct FpsState {
 impl FpsState {
     pub fn new() -> Self {
         Self {
-            props: FpsProps::new(0.0, 0),
+            props: FpsProps::new(),
             frame_count_per_second: 0,
             interval_start: Instant::now() - Duration::from_secs(1),
         }

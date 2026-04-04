@@ -1,9 +1,7 @@
 use ratatui::{
-    buffer::Buffer,
     crossterm::event::{KeyCode, KeyEvent},
-    layout::Rect,
-    style::{Color, Style, Stylize},
-    widgets::{Block, Clear, List, ListItem, Paragraph, Widget},
+    prelude::{Buffer, Color, Rect, Style, Stylize, Widget},
+    widgets::{Block, Clear, List, ListItem, Paragraph},
 };
 
 use crate::{
