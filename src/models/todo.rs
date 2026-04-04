@@ -59,13 +59,17 @@ impl Todo {
         }
     }
 
-    pub fn add(db: &DatabaseConnection, text: String, due_date: Option<Date>, repeat: Option<Repeat>) -> bool {
+    pub fn add(db: &DatabaseConnection, text: String, due_date: Option<Date>, repeat: Option<Repeat>) -> Option<Todo> {
         let mut todo = Todo::new(text, due_date, repeat, None);
-        todo.save(db)
+        if todo.save(db) { Some(todo) } else { None }
     }
 
-    fn add_next(&self, db: &DatabaseConnection, repeat: &Repeat, date: Date) -> Option<Todo> {
-        let next_date = repeat.next_date(date);
+    pub fn add_next(&self, db: &DatabaseConnection) -> Option<Todo> {
+        let (Some(repeat), Some(due_date)) = (self.repeat.as_ref(), self.due_date) else {
+            return None;
+        };
+
+        let next_date = repeat.next_date(due_date);
         let next_date_str = format_date(next_date);
         let parent_id = self.id;
 
@@ -152,11 +156,7 @@ impl Todo {
             return None;
         }
 
-        let (Some(repeat), Some(date)) = (self.repeat.as_ref(), self.due_date) else {
-            return None;
-        };
-
-        self.add_next(db, repeat, date)
+        self.add_next(db)
     }
 
     pub fn delete(&self, db: &DatabaseConnection) -> bool {

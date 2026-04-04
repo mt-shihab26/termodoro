@@ -230,7 +230,7 @@ impl TodosState {
     }
 
     pub fn add(&mut self, page: Page, text: String, due_date: Option<Date>, repeat: Option<Repeat>) {
-        if Todo::add(&self.db, text, due_date, repeat) {
+        if Todo::add(&self.db, text, due_date, repeat).is_some() {
             self.refresh(page);
         }
     }
