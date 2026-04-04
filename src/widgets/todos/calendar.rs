@@ -18,22 +18,10 @@ use crate::{
 
 use super::repeat::{RepeatAction, RepeatWidget};
 
-pub struct CalendarProps<'a> {
+pub struct CalendarProps {
     date: Date,
-    repeat: Option<&'a Repeat>,
+    repeat: Option<Repeat>,
     repeat_picker: Option<RepeatWidget>,
-}
-
-impl<'a> CalendarProps<'a> {
-    pub fn new(date: Option<Date>, repeat: Option<&'a Repeat>) -> Self {
-        let d = date.unwrap_or_else(today);
-
-        Self {
-            repeat: repeat,
-            date: d,
-            repeat_picker: None,
-        }
-    }
 }
 
 pub enum CalendarAction {
@@ -42,13 +30,19 @@ pub enum CalendarAction {
     None,
 }
 
-pub struct CalendarState<'a> {
-    props: CalendarProps<'a>,
+pub struct CalendarState {
+    props: CalendarProps,
 }
 
-impl<'a> CalendarState<'a> {
-    pub fn new(props: CalendarProps<'a>) -> Self {
-        Self { props }
+impl CalendarState {
+    pub fn new(date: Option<Date>, repeat: Option<&Repeat>) -> Self {
+        Self {
+            props: CalendarProps {
+                date: date.unwrap_or_else(today),
+                repeat: repeat.map(Repeat::of),
+                repeat_picker: None,
+            },
+        }
     }
 
     pub fn props(&self) -> &CalendarProps {
@@ -60,7 +54,7 @@ impl<'a> CalendarState<'a> {
             match repeat_picker.handle(key) {
                 RepeatAction::Confirm(repeat) => {
                     self.props.repeat_picker = None;
-                    self.props.repeat = repeat.as_ref();
+                    self.props.repeat = repeat;
                     return CalendarAction::Confirm {
                         date: Some(self.props.date),
                         repeat: self.props.repeat.as_ref().map(Repeat::of),
@@ -107,12 +101,18 @@ impl<'a> CalendarState<'a> {
     }
 }
 
+impl Widget for &CalendarState {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        CalendarWidget::new(self.props()).render(area, buf);
+    }
+}
+
 pub struct CalendarWidget<'a> {
-    props: &'a CalendarProps<'a>,
+    props: &'a CalendarProps,
 }
 
 impl<'a> CalendarWidget<'a> {
-    pub fn new(props: &'a CalendarProps<'a>) -> Self {
+    pub fn new(props: &'a CalendarProps) -> Self {
         Self { props }
     }
 }
