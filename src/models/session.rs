@@ -1,3 +1,5 @@
+//! Session model: persisted pomodoro sessions and per-todo session statistics.
+
 use std::io;
 
 use sea_orm::{
@@ -177,6 +179,7 @@ impl Session {
 }
 
 impl From<Model> for Session {
+    /// Converts a SeaORM session row into the domain `Session` type.
     fn from(m: Model) -> Self {
         let now = now();
 
@@ -193,6 +196,7 @@ impl From<Model> for Session {
     }
 }
 
+/// SeaORM row model for the `sessions` table.
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "sessions")]
 pub struct Model {
@@ -207,11 +211,13 @@ pub struct Model {
     updated_at: String,
 }
 
+/// SeaORM relation set for `sessions`.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Normalizes database and ORM errors into `io::Error` for shared logging paths.
 fn io_err(e: impl std::fmt::Display) -> io::Error {
     io::Error::new(io::ErrorKind::Other, e.to_string())
 }

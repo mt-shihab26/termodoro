@@ -1,3 +1,5 @@
+//! Todo model: persisted tasks, repeat handling, and page-filtered queries.
+
 use std::io;
 
 use sea_orm::{
@@ -270,6 +272,7 @@ impl Todo {
 }
 
 impl From<Model> for Todo {
+    /// Converts a SeaORM todo row into the domain `Todo` type.
     fn from(m: Model) -> Self {
         Self {
             id: Some(m.id),
@@ -284,6 +287,7 @@ impl From<Model> for Todo {
     }
 }
 
+/// SeaORM row model for the `todos` table.
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "todos")]
 pub struct Model {
@@ -298,11 +302,13 @@ pub struct Model {
     updated_at: String,
 }
 
+/// SeaORM relation set for `todos`.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Normalizes database and ORM errors into `io::Error` for shared logging paths.
 fn io_err(e: impl std::fmt::Display) -> io::Error {
     io::Error::new(io::ErrorKind::Other, e.to_string())
 }
