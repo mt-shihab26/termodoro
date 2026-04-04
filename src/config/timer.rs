@@ -1,17 +1,24 @@
+//! Pomodoro timer configuration values and normalized accessors.
+
 use serde::{Deserialize, Serialize};
 
+/// Default work duration in minutes.
 fn default_work_duration() -> u32 {
     25
 }
+/// Default short break duration in minutes.
 fn default_break_duration() -> u32 {
     5
 }
+/// Default long break duration in minutes.
 fn default_long_break_duration() -> u32 {
     15
 }
+/// Default number of work sessions before a long break.
 fn default_long_break_interval() -> u32 {
     4
 }
+/// Default target number of work sessions per day.
 fn default_daily_session_goal() -> u32 {
     16
 }
@@ -40,6 +47,7 @@ pub struct TimerConfig {
 }
 
 impl Default for TimerConfig {
+    /// Returns the built-in default timer configuration.
     fn default() -> Self {
         Self {
             show_millis: false,

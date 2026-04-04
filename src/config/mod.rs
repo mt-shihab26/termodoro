@@ -1,4 +1,8 @@
+//! Application configuration loading and typed config sections.
+
+/// Database connection configuration loaded from `config.toml`.
 pub mod db;
+/// Pomodoro timer configuration loaded from `config.toml`.
 pub mod timer;
 
 use std::{
@@ -28,6 +32,7 @@ pub struct Config {
 }
 
 impl Default for Config {
+    /// Returns the built-in default configuration values.
     fn default() -> Self {
         Self {
             show_fps: false,

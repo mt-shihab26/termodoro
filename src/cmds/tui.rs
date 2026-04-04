@@ -1,3 +1,5 @@
+//! TUI command for launching the interactive terminal application.
+
 use std::io::Result;
 
 use sea_orm::DatabaseConnection;
@@ -22,10 +24,12 @@ impl Tui {
 }
 
 impl Cmd for Tui {
+    /// Returns the CLI aliases and description for the TUI command.
     fn help() -> &'static [&'static str] {
         &["(default)", "tui", "Launch the terminal UI"]
     }
 
+    /// Starts the terminal application event loop.
     fn run(self: Box<Self>) -> Result<()> {
         let mut app = App::new(self.config, self.db);
 

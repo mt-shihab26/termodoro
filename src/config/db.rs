@@ -1,3 +1,5 @@
+//! Database configuration values loaded from the user config file.
+
 use serde::{Deserialize, Serialize};
 
 /// Database connection configuration, loaded from the user's config file.
@@ -12,6 +14,7 @@ pub struct DBConfig {
 }
 
 impl Default for DBConfig {
+    /// Returns an empty database configuration.
     fn default() -> Self {
         Self {
             url: String::new(),
