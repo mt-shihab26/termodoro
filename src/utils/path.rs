@@ -1,9 +1,4 @@
-use std::env;
-use std::path::PathBuf;
-
-fn local() -> PathBuf {
-    PathBuf::from("./local")
-}
+use std::{env, path::PathBuf};
 
 /// Returns the path to the config file.
 pub fn config_toml_path() -> PathBuf {
@@ -62,4 +57,9 @@ fn config_path() -> PathBuf {
 /// Returns the user's home directory
 fn home() -> String {
     env::var("HOME").unwrap_or_else(|_| ".".to_string())
+}
+
+/// Returns the local dev directory used for all files in debug builds.
+fn local() -> PathBuf {
+    PathBuf::from("./local")
 }

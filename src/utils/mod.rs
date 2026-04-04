@@ -1,3 +1,5 @@
+//! Shared utilities: date helpers, database access, logging, notifications, paths, and persistent store.
+
 pub mod date;
 pub mod db;
 pub mod log;
