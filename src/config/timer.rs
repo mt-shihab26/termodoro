@@ -1,5 +1,3 @@
-//! Pomodoro timer configuration values and normalized accessors.
-
 use serde::{Deserialize, Serialize};
 
 /// Default work duration in minutes.

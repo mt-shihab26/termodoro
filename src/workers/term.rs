@@ -1,5 +1,3 @@
-//! Terminal input worker that reads crossterm key and resize events and forwards them to the main loop.
-
 use std::{sync::mpsc::Sender, thread};
 
 use ratatui::crossterm::event::{self, Event as TerminalEvent, KeyEventKind};

@@ -1,5 +1,3 @@
-//! Timer tab state: pomodoro phase tracking, persistence, and session recording.
-
 use std::{
     sync::{Arc, Mutex},
     time::Instant,

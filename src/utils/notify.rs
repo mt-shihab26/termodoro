@@ -1,5 +1,3 @@
-//! Desktop notification helper that prepends the app name to every summary.
-
 use notify_rust::Notification;
 
 use crate::log_error;

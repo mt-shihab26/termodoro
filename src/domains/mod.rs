@@ -1,4 +1,4 @@
-//! Top-level application domains for runtime execution and data seeding.
-
+/// Database seeding helpers for generating sample todos.
 pub mod seed;
+/// Terminal UI application domain and main event loop.
 pub mod tui;

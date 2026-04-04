@@ -1,5 +1,3 @@
-//! Single todo row widget with checkbox, repeat icon, stats, and due date.
-
 use ratatui::{
     prelude::{Buffer, Color, Modifier, Rect, Style, Widget},
     widgets::Paragraph,

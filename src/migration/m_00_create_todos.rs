@@ -1,5 +1,3 @@
-//! Migration that creates the `todos` table used to persist task records.
-
 use sea_orm_migration::prelude::*;
 
 /// SeaORM migration for creating and dropping the `todos` table.

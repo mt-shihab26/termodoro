@@ -1,5 +1,3 @@
-//! Todos tab state: pagination, selection, cache management, and CRUD operations.
-
 use std::{
     cell::{Cell, Ref, RefCell, RefMut},
     sync::{Arc, Mutex},

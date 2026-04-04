@@ -1,6 +1,6 @@
-//! Tab trait and implementations for the timer and todos screens.
-
+/// Timer tab implementation for pomodoro controls and rendering.
 pub mod timer;
+/// Todos tab implementation for task list navigation and editing.
 pub mod todos;
 
 use std::io::Result;

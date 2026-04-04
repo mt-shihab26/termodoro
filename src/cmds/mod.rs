@@ -1,8 +1,10 @@
-//! CLI command modules and the shared command trait.
-
+/// Help command that prints usage for all available commands.
 pub mod help;
+/// Development command that resets and seeds the database.
 pub mod seed;
+/// Command that launches the terminal UI.
 pub mod tui;
+/// Command that prints the application version.
 pub mod version;
 
 use std::io::Result;

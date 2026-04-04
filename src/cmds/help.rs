@@ -1,5 +1,3 @@
-//! Help command for printing usage and the list of available commands.
-
 use std::io::Result;
 
 use super::Cmd;

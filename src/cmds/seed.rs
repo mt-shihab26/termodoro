@@ -1,5 +1,3 @@
-//! Seed command for resetting the database and inserting development data.
-
 use std::io::Result;
 
 use crate::{cmds::Cmd, domains::seed::seed_todos, utils::db};

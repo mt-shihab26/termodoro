@@ -1,5 +1,3 @@
-//! Phase label widget that displays the current timer phase (Focus, Break, etc.).
-
 use ratatui::{
     prelude::{Buffer, Color, Rect, Stylize, Widget},
     widgets::Paragraph,

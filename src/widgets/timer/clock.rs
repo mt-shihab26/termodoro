@@ -1,5 +1,3 @@
-//! Big-text countdown clock widget that renders mm:ss or mm:ss.cs.
-
 use ratatui::prelude::{Buffer, Color, Rect, Style, Widget};
 use tui_big_text::{BigText, PixelSize};
 

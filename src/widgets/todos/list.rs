@@ -1,5 +1,3 @@
-//! Scrollable todo list widget supporting flat and date-grouped layouts.
-
 use ratatui::{
     prelude::{Buffer, Color, Line, Modifier, Rect, Span, Style, Widget},
     widgets::Paragraph,

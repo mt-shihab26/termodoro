@@ -1,5 +1,3 @@
-//! Timer tab: renders the pomodoro clock and handles all timer key events.
-
 use std::{
     io::Result,
     sync::{

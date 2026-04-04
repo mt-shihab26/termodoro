@@ -1,5 +1,3 @@
-//! Todos tab: renders the task list and handles add, edit, delete, and navigation events.
-
 use std::{
     cell::Ref,
     io::Result,

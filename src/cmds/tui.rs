@@ -1,5 +1,3 @@
-//! TUI command for launching the interactive terminal application.
-
 use std::io::Result;
 
 use sea_orm::DatabaseConnection;

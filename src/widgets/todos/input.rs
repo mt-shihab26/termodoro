@@ -1,5 +1,3 @@
-//! Text input widget for adding and editing todos, with an inline calendar overlay.
-
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyModifiers},
     prelude::{Buffer, Color, Constraint, Frame, Layout, Rect, Style, Stylize, Widget},

@@ -1,5 +1,3 @@
-//! Todos tab interaction modes that drive input handling and rendering.
-
 /// Current UI mode for the todos tab.
 #[derive(Clone, Copy)]
 pub enum TodosMode {

@@ -1,5 +1,3 @@
-//! Session model: persisted pomodoro sessions and per-todo session statistics.
-
 use std::io;
 
 use sea_orm::{

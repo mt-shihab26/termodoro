@@ -1,5 +1,3 @@
-//! Todo model: persisted tasks, repeat handling, and page-filtered queries.
-
 use std::io;
 
 use sea_orm::{

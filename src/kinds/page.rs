@@ -1,5 +1,3 @@
-//! Todo page identifiers used for filtering and navigating list views.
-
 /// A view within the todos tab.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Page {

@@ -1,5 +1,3 @@
-//! Event types sent through the application event loop.
-
 use ratatui::crossterm::event::KeyEvent;
 
 /// Application event variants produced by input handling and background work.

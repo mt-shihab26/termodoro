@@ -1,5 +1,3 @@
-//! Database seeding utilities for populating todo data during development.
-
 use sea_orm::DatabaseConnection;
 use time::{Date, Duration};
 

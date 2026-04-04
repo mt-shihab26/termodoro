@@ -1,5 +1,3 @@
-//! Horizontal page-tab navigation bar for switching between todo views.
-
 use ratatui::{
     prelude::{Buffer, Color, Constraint, Layout, Rect, Style, Widget},
     widgets::Tabs,

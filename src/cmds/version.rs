@@ -1,5 +1,3 @@
-//! Version command for printing the current application version.
-
 use std::io::Result;
 
 use crate::cmds::Cmd;

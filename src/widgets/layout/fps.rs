@@ -1,5 +1,3 @@
-//! FPS counter widget that tracks and displays frames-per-second in the corner.
-
 use std::time::{Duration, Instant};
 
 use ratatui::prelude::{Alignment, Buffer, Color, Line, Rect, Span, Stylize, Widget};

@@ -1,6 +1,6 @@
-//! Application configuration loading and typed config sections.
-
+/// Database connection configuration loaded from `config.toml`.
 pub mod db;
+/// Pomodoro timer configuration loaded from `config.toml`.
 pub mod timer;
 
 use std::{

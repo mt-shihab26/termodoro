@@ -1,5 +1,3 @@
-//! Migration that creates the `sessions` table used to persist pomodoro history.
-
 use sea_orm_migration::prelude::*;
 
 /// SeaORM migration for creating and dropping the `sessions` table.

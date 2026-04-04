@@ -1,5 +1,3 @@
-//! Database configuration values loaded from the user config file.
-
 use serde::{Deserialize, Serialize};
 
 /// Database connection configuration, loaded from the user's config file.

@@ -1,5 +1,3 @@
-//! Running/paused status label widget for the timer tab.
-
 use ratatui::{
     prelude::{Buffer, Color, Rect, Stylize, Widget},
     widgets::Paragraph,
