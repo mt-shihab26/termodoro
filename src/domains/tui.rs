@@ -1,3 +1,5 @@
+//! Terminal application domain: tab orchestration, rendering, and event handling.
+
 use std::{
     io::{Error, ErrorKind, Result},
     sync::{

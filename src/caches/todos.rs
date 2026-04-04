@@ -1,3 +1,5 @@
+//! Todos-tab cache for paginated todo items and total counts.
+
 use std::cell::{Ref, RefCell};
 
 use sea_orm::DatabaseConnection;
@@ -6,6 +8,7 @@ use crate::{kinds::page::Page, models::todo::Todo};
 
 /// Per-page cache for the paginated todo list and its total count.
 pub struct TodosCache {
+    /// Database connection used to refresh cached pages and counts.
     db: DatabaseConnection,
     /// Cached page of todos, `None` until first fetch.
     items: RefCell<Option<Vec<Todo>>>,

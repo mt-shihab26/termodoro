@@ -1,3 +1,5 @@
+//! Database seeding utilities for populating todo data during development.
+
 use sea_orm::DatabaseConnection;
 use time::{Date, Duration};
 
@@ -83,6 +85,7 @@ pub fn seed_todos(count: usize, db: &DatabaseConnection) -> usize {
     inserted
 }
 
+/// Inserts a small curated set of todos for common demo states.
 fn seed_focused(base: Date, db: &DatabaseConnection) -> usize {
     let items = [
         Todo::new("Today: pay electricity bill".to_string(), Some(base), None, None),

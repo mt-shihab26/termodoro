@@ -1,3 +1,5 @@
+//! Timer-tab cache for today's todos and aggregated session statistics.
+
 use sea_orm::DatabaseConnection;
 
 use crate::{
@@ -10,6 +12,7 @@ use crate::{
 
 /// Per-tab cache for today's todos and their session stats.
 pub struct TimerCache {
+    /// Database connection used to refresh cache entries on demand.
     db: DatabaseConnection,
     /// Cached list of today's todos, `None` until first fetch.
     todos: Option<Vec<Todo>>,
