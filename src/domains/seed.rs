@@ -62,6 +62,7 @@ pub fn seed_todos(count: usize, db: &DatabaseConnection) -> usize {
 
         let is_repeating = repeat.is_some();
         let mut todo = Todo::new(text, due_date, repeat, None);
+        todo.done = i % 3 != 0;
         if todo.save(db) {
             inserted += 1;
             if is_repeating {
