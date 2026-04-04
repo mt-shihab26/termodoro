@@ -46,17 +46,17 @@ Optionally exposes a `handle()` method that processes input and returns an `Acti
 
 ```rust
 pub struct MyState {
-    items: Vec<(i32, String)>,  // private
+    props: MyProps,  // private
     cursor: usize,              // private tracking fields
 }
 
 impl MyState {
-    pub fn new(items: Vec<(i32, String)>) -> Self {
-        Self { items, cursor: 0 }
+    pub fn new(props: MyProps) -> Self {
+        Self { props }
     }
 
     pub fn props(&self) -> MyProps<'_> {
-        MyProps { items: &self.items, cursor: self.cursor }
+        &self.props
     }
 
     // optional — only add if the widget handles input
