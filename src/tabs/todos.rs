@@ -14,7 +14,11 @@ use crate::kinds::{page::Page, todos_mode::TodosMode};
 use crate::utils::date::today;
 use crate::widgets::todos::hint::{HintProps, HintWidget};
 use crate::widgets::todos::input::{InputAction, InputProps, InputState, InputWidget};
-use crate::widgets::todos::{list::ListWidget, status::StatusWidget, tabs::TabsWidget};
+use crate::widgets::todos::{
+    list::{ListProps, ListWidget},
+    status::{StatusProps, StatusWidget},
+    tabs::{TabsProps, TabsWidget},
+};
 use crate::{models::todo::Todo, states::todos::TodosState};
 
 use super::Tab;
@@ -163,27 +167,24 @@ impl Tab for TodosTab {
         let to = self.state.to(items.len());
         let page = self.state.page();
 
-        frame.render_widget(&StatusWidget::new(total, from, to, page), area);
+        frame.render_widget(&StatusWidget::new(&StatusProps::new(total, from, to, page)), area);
 
         frame.render_widget(
-            &TabsWidget {
-                page: self.page,
-                color: self.color(),
-            },
+            &TabsWidget::new(&TabsProps::new(self.page, self.color())),
             tabs_area,
         );
 
         frame.render_stateful_widget(
-            &ListWidget {
-                items: &items,
-                stats: &stats,
-                offset: self.state.offset(),
-                page: self.page,
-                selected: self.state.selected(),
-                color: self.color(),
-                show_more_above: self.state.show_more_above(),
-                show_more_below: self.state.show_more_below(items.len()),
-            },
+            &ListWidget::new(&ListProps::new(
+                &items,
+                &stats,
+                self.state.offset(),
+                self.page,
+                self.state.selected(),
+                self.color(),
+                self.state.show_more_above(),
+                self.state.show_more_below(items.len()),
+            )),
             list_area,
             &mut self.state.list_state_mut(),
         );

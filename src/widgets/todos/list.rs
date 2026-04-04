@@ -12,63 +12,75 @@ use crate::{
 
 use super::{
     indicator::{IndicatorProps, IndicatorWidget},
-    item::ItemWidget,
+    item::{ItemProps, ItemWidget},
 };
 
-pub struct ListWidget<'a> {
-    pub items: &'a [Todo],
-    pub stats: &'a [Option<Stat>],
-    pub offset: usize,
-    pub page: Page,
-    pub selected: usize,
-    pub color: Color,
-    pub show_more_above: bool,
-    pub show_more_below: bool,
+pub struct ListProps<'a> {
+    items: &'a [Todo],
+    stats: &'a [Option<Stat>],
+    offset: usize,
+    page: Page,
+    selected: usize,
+    color: Color,
+    show_more_above: bool,
+    show_more_below: bool,
 }
 
-impl StatefulWidget for &ListWidget<'_> {
-    type State = ListState;
-
-    fn render(self, area: Rect, buf: &mut Buffer, state: &mut ListState) {
-        let horizontal_padding = 2;
-        let top_padding = 1;
-        let bottom_padding = 1;
-        let padded_area = Rect {
-            x: area.x + horizontal_padding,
-            y: area.y + top_padding,
-            width: area.width.saturating_sub(horizontal_padding * 2),
-            height: area.height.saturating_sub(top_padding + bottom_padding),
-        };
-
-        if padded_area.height == 0 {
-            return;
+impl<'a> ListProps<'a> {
+    pub fn new(
+        items: &'a [Todo],
+        stats: &'a [Option<Stat>],
+        offset: usize,
+        page: Page,
+        selected: usize,
+        color: Color,
+        show_more_above: bool,
+        show_more_below: bool,
+    ) -> Self {
+        Self {
+            items,
+            stats,
+            offset,
+            page,
+            selected,
+            color,
+            show_more_above,
+            show_more_below,
         }
+    }
+}
 
-        match self.page {
-            Page::Index => self.render_index(padded_area, buf),
-            Page::Due | Page::Today | Page::History => self.render_flat(padded_area, buf, state),
-        }
+pub struct ListWidget<'a> {
+    props: &'a ListProps<'a>,
+}
 
-        IndicatorWidget::new(&IndicatorProps::new(self.show_more_above, self.show_more_below)).render(area, buf);
+impl<'a> ListWidget<'a> {
+    pub fn new(props: &'a ListProps<'a>) -> Self {
+        Self { props }
     }
 }
 
 impl ListWidget<'_> {
     fn render_flat(&self, area: Rect, buf: &mut Buffer, state: &mut ListState) {
-        let dimmed = matches!(self.page, Page::History);
-        let serial_width = (self.offset + self.items.len()).max(1).to_string().len();
+        let dimmed = matches!(self.props.page, Page::History);
+        let serial_width = (self.props.offset + self.props.items.len()).max(1).to_string().len();
         let items = self
+            .props
             .items
             .iter()
             .enumerate()
             .map(|(index, todo)| {
-                let stats = self.stats.get(index).cloned().flatten();
-                ItemWidget { todo, stats }.list_item(dimmed, self.offset + index + 1, serial_width)
+                let stats = self.props.stats.get(index).cloned().flatten();
+                ItemWidget::new(&ItemProps::new(todo, stats)).list_item(
+                    dimmed,
+                    self.props.offset + index + 1,
+                    serial_width,
+                )
             })
             .collect::<Vec<_>>();
 
         let list = List::new(items)
-            .highlight_style(Style::default().fg(self.color).bold())
+            .highlight_style(Style::default().fg(self.props.color).bold())
             .highlight_symbol(">");
 
         StatefulWidget::render(list, area, buf, state);
@@ -93,28 +105,59 @@ impl ListWidget<'_> {
         let mut rows = Vec::new();
         let mut selected_row = 0;
         let mut last_date = None;
-        let serial_width = (self.offset + self.items.len()).max(1).to_string().len();
+        let serial_width = (self.props.offset + self.props.items.len()).max(1).to_string().len();
 
-        for (index, todo) in self.items.iter().enumerate() {
+        for (index, todo) in self.props.items.iter().enumerate() {
             if todo.due_date != last_date {
-                rows.push(section_line(todo.due_date, width, self.color));
+                rows.push(section_line(todo.due_date, width, self.props.color));
                 last_date = todo.due_date;
             }
 
-            if index == self.selected {
+            if index == self.props.selected {
                 selected_row = rows.len();
             }
 
-            let stats = self.stats.get(index).cloned().flatten();
-            rows.push(ItemWidget { todo, stats }.line(
-                index == self.selected,
-                self.color,
-                self.offset + index + 1,
+            let stats = self.props.stats.get(index).cloned().flatten();
+            rows.push(ItemWidget::new(&ItemProps::new(todo, stats)).line(
+                index == self.props.selected,
+                self.props.color,
+                self.props.offset + index + 1,
                 serial_width,
             ));
         }
 
         (rows, selected_row)
+    }
+}
+
+impl StatefulWidget for &ListWidget<'_> {
+    type State = ListState;
+
+    fn render(self, area: Rect, buf: &mut Buffer, state: &mut ListState) {
+        let horizontal_padding = 2;
+        let top_padding = 1;
+        let bottom_padding = 1;
+        let padded_area = Rect {
+            x: area.x + horizontal_padding,
+            y: area.y + top_padding,
+            width: area.width.saturating_sub(horizontal_padding * 2),
+            height: area.height.saturating_sub(top_padding + bottom_padding),
+        };
+
+        if padded_area.height == 0 {
+            return;
+        }
+
+        match self.props.page {
+            Page::Index => self.render_index(padded_area, buf),
+            Page::Due | Page::Today | Page::History => self.render_flat(padded_area, buf, state),
+        }
+
+        IndicatorWidget::new(&IndicatorProps::new(
+            self.props.show_more_above,
+            self.props.show_more_below,
+        ))
+        .render(area, buf);
     }
 }
 

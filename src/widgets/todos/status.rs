@@ -3,28 +3,38 @@ use ratatui::{
     widgets::Paragraph,
 };
 
-pub struct StatusWidget {
-    pub total: usize,
-    pub from: usize,
-    pub to: usize,
-    pub page: usize,
+pub struct StatusProps {
+    total: usize,
+    from: usize,
+    to: usize,
+    page: usize,
 }
 
-impl StatusWidget {
+impl StatusProps {
     pub fn new(total: usize, from: usize, to: usize, page: usize) -> Self {
         Self { total, from, to, page }
     }
 }
 
-impl Widget for &StatusWidget {
+pub struct StatusWidget<'a> {
+    props: &'a StatusProps,
+}
+
+impl<'a> StatusWidget<'a> {
+    pub fn new(props: &'a StatusProps) -> Self {
+        Self { props }
+    }
+}
+
+impl Widget for &StatusWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         Paragraph::new(format!(
             "Page {} • Range {}-{} • Showing {}/{} items",
-            self.page,
-            self.from,
-            self.to,
-            self.to - self.from,
-            self.total,
+            self.props.page,
+            self.props.from,
+            self.props.to,
+            self.props.to - self.props.from,
+            self.props.total,
         ))
         .fg(Color::DarkGray)
         .right_aligned()

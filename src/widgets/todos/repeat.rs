@@ -12,33 +12,46 @@ pub enum RepeatAction {
     None,
 }
 
-pub struct RepeatWidget {
+pub struct RepeatProps {
     cursor: usize,
 }
 
-impl RepeatWidget {
+impl RepeatProps {
     pub fn new(selected: Option<&Repeat>) -> Self {
         let cursor = selected
             .and_then(|r| Repeat::ALL.iter().position(|v| v == r).map(|i| i + 1))
             .unwrap_or(0);
-
         Self { cursor }
+    }
+}
+
+pub struct RepeatState {
+    props: RepeatProps,
+}
+
+impl RepeatState {
+    pub fn new(props: RepeatProps) -> Self {
+        Self { props }
+    }
+
+    pub fn props(&self) -> &RepeatProps {
+        &self.props
     }
 
     pub fn handle(&mut self, key: KeyEvent) -> RepeatAction {
         let max = Repeat::ALL.len();
         match key.code {
             KeyCode::Char('j') | KeyCode::Down => {
-                self.cursor = (self.cursor + 1).min(max);
+                self.props.cursor = (self.props.cursor + 1).min(max);
             }
             KeyCode::Char('k') | KeyCode::Up => {
-                self.cursor = self.cursor.saturating_sub(1);
+                self.props.cursor = self.props.cursor.saturating_sub(1);
             }
             KeyCode::Enter => {
-                let repeat = if self.cursor == 0 {
+                let repeat = if self.props.cursor == 0 {
                     None
                 } else {
-                    Repeat::ALL.get(self.cursor - 1).map(Repeat::of)
+                    Repeat::ALL.get(self.props.cursor - 1).map(Repeat::of)
                 };
                 return RepeatAction::Confirm(repeat);
             }
@@ -49,16 +62,27 @@ impl RepeatWidget {
     }
 }
 
-impl Widget for &RepeatWidget {
+pub struct RepeatWidget<'a> {
+    props: &'a RepeatProps,
+}
+
+impl<'a> RepeatWidget<'a> {
+    pub fn new(props: &'a RepeatProps) -> Self {
+        Self { props }
+    }
+}
+
+impl Widget for &RepeatWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let [list_area, hint_area] = Layout::vertical([Constraint::Fill(1), Constraint::Length(3)]).areas(area);
+        let [list_area, hint_area] =
+            Layout::vertical([Constraint::Fill(1), Constraint::Length(3)]).areas(area);
 
         let options = std::iter::once("None").chain(Repeat::ALL.iter().map(|r| r.label()));
 
         let items: Vec<ListItem> = options
             .enumerate()
             .map(|(i, label)| {
-                let active = i == self.cursor;
+                let active = i == self.props.cursor;
                 let style = if active {
                     Style::default().fg(COLOR).bold()
                 } else {
