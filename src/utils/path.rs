@@ -1,3 +1,5 @@
+//! Platform-aware path helpers for config, database, log, and store files.
+
 use std::{env, path::PathBuf};
 
 /// Returns the path to the config file.
