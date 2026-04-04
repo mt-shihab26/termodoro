@@ -1,3 +1,5 @@
+//! Timer tab state: pomodoro phase tracking, persistence, and session recording.
+
 use std::{
     sync::{Arc, Mutex},
     time::Instant,
@@ -106,9 +108,6 @@ impl TimerState {
         self.store.set_timer_todo_id(self.todo_id).save();
     }
 
-    // fn persist(&self) {
-    // }
-
     /// Returns the current remaining time derived from the wall clock.
     pub fn current_millis(&self) -> u32 {
         match self.started_at {
@@ -184,6 +183,7 @@ impl TimerState {
         self.store.set_timer_cycle_phase(self.cycle_phase.clone()).save();
     }
 
+    /// Sends a desktop notification describing the completed phase.
     fn phase_notifiction(&self) {
         let todo_name = self
             .todo_id
@@ -200,6 +200,7 @@ impl TimerState {
         notify(&summary, &body);
     }
 
+    /// Chooses whether the next rest phase is a short break or a long break.
     fn which_break_phase(&self, sessions_count: u32) -> Phase {
         if sessions_count % self.config.long_break_interval() == 0 {
             Phase::LongBreak
