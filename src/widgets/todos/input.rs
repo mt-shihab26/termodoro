@@ -11,7 +11,7 @@ use time::Date;
 use crate::kinds::repeat::Repeat;
 use crate::tabs::todos::COLOR;
 
-use super::calendar::{CalendarAction, CalendarState};
+use super::calendar::{CalendarAction, CalendarProps, CalendarState, CalendarWidget};
 
 pub enum InputAction {
     Confirm {
@@ -73,7 +73,7 @@ impl InputWidget {
             }
             KeyCode::Esc => return InputAction::Escape,
             KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                self.calendar_widget = Some(CalendarState::new(self.date, self.repeat.as_ref()));
+                self.calendar_widget = Some(CalendarState::new(CalendarProps::new(self.date, self.repeat.as_ref())));
             }
             _ => {
                 self.textarea.input(key);
@@ -84,7 +84,7 @@ impl InputWidget {
 
     pub fn render_calendar(&self, frame: &mut Frame, area: Rect) {
         if let Some(cal) = &self.calendar_widget {
-            frame.render_widget(cal, area);
+            frame.render_widget(&CalendarWidget::new(cal.props()), area);
         }
     }
 }
