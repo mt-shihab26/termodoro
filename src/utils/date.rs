@@ -1,8 +1,24 @@
-use time::{Date, Month, OffsetDateTime};
+use time::{Date, Month, OffsetDateTime, PrimitiveDateTime, Time};
+
+/// Returns the current UTC time
+pub fn now_utc() -> OffsetDateTime {
+    OffsetDateTime::now_utc()
+}
 
 /// Returns the current UTC time formatted as an ISO 8601 string (e.g. `"2024-01-15T10:30:00Z"`).
-pub fn now_utc_str() -> String {
-    let dt = OffsetDateTime::now_utc();
+// fn now_utc_str() -> String {
+//     format_datetime(now_utc())
+// }
+
+/// Returns today's local date, falling back to UTC if the local offset is unavailable.
+pub fn today() -> Date {
+    OffsetDateTime::now_local()
+        .unwrap_or_else(|_| OffsetDateTime::now_utc())
+        .date()
+}
+
+/// Formats an `OffsetDateTime` as `"YYYY-MM-DDTHH:MM:SSZ"`.
+pub fn format_datetime(dt: OffsetDateTime) -> String {
     format!(
         "{}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
         dt.year(),
@@ -14,11 +30,19 @@ pub fn now_utc_str() -> String {
     )
 }
 
-/// Returns today's local date, falling back to UTC if the local offset is unavailable.
-pub fn today() -> Date {
-    OffsetDateTime::now_local()
-        .unwrap_or_else(|_| OffsetDateTime::now_utc())
-        .date()
+/// Parses an ISO 8601 datetime string (`"YYYY-MM-DDTHH:MM:SSZ"` or `"YYYY-MM-DD"`) into an
+/// `OffsetDateTime`. Date-only strings are interpreted as midnight UTC.
+pub fn parse_datetime(s: &str) -> Option<OffsetDateTime> {
+    if s.len() >= 19 {
+        let date = parse_date(&s[..10])?;
+        let hour: u8 = s[11..13].parse().ok()?;
+        let minute: u8 = s[14..16].parse().ok()?;
+        let second: u8 = s[17..19].parse().ok()?;
+        let time = Time::from_hms(hour, minute, second).ok()?;
+        Some(PrimitiveDateTime::new(date, time).assume_utc())
+    } else {
+        Some(PrimitiveDateTime::new(parse_date(s)?, Time::MIDNIGHT).assume_utc())
+    }
 }
 
 /// Shifts a date by `delta` months, clamping the day to the last valid day of the target month.
@@ -40,9 +64,11 @@ pub fn format_date(date: Date) -> String {
     format!("{}-{:02}-{:02}", date.year(), date.month() as u8, date.day())
 }
 
-/// Parses a `"YYYY-MM-DD"` string into a `Date`, returning `None` if the input is invalid.
+/// Parses a `"YYYY-MM-DD"` or `"YYYY-MM-DDTHH:MM:SSZ"` string into a `Date`. Only the first 10
+/// characters (the date portion) are used.
 pub fn parse_date(s: &str) -> Option<Date> {
-    let mut parts = s.splitn(3, '-');
+    let date_part = &s[..s.len().min(10)];
+    let mut parts = date_part.splitn(3, '-');
     let year: i32 = parts.next()?.parse().ok()?;
     let month: u8 = parts.next()?.parse().ok()?;
     let day: u8 = parts.next()?.parse().ok()?;

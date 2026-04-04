@@ -5,13 +5,13 @@ use sea_orm::{
     DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, Order, PaginatorTrait, PrimaryKeyTrait,
     QueryFilter, QueryOrder, QuerySelect, sea_query::Expr,
 };
-use time::{Date, Duration};
+use time::{Date, Duration, OffsetDateTime};
 
 use crate::{
     kinds::{page::Page, repeat::Repeat},
     log_error, log_warn,
     utils::{
-        date::{format_date, parse_date, today},
+        date::{format_date, format_datetime, now_utc, parse_date, parse_datetime, today},
         db::rt,
     },
 };
@@ -31,16 +31,16 @@ pub struct Todo {
     pub repeat: Option<Repeat>,
     /// Id of the todo this was spawned from, if it is a repeated occurrence.
     pub parent_id: Option<i32>,
-    /// Date when the todo was created.
-    pub created_at: Date,
-    /// Date when the todo was last updated.
-    pub updated_at: Date,
+    /// UTC datetime when the todo was created.
+    pub created_at: OffsetDateTime,
+    /// UTC datetime when the todo was last updated.
+    pub updated_at: OffsetDateTime,
 }
 
 impl Todo {
     /// Creates an unsaved in-memory Todo with default values.
     pub fn new(text: String, due_date: Option<Date>, repeat: Option<Repeat>, parent_id: Option<i32>) -> Self {
-        let now = today();
+        let now = now_utc();
 
         Self {
             id: None,
@@ -49,7 +49,7 @@ impl Todo {
             due_date,
             repeat,
             parent_id,
-            created_at: now.clone(),
+            created_at: now,
             updated_at: now,
         }
     }
@@ -138,13 +138,11 @@ impl Todo {
     /// `done` filters by completion state: `false` for Index, `true` for History.
     pub fn count_before_today(db: &DatabaseConnection, done: bool) -> usize {
         let today = format_date(today());
-        let query = Entity::find()
-            .filter(Column::Done.eq(done))
-            .filter(
-                Condition::any()
-                    .add(Column::DueDate.lt(today))
-                    .add(Column::DueDate.is_null()),
-            );
+        let query = Entity::find().filter(Column::Done.eq(done)).filter(
+            Condition::any()
+                .add(Expr::cust_with_values("substr(due_date, 1, 10) < ?", [&today]))
+                .add(Column::DueDate.is_null()),
+        );
         match rt().block_on(async { query.count(db).await.map_err(io_err) }) {
             Ok(count) => count as usize,
             Err(e) => {
@@ -162,21 +160,18 @@ impl Todo {
         match page {
             Page::Due => Entity::find()
                 .filter(Column::Done.eq(false))
-                .filter(Column::DueDate.lt(today))
+                .filter(Expr::cust_with_values("substr(due_date, 1, 10) < ?", [today.clone()]))
                 .order_by_desc(Column::DueDate)
                 .order_by_desc(Column::CreatedAt),
             Page::Today => Entity::find()
-                .filter(Column::DueDate.eq(today))
+                .filter(Expr::cust_with_values("substr(due_date, 1, 10) = ?", [today.clone()]))
                 .order_by_desc(Column::CreatedAt),
             Page::Index => {
                 let null_key = format!("{}~", format_date(today_date - Duration::days(1)));
                 Entity::find()
                     .filter(Column::Done.eq(false))
                     .order_by(
-                        Expr::cust_with_values(
-                            "CASE WHEN due_date IS NULL THEN ? ELSE due_date END",
-                            [null_key],
-                        ),
+                        Expr::cust_with_values("CASE WHEN due_date IS NULL THEN ? ELSE due_date END", [null_key]),
                         Order::Asc,
                     )
                     .order_by_asc(Column::CreatedAt)
@@ -186,10 +181,7 @@ impl Todo {
                 Entity::find()
                     .filter(Column::Done.eq(true))
                     .order_by(
-                        Expr::cust_with_values(
-                            "CASE WHEN due_date IS NULL THEN ? ELSE due_date END",
-                            [null_key],
-                        ),
+                        Expr::cust_with_values("CASE WHEN due_date IS NULL THEN ? ELSE due_date END", [null_key]),
                         Order::Asc,
                     )
                     .order_by_asc(Column::CreatedAt)
@@ -251,7 +243,7 @@ impl Todo {
     fn to_model(&self) -> ActiveModel {
         let due_date = self.due_date.map(format_date);
         let repeat = self.repeat.as_ref().map(|r| r.to_db_str().to_string());
-        let today = format_date(today());
+        let now = format_datetime(now_utc());
         match self.id {
             Some(id) => ActiveModel {
                 id: Set(id),
@@ -260,8 +252,8 @@ impl Todo {
                 due_date: Set(due_date),
                 repeat: Set(repeat),
                 parent_id: Set(self.parent_id),
-                created_at: Set(format_date(self.created_at)),
-                updated_at: Set(today),
+                created_at: Set(format_datetime(self.created_at)),
+                updated_at: Set(now),
             },
             None => ActiveModel {
                 text: Set(self.text.clone()),
@@ -269,8 +261,8 @@ impl Todo {
                 due_date: Set(due_date),
                 repeat: Set(repeat),
                 parent_id: Set(self.parent_id),
-                created_at: Set(today.clone()),
-                updated_at: Set(today),
+                created_at: Set(now.clone()),
+                updated_at: Set(now),
                 ..Default::default()
             },
         }
@@ -286,8 +278,8 @@ impl From<Model> for Todo {
             due_date: m.due_date.as_deref().and_then(parse_date),
             repeat: m.repeat.as_deref().and_then(Repeat::from_db_str),
             parent_id: m.parent_id,
-            created_at: parse_date(&m.created_at).unwrap_or_else(today),
-            updated_at: parse_date(&m.updated_at).unwrap_or_else(today),
+            created_at: parse_datetime(&m.created_at).unwrap_or_else(now_utc),
+            updated_at: parse_datetime(&m.updated_at).unwrap_or_else(now_utc),
         }
     }
 }

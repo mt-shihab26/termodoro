@@ -4,13 +4,14 @@ use std::{
 };
 
 use sea_orm::DatabaseConnection;
+use time::OffsetDateTime;
 
 use crate::{
     caches::timer::TimerCache,
     config::timer::TimerConfig,
     kinds::phase::Phase,
     models::session::Session,
-    utils::{date::now_utc_str, notify::notify, store::Store},
+    utils::{date::now_utc, notify::notify, store::Store},
 };
 
 /// Runtime state for the pomodoro timer, owned by the timer worker thread.
@@ -28,7 +29,7 @@ pub struct TimerState {
     /// Wall-clock anchor set when the timer was last resumed, `None` when paused.
     started_at: Option<Instant>,
     /// UTC timestamp of when the current phase was first started, `None` before first resume.
-    phase_started_at: Option<String>,
+    phase_started_at: Option<OffsetDateTime>,
     /// Current phase of the pomodoro cycle (work, break, or long break).
     cycle_phase: Phase,
     /// The currently selected todo id, used to associate sessions.
@@ -124,7 +125,7 @@ impl TimerState {
             self.is_running = false;
         } else {
             if self.phase_started_at.is_none() {
-                self.phase_started_at = Some(now_utc_str());
+                self.phase_started_at = Some(now_utc());
             }
             self.started_at = Some(Instant::now());
             self.is_running = true;
