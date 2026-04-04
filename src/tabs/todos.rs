@@ -1,3 +1,5 @@
+//! Todos tab: renders the task list and handles add, edit, delete, and navigation events.
+
 use std::{
     cell::Ref,
     io::Result,
@@ -29,16 +31,23 @@ use crate::{
 
 use super::Tab;
 
+/// Accent color for the todos tab UI elements.
 pub const COLOR: Color = Color::Green;
 
+/// The todos tab, managing the task list UI and input state.
 pub struct TodosTab {
+    /// Currently active page view (Due, Today, Index, History).
     page: Page,
+    /// Current UI mode controlling input handling.
     mode: TodosMode,
+    /// Underlying todos state holding data and pagination.
     state: TodosState,
+    /// Active text input state when adding or editing a todo.
     input_state: Option<InputState>,
 }
 
 impl TodosTab {
+    /// Creates a new `TodosTab` connected to the given database and timer cache.
     pub fn new(db: DatabaseConnection, timer_cache: Arc<Mutex<TimerCache>>) -> Self {
         Self {
             page: Page::Today,
@@ -48,19 +57,23 @@ impl TodosTab {
         }
     }
 
+    /// Returns the visible todo items for the current page.
     fn items(&self) -> Ref<'_, [Todo]> {
         self.state.items(self.page)
     }
 
+    /// Returns the total number of todos on the current page.
     fn count(&self) -> usize {
         self.state.count(self.page)
     }
 
+    /// Switches to the given page and resets its pagination state.
     fn set_page(&mut self, page: Page) {
         self.page = page;
         self.state.reset_page(self.page);
     }
 
+    /// Discards the active input and returns to normal mode.
     fn cancel_input(&mut self) {
         self.input_state = None;
         self.mode = TodosMode::Normal;
@@ -68,14 +81,17 @@ impl TodosTab {
 }
 
 impl Tab for TodosTab {
+    /// Returns the tab label shown in the tab bar.
     fn name(&self) -> &str {
         "Todos [^t]"
     }
 
+    /// Returns the accent color for the todos tab.
     fn color(&self) -> Color {
         COLOR
     }
 
+    /// Handles a key event, delegating to input or normal-mode handlers.
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
         let pending_g = self.state.begin_input();
 
@@ -138,6 +154,7 @@ impl Tab for TodosTab {
         Ok(())
     }
 
+    /// Renders the todos tab including the list, tabs bar, hint, and input overlay.
     fn render(&self, frame: &mut Frame, area: Rect) {
         let buf = frame.buffer_mut();
 
