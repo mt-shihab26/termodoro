@@ -8,6 +8,21 @@ Every UI component follows a three-part split: **Action(optional) → Props → 
 
 ## The four parts
 
+
+### Action *(optional)*
+
+An enum returned by `State::handle()` to communicate events back to the caller.
+Only add this when the widget must signal something upward (selection, cancellation, etc.).
+If the widget is purely visual with no input handling, skip `Action` and `handle` entirely.
+
+```rust
+pub enum MyAction {
+    Select((i32, String)),
+    Cancel,
+    None,
+}
+```
+
 ### Props
 
 Holds the data a widget needs to render one frame.
@@ -27,20 +42,6 @@ impl MyProps {
 }
 ```
 
-
-### Action *(optional)*
-
-An enum returned by `State::handle()` to communicate events back to the caller.
-Only add this when the widget must signal something upward (selection, cancellation, etc.).
-If the widget is purely visual with no input handling, skip `Action` and `handle` entirely.
-
-```rust
-pub enum MyAction {
-    Select((i32, String)),
-    Cancel,
-    None,
-}
-```
 
 
 ### State *(optional)*
