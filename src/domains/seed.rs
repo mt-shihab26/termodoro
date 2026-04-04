@@ -57,7 +57,7 @@ pub fn seed_todos(count: usize) -> Vec<Todo> {
             _ => None,
         };
 
-        let mut todo = Todo::new(text, due_date, repeat);
+        let mut todo = Todo::new(text, due_date, repeat, None);
         if i % 8 == 0 {
             todo.done = true;
         }
@@ -87,7 +87,7 @@ fn focused_examples(base: Date) -> Vec<Todo> {
 }
 
 fn make(text: &str, due_date: Option<Date>, repeat: Option<Repeat>, done: bool) -> Todo {
-    let mut todo = Todo::new(text.to_string(), due_date, repeat);
+    let mut todo = Todo::new(text.to_string(), due_date, repeat, None);
     todo.done = done;
     todo
 }

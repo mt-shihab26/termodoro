@@ -10,6 +10,7 @@ enum Todos {
     Done,
     DueDate,
     Repeat,
+    ParentId,
     CreatedAt,
     UpdatedAt,
 }
@@ -39,6 +40,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Todos::Done).boolean().not_null().default(false))
                     .col(ColumnDef::new(Todos::DueDate).string().null())
                     .col(ColumnDef::new(Todos::Repeat).string().null())
+                    .col(ColumnDef::new(Todos::ParentId).integer().null())
                     .col(ColumnDef::new(Todos::CreatedAt).string().not_null().default(""))
                     .col(ColumnDef::new(Todos::UpdatedAt).string().not_null().default(""))
                     .to_owned(),

@@ -39,13 +39,6 @@ impl TodosState {
         }
     }
 
-    pub fn begin_input(&mut self) -> bool {
-        let pending_g = self.pending_g;
-        self.pending_g = false;
-        self.direction = None;
-        pending_g
-    }
-
     pub fn selected(&self) -> usize {
         self.selected
     }
@@ -56,6 +49,13 @@ impl TodosState {
 
     pub fn list_state_mut(&self) -> RefMut<'_, ListState> {
         self.list_state.borrow_mut()
+    }
+
+    pub fn begin_input(&mut self) -> bool {
+        let pending_g = self.pending_g;
+        self.pending_g = false;
+        self.direction = None;
+        pending_g
     }
 
     pub fn from(&self, total: usize) -> usize {
@@ -230,8 +230,7 @@ impl TodosState {
     }
 
     pub fn add(&mut self, page: Page, text: String, due_date: Option<Date>, repeat: Option<Repeat>) {
-        let mut todo = Todo::new(text, due_date, repeat);
-        if todo.save(&self.db) {
+        if Todo::add(&self.db, text, due_date, repeat) {
             self.refresh(page);
         }
     }

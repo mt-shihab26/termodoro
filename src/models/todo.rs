@@ -1,9 +1,9 @@
 use std::io;
 
+use sea_orm::sea_query::Expr;
 use sea_orm::{ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, DatabaseConnection, QuerySelect};
 use sea_orm::{ColumnTrait, Condition, DeriveEntityModel, DerivePrimaryKey, QueryFilter};
 use sea_orm::{DeriveRelation, EntityTrait, EnumIter, Order, PaginatorTrait, PrimaryKeyTrait, QueryOrder};
-use sea_orm::sea_query::Expr;
 use time::Date;
 
 use crate::{
@@ -24,6 +24,7 @@ pub struct Model {
     done: bool,
     due_date: Option<String>,
     repeat: Option<String>,
+    parent_id: Option<i32>,
     created_at: String,
     updated_at: String,
 }
@@ -38,12 +39,13 @@ pub struct Todo {
     pub done: bool,
     pub due_date: Option<Date>,
     pub repeat: Option<Repeat>,
+    pub parent_id: Option<i32>,
     pub created_at: String,
     pub updated_at: String,
 }
 
 impl Todo {
-    pub fn new(text: String, due_date: Option<Date>, repeat: Option<Repeat>) -> Self {
+    fn new(text: String, due_date: Option<Date>, repeat: Option<Repeat>, parent_id: Option<i32>) -> Self {
         let now = now_utc_str();
         Self {
             id: None,
@@ -51,8 +53,53 @@ impl Todo {
             done: false,
             due_date,
             repeat,
+            parent_id,
             created_at: now.clone(),
             updated_at: now,
+        }
+    }
+
+    pub fn add(db: &DatabaseConnection, text: String, due_date: Option<Date>, repeat: Option<Repeat>) -> bool {
+        let mut todo = Todo::new(text, due_date, repeat, None);
+        todo.save(db)
+    }
+
+    fn add_next(&self, db: &DatabaseConnection, repeat: &Repeat, date: Date) -> Option<Todo> {
+        let next_date = repeat.next_date(date);
+        let next_date_str = format_date(next_date);
+        let parent_id = self.id;
+
+        let already_exists = rt().block_on(async {
+            Entity::find()
+                .filter(Column::ParentId.eq(parent_id))
+                .filter(Column::DueDate.eq(&next_date_str))
+                .count(db)
+                .await
+                .unwrap_or(0)
+        }) > 0;
+
+        if already_exists {
+            return None;
+        }
+
+        let mut next = Todo::new(self.text.clone(), Some(next_date), Some(Repeat::of(repeat)), parent_id);
+
+        if next.save(db) { Some(next) } else { None }
+    }
+
+    fn save(&mut self, db: &DatabaseConnection) -> bool {
+        match self.id {
+            Some(_) => self.update(db),
+            None => match rt().block_on(async { self.to_model().insert(db).await.map_err(io_err) }) {
+                Ok(model) => {
+                    *self = model.into();
+                    true
+                }
+                Err(e) => {
+                    log_error!("failed to insert todo: {e}");
+                    false
+                }
+            },
         }
     }
 
@@ -109,13 +156,7 @@ impl Todo {
             return None;
         };
 
-        let mut next = Todo::new(
-            self.text.clone(),
-            Some(repeat.next_date(date)),
-            Some(Repeat::of(repeat)),
-        );
-
-        if next.save(db) { Some(next) } else { None }
+        self.add_next(db, repeat, date)
     }
 
     pub fn delete(&self, db: &DatabaseConnection) -> bool {
@@ -130,22 +171,6 @@ impl Todo {
                 log_error!("failed to delete todo: {e}");
                 false
             }
-        }
-    }
-
-    pub fn save(&mut self, db: &DatabaseConnection) -> bool {
-        match self.id {
-            Some(_) => self.update(db),
-            None => match rt().block_on(async { self.to_model().insert(db).await.map_err(io_err) }) {
-                Ok(model) => {
-                    *self = model.into();
-                    true
-                }
-                Err(e) => {
-                    log_error!("failed to insert todo: {e}");
-                    false
-                }
-            },
         }
     }
 
@@ -173,6 +198,7 @@ impl Todo {
                 done: Set(self.done),
                 due_date: Set(due_date),
                 repeat: Set(repeat),
+                parent_id: Set(self.parent_id),
                 created_at: Set(self.created_at.clone()),
                 updated_at: Set(now),
             },
@@ -181,6 +207,7 @@ impl Todo {
                 done: Set(self.done),
                 due_date: Set(due_date),
                 repeat: Set(repeat),
+                parent_id: Set(self.parent_id),
                 created_at: Set(now.clone()),
                 updated_at: Set(now),
                 ..Default::default()
@@ -197,6 +224,7 @@ impl From<Model> for Todo {
             done: m.done,
             due_date: m.due_date.as_deref().and_then(parse_date),
             repeat: m.repeat.as_deref().and_then(Repeat::from_db_str),
+            parent_id: m.parent_id,
             created_at: m.created_at,
             updated_at: m.updated_at,
         }
