@@ -208,8 +208,13 @@ impl TodosState {
         self.selected = 0;
         self.clear_caches();
 
-        if page == Page::Index {
-            let before = Todo::count_before_today(&self.db);
+        let done = match page {
+            Page::Index => Some(false),
+            Page::History => Some(true),
+            _ => None,
+        };
+        if let Some(done) = done {
+            let before = Todo::count_before_today(&self.db, done);
             let page_size = self.page_size();
             self.offset = (before / page_size) * page_size;
             self.selected = before - self.offset;

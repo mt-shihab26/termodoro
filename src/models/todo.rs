@@ -134,18 +134,21 @@ impl Todo {
         }
     }
 
-    /// Counts items that appear before today in the Index sort order (past dates + no-date).
-    pub fn count_before_today(db: &DatabaseConnection) -> usize {
+    /// Counts items that appear before today in the timeline sort order (past dates + no-date).
+    /// `done` filters by completion state: `false` for Index, `true` for History.
+    pub fn count_before_today(db: &DatabaseConnection, done: bool) -> usize {
         let today = format_date(today());
-        let query = Entity::find().filter(
-            Condition::any()
-                .add(Column::DueDate.lt(today))
-                .add(Column::DueDate.is_null()),
-        );
+        let query = Entity::find()
+            .filter(Column::Done.eq(done))
+            .filter(
+                Condition::any()
+                    .add(Column::DueDate.lt(today))
+                    .add(Column::DueDate.is_null()),
+            );
         match rt().block_on(async { query.count(db).await.map_err(io_err) }) {
             Ok(count) => count as usize,
             Err(e) => {
-                log_error!("failed to count index items before today: {e}");
+                log_error!("failed to count timeline items before today: {e}");
                 0
             }
         }
@@ -168,6 +171,7 @@ impl Todo {
             Page::Index => {
                 let null_key = format!("{}~", format_date(today_date - Duration::days(1)));
                 Entity::find()
+                    .filter(Column::Done.eq(false))
                     .order_by(
                         Expr::cust_with_values(
                             "CASE WHEN due_date IS NULL THEN ? ELSE due_date END",
@@ -177,10 +181,19 @@ impl Todo {
                     )
                     .order_by_asc(Column::CreatedAt)
             }
-            Page::History => Entity::find()
-                .filter(Column::Done.eq(true))
-                .order_by_desc(Column::DueDate)
-                .order_by_desc(Column::Id),
+            Page::History => {
+                let null_key = format!("{}~", format_date(today_date - Duration::days(1)));
+                Entity::find()
+                    .filter(Column::Done.eq(true))
+                    .order_by(
+                        Expr::cust_with_values(
+                            "CASE WHEN due_date IS NULL THEN ? ELSE due_date END",
+                            [null_key],
+                        ),
+                        Order::Asc,
+                    )
+                    .order_by_asc(Column::CreatedAt)
+            }
         }
     }
 
