@@ -11,6 +11,18 @@ use crate::{kinds::repeat::Repeat, tabs::todos::COLOR};
 
 use super::calendar::{CalendarAction, CalendarProps, CalendarState, CalendarWidget};
 
+pub struct InputProps<'a> {
+    textarea: &'a TextArea<'static>,
+    date: Option<Date>,
+    repeat: Option<&'a Repeat>,
+}
+
+impl<'a> InputProps<'a> {
+    pub fn new(textarea: &'a TextArea<'static>, date: Option<Date>, repeat: Option<&'a Repeat>) -> Self {
+        Self { textarea, date, repeat }
+    }
+}
+
 pub enum InputAction {
     Confirm {
         text: String,
@@ -21,14 +33,14 @@ pub enum InputAction {
     None,
 }
 
-pub struct InputWidget {
+pub struct InputState {
     textarea: TextArea<'static>,
     date: Option<Date>,
     repeat: Option<Repeat>,
-    calendar_widget: Option<CalendarState>,
+    calendar_state: Option<CalendarState>,
 }
 
-impl InputWidget {
+impl InputState {
     pub fn new(text: Option<&str>, date: Option<Date>, repeat: Option<&Repeat>) -> Self {
         let mut textarea = TextArea::default();
         if let Some(t) = text {
@@ -40,19 +52,23 @@ impl InputWidget {
             textarea,
             date,
             repeat: repeat.map(Repeat::of),
-            calendar_widget: None,
+            calendar_state: None,
         }
     }
 
+    pub fn props(&self) -> InputProps<'_> {
+        InputProps::new(&self.textarea, self.date, self.repeat.as_ref())
+    }
+
     pub fn handle(&mut self, key: KeyEvent) -> InputAction {
-        if let Some(cal) = &mut self.calendar_widget {
+        if let Some(cal) = &mut self.calendar_state {
             match cal.handle(key) {
                 CalendarAction::Confirm { date, repeat } => {
                     self.date = date;
                     self.repeat = repeat;
-                    self.calendar_widget = None;
+                    self.calendar_state = None;
                 }
-                CalendarAction::Cancel => self.calendar_widget = None,
+                CalendarAction::Cancel => self.calendar_state = None,
                 CalendarAction::None => {}
             }
             return InputAction::None;
@@ -71,7 +87,7 @@ impl InputWidget {
             }
             KeyCode::Esc => return InputAction::Escape,
             KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                self.calendar_widget = Some(CalendarState::new(CalendarProps::new(self.date, self.repeat.as_ref())));
+                self.calendar_state = Some(CalendarState::new(CalendarProps::new(self.date, self.repeat.as_ref())));
             }
             _ => {
                 self.textarea.input(key);
@@ -81,21 +97,32 @@ impl InputWidget {
     }
 
     pub fn render_calendar(&self, frame: &mut Frame, area: Rect) {
-        if let Some(cal) = &self.calendar_widget {
+        if let Some(cal) = &self.calendar_state {
             frame.render_widget(&CalendarWidget::new(cal.props()), area);
         }
     }
 }
 
-impl Widget for &InputWidget {
+pub struct InputWidget<'a> {
+    props: &'a InputProps<'a>,
+}
+
+impl<'a> InputWidget<'a> {
+    pub fn new(props: &'a InputProps<'a>) -> Self {
+        Self { props }
+    }
+}
+
+impl Widget for &InputWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let date_area_width = self
+            .props
             .repeat
             .as_ref()
             .map(|r| (r.label().len() as u16 + 4).max(14))
             .unwrap_or(14);
 
-        let icon_width = if self.repeat.is_some() { 2 } else { 0 };
+        let icon_width = if self.props.repeat.is_some() { 2 } else { 0 };
         let [icon_area, text_area, date_area] = Layout::horizontal([
             Constraint::Length(icon_width),
             Constraint::Fill(1),
@@ -103,7 +130,7 @@ impl Widget for &InputWidget {
         ])
         .areas(area);
 
-        if self.repeat.is_some() {
+        if self.props.repeat.is_some() {
             let v_offset = icon_area.height / 2;
             let centered = Rect {
                 y: icon_area.y + v_offset,
@@ -117,9 +144,9 @@ impl Widget for &InputWidget {
                 .render(centered, buf);
         }
 
-        Widget::render(&self.textarea, text_area, buf);
+        Widget::render(self.props.textarea, text_area, buf);
 
-        let date_str = match self.date {
+        let date_str = match self.props.date {
             Some(d) => format!("{}", d),
             None => "no date".to_string(),
         };
@@ -127,7 +154,7 @@ impl Widget for &InputWidget {
         let mut block = Block::bordered()
             .title(Span::from(" ^d ").fg(Color::DarkGray).bold())
             .border_style(Style::default().fg(COLOR));
-        if let Some(ref repeat) = self.repeat {
+        if let Some(repeat) = self.props.repeat {
             block = block.title_bottom(Span::from(format!(" {} ", repeat.label())).fg(COLOR).bold());
         }
         let inner = block.inner(date_area);

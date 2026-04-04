@@ -13,7 +13,7 @@ use crate::caches::timer::TimerCache;
 use crate::kinds::{page::Page, todos_mode::TodosMode};
 use crate::utils::date::today;
 use crate::widgets::todos::hint::{HintProps, HintWidget};
-use crate::widgets::todos::input::{InputAction, InputWidget};
+use crate::widgets::todos::input::{InputAction, InputState, InputWidget};
 use crate::widgets::todos::{list::ListWidget, status::StatusWidget, tabs::TabsWidget};
 use crate::{models::todo::Todo, states::todos::TodosState};
 
@@ -25,7 +25,7 @@ pub struct TodosTab {
     page: Page,
     mode: TodosMode,
     state: TodosState,
-    input_widget: Option<InputWidget>,
+    input_state: Option<InputState>,
 }
 
 impl TodosTab {
@@ -34,7 +34,7 @@ impl TodosTab {
             page: Page::Today,
             mode: TodosMode::Normal,
             state: TodosState::new(db, timer_cache),
-            input_widget: None,
+            input_state: None,
         }
     }
 
@@ -52,7 +52,7 @@ impl TodosTab {
     }
 
     fn cancel_input(&mut self) {
-        self.input_widget = None;
+        self.input_state = None;
         self.mode = TodosMode::Normal;
     }
 }
@@ -88,18 +88,18 @@ impl Tab for TodosTab {
                 KeyCode::Char('a') => {
                     self.mode = TodosMode::Adding;
                     let date = if self.page == Page::Today { Some(today()) } else { None };
-                    self.input_widget = Some(InputWidget::new(None, date, None));
+                    self.input_state = Some(InputState::new(None, date, None));
                 }
                 KeyCode::Char('e') => {
                     if let Some((text, due_date, repeat)) = self.state.edit_values(self.page) {
                         self.mode = TodosMode::Editing;
-                        self.input_widget = Some(InputWidget::new(Some(&text), due_date, repeat.as_ref()));
+                        self.input_state = Some(InputState::new(Some(&text), due_date, repeat.as_ref()));
                     }
                 }
                 _ => {}
             },
             TodosMode::Adding => {
-                if let Some(input_widget) = &mut self.input_widget {
+                if let Some(input_widget) = &mut self.input_state {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
                             self.state.add(self.page, text, date, repeat);
@@ -111,7 +111,7 @@ impl Tab for TodosTab {
                 }
             }
             TodosMode::Editing => {
-                if let Some(input_widget) = &mut self.input_widget {
+                if let Some(input_widget) = &mut self.input_state {
                     match input_widget.handle(key) {
                         InputAction::Confirm { text, date, repeat } => {
                             self.state.update(self.page, text, date, repeat);
@@ -191,9 +191,10 @@ impl Tab for TodosTab {
             .render(hint_area, frame.buffer_mut());
 
         if let Some(input_rect) = input_area {
-            if let Some(input_area_widget) = &self.input_widget {
-                frame.render_widget(input_area_widget, input_rect);
-                input_area_widget.render_calendar(frame, area);
+            if let Some(input_state) = &self.input_state {
+                let props = input_state.props();
+                frame.render_widget(&InputWidget::new(&props), input_rect);
+                input_state.render_calendar(frame, area);
             }
         }
     }
