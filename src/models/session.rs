@@ -83,6 +83,20 @@ impl Session {
         Self::new(phase, duration_millis, started_at, todo_id).save(db);
     }
 
+    /// Inserts or updates this session in the database.
+    fn save(&mut self, db: &DatabaseConnection) -> bool {
+        match rt().block_on(async { self.to_model().insert(db).await.map_err(io_err) }) {
+            Ok(model) => {
+                *self = model.into();
+                true
+            }
+            Err(e) => {
+                log_error!("failed to save session: {e}");
+                false
+            }
+        }
+    }
+
     /// Returns the number of completed work sessions started today.
     pub fn count_today(db: &DatabaseConnection) -> u32 {
         let prefix = format!("{}%", format_date(today()));
@@ -129,20 +143,6 @@ impl Session {
             Err(e) => {
                 log_error!("failed to list sessions for todo {todo_id}: {e}");
                 vec![]
-            }
-        }
-    }
-
-    /// Inserts or updates this session in the database.
-    fn save(&mut self, db: &DatabaseConnection) -> bool {
-        match rt().block_on(async { self.to_model().insert(db).await.map_err(io_err) }) {
-            Ok(model) => {
-                *self = model.into();
-                true
-            }
-            Err(e) => {
-                log_error!("failed to save session: {e}");
-                false
             }
         }
     }
