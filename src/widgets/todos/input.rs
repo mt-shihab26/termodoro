@@ -11,7 +11,7 @@ use time::Date;
 use crate::kinds::repeat::Repeat;
 use crate::tabs::todos::COLOR;
 
-use super::calendar::{CalendarAction, CalendarWidget};
+use super::calendar::{CalendarAction, CalendarState};
 
 pub enum InputAction {
     Confirm {
@@ -27,7 +27,7 @@ pub struct InputWidget {
     textarea: TextArea<'static>,
     date: Option<Date>,
     repeat: Option<Repeat>,
-    calendar_widget: Option<CalendarWidget>,
+    calendar_widget: Option<CalendarState>,
 }
 
 impl InputWidget {
@@ -73,7 +73,7 @@ impl InputWidget {
             }
             KeyCode::Esc => return InputAction::Escape,
             KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                self.calendar_widget = Some(CalendarWidget::new(self.date, self.repeat.as_ref()));
+                self.calendar_widget = Some(CalendarState::new(self.date, self.repeat.as_ref()));
             }
             _ => {
                 self.textarea.input(key);

@@ -1,16 +1,40 @@
-use ratatui::buffer::Buffer;
-use ratatui::crossterm::event::{KeyCode, KeyEvent};
-use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::style::{Color, Style, Stylize};
-use ratatui::widgets::calendar::{CalendarEventStore, Monthly};
-use ratatui::widgets::{Block, Borders, Clear, Paragraph, Widget};
+use ratatui::{
+    buffer::Buffer,
+    crossterm::event::{KeyCode, KeyEvent},
+    layout::{Constraint, Layout, Rect},
+    style::{Color, Style, Stylize},
+    widgets::{
+        Block, Borders, Clear, Paragraph, Widget,
+        calendar::{CalendarEventStore, Monthly},
+    },
+};
 use time::{Date, Duration};
 
-use crate::kinds::repeat::Repeat;
-use crate::tabs::todos::COLOR;
-use crate::utils::date::{shift_month, today};
+use crate::{
+    kinds::repeat::Repeat,
+    tabs::todos::COLOR,
+    utils::date::{shift_month, today},
+};
 
 use super::repeat::{RepeatAction, RepeatWidget};
+
+pub struct CalendarProps<'a> {
+    date: Date,
+    repeat: Option<&'a Repeat>,
+    repeat_picker: Option<RepeatWidget>,
+}
+
+impl<'a> CalendarProps<'a> {
+    pub fn new(date: Option<Date>, repeat: Option<&'a Repeat>) -> Self {
+        let d = date.unwrap_or_else(today);
+
+        Self {
+            repeat: repeat,
+            date: d,
+            repeat_picker: None,
+        }
+    }
+}
 
 pub enum CalendarAction {
     Confirm { date: Option<Date>, repeat: Option<Repeat> },
@@ -18,36 +42,32 @@ pub enum CalendarAction {
     None,
 }
 
-pub struct CalendarWidget {
-    date: Date,
-    repeat: Option<Repeat>,
-    repeat_picker: Option<RepeatWidget>,
+pub struct CalendarState<'a> {
+    props: CalendarProps<'a>,
 }
 
-impl CalendarWidget {
-    pub fn new(date: Option<Date>, repeat: Option<&Repeat>) -> Self {
-        let d = date.unwrap_or_else(today);
+impl<'a> CalendarState<'a> {
+    pub fn new(props: CalendarProps<'a>) -> Self {
+        Self { props }
+    }
 
-        Self {
-            repeat: repeat.map(Repeat::of),
-            date: d,
-            repeat_picker: None,
-        }
+    pub fn props(&self) -> &CalendarProps {
+        &self.props
     }
 
     pub fn handle(&mut self, key: KeyEvent) -> CalendarAction {
-        if let Some(ref mut repeat_picker) = self.repeat_picker {
+        if let Some(ref mut repeat_picker) = self.props.repeat_picker {
             match repeat_picker.handle(key) {
                 RepeatAction::Confirm(repeat) => {
-                    self.repeat_picker = None;
-                    self.repeat = repeat;
+                    self.props.repeat_picker = None;
+                    self.props.repeat = repeat.as_ref();
                     return CalendarAction::Confirm {
-                        date: Some(self.date),
-                        repeat: self.repeat.as_ref().map(Repeat::of),
+                        date: Some(self.props.date),
+                        repeat: self.props.repeat.as_ref().map(Repeat::of),
                     };
                 }
                 RepeatAction::Cancel => {
-                    self.repeat_picker = None;
+                    self.props.repeat_picker = None;
                 }
                 RepeatAction::None => {}
             }
@@ -59,16 +79,16 @@ impl CalendarWidget {
             KeyCode::Char('t') => self.navigate(Some(today())),
             KeyCode::Char('y') => self.navigate(today().previous_day()),
             KeyCode::Char('n') => self.navigate(today().next_day()),
-            KeyCode::Char('h') | KeyCode::Left => self.navigate(self.date.previous_day()),
-            KeyCode::Char('l') | KeyCode::Right => self.navigate(self.date.next_day()),
-            KeyCode::Char('k') | KeyCode::Up => self.navigate(self.date.checked_sub(Duration::weeks(1))),
-            KeyCode::Char('j') | KeyCode::Down => self.navigate(self.date.checked_add(Duration::weeks(1))),
-            KeyCode::Char('H') => self.navigate(Some(shift_month(self.date, -1))),
-            KeyCode::Char('L') => self.navigate(Some(shift_month(self.date, 1))),
-            KeyCode::Char('r') => self.repeat_picker = Some(RepeatWidget::new(self.repeat.as_ref())),
+            KeyCode::Char('h') | KeyCode::Left => self.navigate(self.props.date.previous_day()),
+            KeyCode::Char('l') | KeyCode::Right => self.navigate(self.props.date.next_day()),
+            KeyCode::Char('k') | KeyCode::Up => self.navigate(self.props.date.checked_sub(Duration::weeks(1))),
+            KeyCode::Char('j') | KeyCode::Down => self.navigate(self.props.date.checked_add(Duration::weeks(1))),
+            KeyCode::Char('H') => self.navigate(Some(shift_month(self.props.date, -1))),
+            KeyCode::Char('L') => self.navigate(Some(shift_month(self.props.date, 1))),
+            KeyCode::Char('r') => self.props.repeat_picker = Some(RepeatWidget::new(self.props.repeat.as_ref())),
             KeyCode::Enter => {
                 return CalendarAction::Confirm {
-                    date: Some(self.date),
+                    date: Some(self.props.date),
                     repeat: None,
                 };
             }
@@ -82,12 +102,26 @@ impl CalendarWidget {
 
     fn navigate(&mut self, date: Option<Date>) {
         if let Some(date) = date {
-            self.date = date;
+            self.props.date = date;
         }
     }
 }
 
-impl Widget for &CalendarWidget {
+pub struct CalendarWidget<'a> {
+    props: &'a CalendarProps<'a>,
+    repeat_picker: Option<RepeatWidget>,
+}
+
+impl<'a> CalendarWidget<'a> {
+    pub fn new(props: &'a CalendarProps<'a>) -> Self {
+        Self {
+            props,
+            repeat_picker: None,
+        }
+    }
+}
+
+impl<'a> Widget for &CalendarWidget<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let popup = centered_rect(area, 24, 5 + 10 + 3 + 5);
 
@@ -101,7 +135,7 @@ impl Widget for &CalendarWidget {
         block.render(popup, buf);
 
         let mut events = CalendarEventStore::today(Style::default().fg(Color::Yellow).bold());
-        events.add(self.date, Style::default().bg(COLOR).fg(Color::Black));
+        events.add(self.props.date, Style::default().bg(COLOR).fg(Color::Black));
 
         if let Some(repeat_picker) = &self.repeat_picker {
             repeat_picker.render(inner, buf);
@@ -129,7 +163,7 @@ impl Widget for &CalendarWidget {
         )
         .render(action_hint, buf);
 
-        Monthly::new(self.date, events)
+        Monthly::new(self.props.date, events)
             .show_month_header(Style::default().bold())
             .show_weekdays_header(Style::default().fg(Color::DarkGray))
             .render(cal_area, buf);
