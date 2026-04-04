@@ -17,19 +17,28 @@ use crate::{
 
 use super::repeat::{RepeatAction, RepeatProps, RepeatState, RepeatWidget};
 
+/// Action returned by the calendar picker after handling a key event.
 pub enum CalendarAction {
+    /// User confirmed; carries the selected date and optional repeat rule.
     Confirm { date: Option<Date>, repeat: Option<Repeat> },
+    /// User cancelled without confirming.
     Cancel,
+    /// No state change occurred.
     None,
 }
 
+/// Props for the due-date calendar popup.
 pub struct CalendarProps {
+    /// Currently highlighted date in the calendar.
     date: Date,
+    /// Optional repeat rule attached to the todo.
     repeat: Option<Repeat>,
+    /// Active repeat-picker sub-state when the repeat overlay is open.
     repeat_state: Option<RepeatState>,
 }
 
 impl CalendarProps {
+    /// Creates new calendar props from an optional existing date and repeat rule.
     pub fn new(date: Option<Date>, repeat: Option<&Repeat>) -> Self {
         Self {
             date: date.unwrap_or_else(today),
@@ -39,19 +48,24 @@ impl CalendarProps {
     }
 }
 
+/// Stateful container for the calendar picker.
 pub struct CalendarState {
+    /// Mutable props updated as the user navigates or opens sub-pickers.
     props: CalendarProps,
 }
 
 impl CalendarState {
+    /// Creates a new calendar state wrapping the given props.
     pub fn new(props: CalendarProps) -> Self {
         Self { props }
     }
 
+    /// Returns a shared reference to the current props.
     pub fn props(&self) -> &CalendarProps {
         &self.props
     }
 
+    /// Handles a key event and returns the resulting calendar action.
     pub fn handle(&mut self, key: KeyEvent) -> CalendarAction {
         if let Some(ref mut repeat_picker) = self.props.repeat_state {
             match repeat_picker.handle(key) {
@@ -99,6 +113,7 @@ impl CalendarState {
         CalendarAction::None
     }
 
+    /// Moves the highlighted date to `date`, ignoring `None` (no-date case).
     fn navigate(&mut self, date: Option<Date>) {
         if let Some(date) = date {
             self.props.date = date;
@@ -106,17 +121,21 @@ impl CalendarState {
     }
 }
 
+/// Stateless widget that renders the calendar due-date popup.
 pub struct CalendarWidget<'a> {
+    /// Borrowed calendar props for this render pass.
     props: &'a CalendarProps,
 }
 
 impl<'a> CalendarWidget<'a> {
+    /// Creates a new calendar widget from the given props.
     pub fn new(props: &'a CalendarProps) -> Self {
         Self { props }
     }
 }
 
 impl Widget for &CalendarWidget<'_> {
+    /// Renders the calendar popup (or repeat sub-picker) into the buffer.
     fn render(self, area: Rect, buf: &mut Buffer) {
         let popup = centered_rect(area, 24, 5 + 10 + 3 + 5);
 
@@ -183,6 +202,7 @@ impl Widget for &CalendarWidget<'_> {
     }
 }
 
+/// Computes a centered popup rect of the given dimensions within `area`.
 fn centered_rect(area: Rect, width: u16, height: u16) -> Rect {
     Rect {
         x: area.x + area.width.saturating_sub(width) / 2,

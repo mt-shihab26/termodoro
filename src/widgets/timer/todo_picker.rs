@@ -9,19 +9,28 @@ use crate::{
     models::{session::Stat, todo::Todo},
 };
 
+/// Action returned by the todo-picker after handling a key event.
 pub enum TodoPickerAction {
+    /// User confirmed a selection; carries the chosen todo's id.
     Select(i32),
+    /// User cancelled the picker without selecting.
     Cancel,
+    /// No state change occurred.
     None,
 }
 
+/// Props for the todo-picker overlay.
 pub struct TodoPickerProps {
+    /// Todos available for selection.
     todos: Vec<Todo>,
+    /// Session stats corresponding to each todo in order.
     stats: Vec<Stat>,
+    /// Index of the currently highlighted todo.
     cursor: usize,
 }
 
 impl TodoPickerProps {
+    /// Creates new todo-picker props from the todo and stats lists.
     pub fn new(todos: Vec<Todo>, stats: Vec<Stat>) -> Self {
         Self {
             todos,
@@ -31,19 +40,24 @@ impl TodoPickerProps {
     }
 }
 
+/// Stateful container for the todo-picker, owns its props and cursor.
 pub struct TodoPickerState {
+    /// Mutable props updated as the user navigates.
     props: TodoPickerProps,
 }
 
 impl TodoPickerState {
+    /// Creates a new picker state wrapping the given props.
     pub fn new(props: TodoPickerProps) -> Self {
         Self { props }
     }
 
+    /// Returns a shared reference to the current props.
     pub fn props(&self) -> &TodoPickerProps {
         &self.props
     }
 
+    /// Handles a key event and returns the resulting action.
     pub fn handle(&mut self, key: KeyEvent) -> TodoPickerAction {
         match key.code {
             KeyCode::Char('j') | KeyCode::Down => {
@@ -69,17 +83,21 @@ impl TodoPickerState {
     }
 }
 
+/// Stateless widget that renders the todo-picker popup.
 pub struct TodoPickerWidget<'a> {
+    /// Borrowed picker props for this render pass.
     props: &'a TodoPickerProps,
 }
 
 impl<'a> TodoPickerWidget<'a> {
+    /// Creates a new picker widget from the given props.
     pub fn new(props: &'a TodoPickerProps) -> Self {
         Self { props }
     }
 }
 
 impl Widget for &TodoPickerWidget<'_> {
+    /// Renders the centered popup list into the buffer.
     fn render(self, area: Rect, buf: &mut Buffer) {
         let popup = centered_rect(area, 60, area.height.saturating_sub(4));
 
@@ -142,6 +160,7 @@ impl Widget for &TodoPickerWidget<'_> {
     }
 }
 
+/// Computes a centered popup rect of the given dimensions within `area`.
 fn centered_rect(area: Rect, width: u16, height: u16) -> Rect {
     Rect {
         x: area.x + area.width.saturating_sub(width) / 2,

@@ -11,23 +11,35 @@ use crate::{kinds::repeat::Repeat, tabs::todos::COLOR};
 
 use super::calendar::{CalendarAction, CalendarProps, CalendarState, CalendarWidget};
 
+/// Action returned by the input widget after handling a key event.
 pub enum InputAction {
+    /// User submitted the input; carries the text, optional due date, and repeat rule.
     Confirm {
+        /// The trimmed text entered by the user.
         text: String,
+        /// Optional due date chosen via the calendar picker.
         date: Option<Date>,
+        /// Optional repeat rule chosen via the repeat picker.
         repeat: Option<Repeat>,
     },
+    /// User pressed Escape to cancel input.
     Escape,
+    /// No state change occurred.
     None,
 }
 
+/// Props for the todo text-input widget.
 pub struct InputProps {
+    /// The textarea holding the user's current text input.
     textarea: TextArea<'static>,
+    /// Currently selected due date, if any.
     date: Option<Date>,
+    /// Currently selected repeat rule, if any.
     repeat: Option<Repeat>,
 }
 
 impl InputProps {
+    /// Creates new input props, optionally pre-filling text, date, and repeat.
     pub fn new(text: Option<&str>, date: Option<Date>, repeat: Option<&Repeat>) -> Self {
         let mut textarea = TextArea::default();
         if let Some(t) = text {
@@ -43,12 +55,16 @@ impl InputProps {
     }
 }
 
+/// Stateful container for the todo input, owns props and optional calendar overlay.
 pub struct InputState {
+    /// Mutable props updated as the user types or picks a date/repeat.
     props: InputProps,
+    /// Active calendar state when the date-picker overlay is open.
     calendar_state: Option<CalendarState>,
 }
 
 impl InputState {
+    /// Creates a new input state wrapping the given props.
     pub fn new(props: InputProps) -> Self {
         Self {
             props,
@@ -56,10 +72,12 @@ impl InputState {
         }
     }
 
+    /// Returns a shared reference to the current props.
     pub fn props(&self) -> &InputProps {
         &self.props
     }
 
+    /// Handles a key event, delegating to the calendar overlay when open.
     pub fn handle(&mut self, key: KeyEvent) -> InputAction {
         if let Some(cal) = &mut self.calendar_state {
             match cal.handle(key) {
@@ -99,6 +117,7 @@ impl InputState {
         InputAction::None
     }
 
+    /// Renders the calendar overlay into the frame if it is currently open.
     pub fn render_calendar(&self, frame: &mut Frame, area: Rect) {
         if let Some(cal) = &self.calendar_state {
             frame.render_widget(&CalendarWidget::new(cal.props()), area);
@@ -106,17 +125,21 @@ impl InputState {
     }
 }
 
+/// Stateless widget that renders the todo text-input row.
 pub struct InputWidget<'a> {
+    /// Borrowed input props for this render pass.
     props: &'a InputProps,
 }
 
 impl<'a> InputWidget<'a> {
+    /// Creates a new input widget from the given props.
     pub fn new(props: &'a InputProps) -> Self {
         Self { props }
     }
 }
 
 impl Widget for &InputWidget<'_> {
+    /// Renders the textarea alongside the due-date block into the buffer.
     fn render(self, area: Rect, buf: &mut Buffer) {
         let date_area_width = self
             .props

@@ -1,3 +1,5 @@
+//! Widgets for the todos tab: list, input, calendar, repeat picker, and supporting UI.
+
 pub mod calendar;
 pub mod hint;
 pub mod indicator;

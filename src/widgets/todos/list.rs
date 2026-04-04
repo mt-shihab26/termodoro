@@ -15,18 +15,28 @@ use super::{
     item::{ItemProps, ItemWidget},
 };
 
+/// Props for the scrollable todo list widget.
 pub struct ListProps<'a> {
+    /// Slice of todos to display on the current page.
     items: &'a [Todo],
+    /// Session stats aligned by index with `items`; `None` when unavailable.
     stats: &'a [Option<Stat>],
+    /// Global offset of the first item in `items`, used for serial numbering.
     offset: usize,
+    /// Active page, which controls the rendering layout.
     page: Page,
+    /// Index within `items` of the currently selected row.
     selected: usize,
+    /// Accent color for the selected row and section headers.
     color: Color,
+    /// Whether there are hidden items above the visible window.
     show_more_above: bool,
+    /// Whether there are hidden items below the visible window.
     show_more_below: bool,
 }
 
 impl<'a> ListProps<'a> {
+    /// Creates new list props with all display parameters.
     pub fn new(
         items: &'a [Todo],
         stats: &'a [Option<Stat>],
@@ -50,17 +60,21 @@ impl<'a> ListProps<'a> {
     }
 }
 
+/// Stateless widget that renders the todo list in either flat or indexed layout.
 pub struct ListWidget<'a> {
+    /// Borrowed list props for this render pass.
     props: &'a ListProps<'a>,
 }
 
 impl<'a> ListWidget<'a> {
+    /// Creates a new list widget from the given props.
     pub fn new(props: &'a ListProps<'a>) -> Self {
         Self { props }
     }
 }
 
 impl Widget for &ListWidget<'_> {
+    /// Renders the todo list with padding and overflow indicators.
     fn render(self, area: Rect, buf: &mut Buffer) {
         let horizontal_padding = 2;
         let top_padding = 1;
@@ -90,6 +104,7 @@ impl Widget for &ListWidget<'_> {
 }
 
 impl ListWidget<'_> {
+    /// Renders todos as a plain sequential list without date section headers.
     fn render_flat(&self, area: Rect, buf: &mut Buffer) {
         let dimmed = matches!(self.props.page, Page::History);
         let serial_width = (self.props.offset + self.props.items.len()).max(1).to_string().len();
@@ -113,6 +128,7 @@ impl ListWidget<'_> {
         }
     }
 
+    /// Renders todos grouped under date section headers with virtual scrolling.
     fn render_index(&self, area: Rect, buf: &mut Buffer) {
         let serial_width = (self.props.offset + self.props.items.len()).max(1).to_string().len();
 
@@ -179,6 +195,7 @@ impl ListWidget<'_> {
     }
 }
 
+/// Builds a styled horizontal divider line with a centered date label.
 fn section_line(date: Option<time::Date>, width: usize, color: Color) -> Line<'static> {
     let label = match date {
         Some(date) => format!(" {} ", section_label(date)),
@@ -202,6 +219,7 @@ fn section_line(date: Option<time::Date>, width: usize, color: Color) -> Line<'s
     ])
 }
 
+/// Returns a human-friendly label for a date relative to today.
 fn section_label(date: time::Date) -> String {
     let current = today();
 
