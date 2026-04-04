@@ -17,6 +17,12 @@ use crate::{
 
 use super::repeat::{RepeatAction, RepeatProps, RepeatState, RepeatWidget};
 
+pub enum CalendarAction {
+    Confirm { date: Option<Date>, repeat: Option<Repeat> },
+    Cancel,
+    None,
+}
+
 pub struct CalendarProps {
     date: Date,
     repeat: Option<Repeat>,
@@ -31,12 +37,6 @@ impl CalendarProps {
             repeat_state: None,
         }
     }
-}
-
-pub enum CalendarAction {
-    Confirm { date: Option<Date>, repeat: Option<Repeat> },
-    Cancel,
-    None,
 }
 
 pub struct CalendarState {

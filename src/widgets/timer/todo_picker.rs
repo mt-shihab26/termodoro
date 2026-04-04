@@ -9,6 +9,12 @@ use crate::{
     models::{session::Stat, todo::Todo},
 };
 
+pub enum TodoPickerAction {
+    Select(i32),
+    Cancel,
+    None,
+}
+
 pub struct TodoPickerProps {
     todos: Vec<Todo>,
     stats: Vec<Stat>,
@@ -23,12 +29,6 @@ impl TodoPickerProps {
             cursor: 0,
         }
     }
-}
-
-pub enum TodoPickerAction {
-    Select(i32),
-    Cancel,
-    None,
 }
 
 pub struct TodoPickerState {

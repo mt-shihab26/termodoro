@@ -169,10 +169,7 @@ impl Tab for TodosTab {
 
         frame.render_widget(&StatusWidget::new(&StatusProps::new(total, from, to, page)), area);
 
-        frame.render_widget(
-            &TabsWidget::new(&TabsProps::new(self.page, self.color())),
-            tabs_area,
-        );
+        frame.render_widget(&TabsWidget::new(&TabsProps::new(self.page, self.color())), tabs_area);
 
         frame.render_widget(
             &ListWidget::new(&ListProps::new(

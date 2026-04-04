@@ -11,6 +11,16 @@ use crate::{kinds::repeat::Repeat, tabs::todos::COLOR};
 
 use super::calendar::{CalendarAction, CalendarProps, CalendarState, CalendarWidget};
 
+pub enum InputAction {
+    Confirm {
+        text: String,
+        date: Option<Date>,
+        repeat: Option<Repeat>,
+    },
+    Escape,
+    None,
+}
+
 pub struct InputProps {
     textarea: TextArea<'static>,
     date: Option<Date>,
@@ -31,16 +41,6 @@ impl InputProps {
             repeat: repeat.map(Repeat::of),
         }
     }
-}
-
-pub enum InputAction {
-    Confirm {
-        text: String,
-        date: Option<Date>,
-        repeat: Option<Repeat>,
-    },
-    Escape,
-    None,
 }
 
 pub struct InputState {
