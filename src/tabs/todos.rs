@@ -13,7 +13,7 @@ use crate::caches::timer::TimerCache;
 use crate::kinds::{page::Page, todos_mode::TodosMode};
 use crate::utils::date::today;
 use crate::widgets::todos::hint::{HintProps, HintWidget};
-use crate::widgets::todos::input::{InputAction, InputState, InputWidget};
+use crate::widgets::todos::input::{InputAction, InputProps, InputState, InputWidget};
 use crate::widgets::todos::{list::ListWidget, status::StatusWidget, tabs::TabsWidget};
 use crate::{models::todo::Todo, states::todos::TodosState};
 
@@ -88,12 +88,13 @@ impl Tab for TodosTab {
                 KeyCode::Char('a') => {
                     self.mode = TodosMode::Adding;
                     let date = if self.page == Page::Today { Some(today()) } else { None };
-                    self.input_state = Some(InputState::new(None, date, None));
+                    self.input_state = Some(InputState::new(InputProps::new(None, date, None)));
                 }
                 KeyCode::Char('e') => {
                     if let Some((text, due_date, repeat)) = self.state.edit_values(self.page) {
                         self.mode = TodosMode::Editing;
-                        self.input_state = Some(InputState::new(Some(&text), due_date, repeat.as_ref()));
+                        self.input_state =
+                            Some(InputState::new(InputProps::new(Some(&text), due_date, repeat.as_ref())));
                     }
                 }
                 _ => {}
