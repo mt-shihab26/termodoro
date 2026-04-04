@@ -145,6 +145,7 @@ impl Session {
         }
     }
 
+    /// Converts this session into a SeaORM active model for insert or update.
     fn to_model(&self) -> ActiveModel {
         let today = format_date(today());
         match self.id {
