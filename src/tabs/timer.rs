@@ -158,14 +158,17 @@ impl TimerTab {
 }
 
 impl Tab for TimerTab {
+    /// Returns the tab label shown in the tab bar.
     fn name(&self) -> &str {
         "Timer [^x]"
     }
 
+    /// Returns the accent color for the timer tab.
     fn color(&self) -> Color {
         COLOR
     }
 
+    /// Handles a key event, delegating to the picker overlay or timer controls.
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
         if let Some(picker) = &mut self.picker {
             match picker.handle(key) {
@@ -189,6 +192,7 @@ impl Tab for TimerTab {
         Ok(())
     }
 
+    /// Renders the timer tab including clock, phase, session, status, todo bar, and hints.
     fn render(&self, frame: &mut Frame, area: Rect) {
         self.tick_render_count();
 
