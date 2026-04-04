@@ -5,17 +5,33 @@ use ratatui::{
 
 use crate::tabs::todos::COLOR;
 
-pub struct IndicatorWidget {
-    pub show_more_above: bool,
-    pub show_more_below: bool,
+pub struct IndicatorProps {
+    show_more_above: bool,
+    show_more_below: bool,
 }
 
-impl Widget for &IndicatorWidget {
+impl IndicatorProps {
+    pub fn new(show_more_above: bool, show_more_below: bool) -> Self {
+        Self { show_more_above, show_more_below }
+    }
+}
+
+pub struct IndicatorWidget<'a> {
+    props: &'a IndicatorProps,
+}
+
+impl<'a> IndicatorWidget<'a> {
+    pub fn new(props: &'a IndicatorProps) -> Self {
+        Self { props }
+    }
+}
+
+impl Widget for &IndicatorWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let horizontal_padding = 2;
         let inner_width = area.width.saturating_sub(horizontal_padding * 2);
 
-        if self.show_more_above {
+        if self.props.show_more_above {
             let top_area = Rect {
                 x: area.x + horizontal_padding,
                 y: area.y,
@@ -25,7 +41,7 @@ impl Widget for &IndicatorWidget {
             Paragraph::new("^ more").fg(COLOR).right_aligned().render(top_area, buf);
         }
 
-        if self.show_more_below && area.height > 0 {
+        if self.props.show_more_below && area.height > 0 {
             let bottom_area = Rect {
                 x: area.x + horizontal_padding,
                 y: area.y + area.height.saturating_sub(1),

@@ -4,12 +4,16 @@ use ratatui::{
 };
 use time::Duration;
 
-use crate::kinds::page::Page;
-use crate::models::session::Stat;
-use crate::models::todo::Todo;
-use crate::utils::date::today;
+use crate::{
+    kinds::page::Page,
+    models::{session::Stat, todo::Todo},
+    utils::date::today,
+};
 
-use super::{indicator::IndicatorWidget, item::ItemWidget};
+use super::{
+    indicator::{IndicatorProps, IndicatorWidget},
+    item::ItemWidget,
+};
 
 pub struct ListWidget<'a> {
     pub items: &'a [Todo],
@@ -45,11 +49,7 @@ impl StatefulWidget for &ListWidget<'_> {
             Page::Due | Page::Today | Page::History => self.render_flat(padded_area, buf, state),
         }
 
-        IndicatorWidget {
-            show_more_above: self.show_more_above,
-            show_more_below: self.show_more_below,
-        }
-        .render(area, buf);
+        IndicatorWidget::new(&IndicatorProps::new(self.show_more_above, self.show_more_below)).render(area, buf);
     }
 }
 
