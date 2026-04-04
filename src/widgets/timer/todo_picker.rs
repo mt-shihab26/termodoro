@@ -38,10 +38,8 @@ pub struct TodoPickerState {
 }
 
 impl TodoPickerState {
-    pub fn new(todos: Vec<Todo>, stats: Vec<Stat>) -> Self {
-        Self {
-            props: TodoPickerProps::new(todos, stats),
-        }
+    pub fn new(props: TodoPickerProps) -> Self {
+        Self { props }
     }
 
     pub fn props(&self) -> &TodoPickerProps {
@@ -125,7 +123,12 @@ impl Widget for &TodoPickerWidget<'_> {
             .map(|(i, (todo, stat))| {
                 let serial = i + 1;
                 let label = if stat.completed_sessions > 0 {
-                    format!("{}  ·  {}× {}m", todo.text, stat.completed_sessions, stat.completed_secs / 60)
+                    format!(
+                        "{}  ·  {}× {}m",
+                        todo.text,
+                        stat.completed_sessions,
+                        stat.completed_secs / 60
+                    )
                 } else {
                     todo.text.clone()
                 };

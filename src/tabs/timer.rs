@@ -33,7 +33,7 @@ use crate::{
             phase::{PhaseProps, PhaseWidget},
             session::{SessionProps, SessionWidget},
             status::{StatusProps, StatusWidget},
-            todo_picker::{TodoPickerAction, TodoPickerState, TodoPickerWidget},
+            todo_picker::{TodoPickerAction, TodoPickerProps, TodoPickerState, TodoPickerWidget},
             todo_show::{TodoShowProps, TodoShowWidget},
         },
     },
@@ -118,7 +118,7 @@ impl TimerTab {
         if let Ok(mut cache) = self.cache.lock() {
             let todos = cache.get_todos().to_vec();
             let stats = cache.get_stats().to_vec();
-            self.picker = Some(TodoPickerState::new(todos, stats));
+            self.picker = Some(TodoPickerState::new(TodoPickerProps::new(todos, stats)));
         }
     }
 
