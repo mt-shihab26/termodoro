@@ -109,15 +109,11 @@ impl<'a> CalendarState<'a> {
 
 pub struct CalendarWidget<'a> {
     props: &'a CalendarProps<'a>,
-    repeat_picker: Option<RepeatWidget>,
 }
 
 impl<'a> CalendarWidget<'a> {
     pub fn new(props: &'a CalendarProps<'a>) -> Self {
-        Self {
-            props,
-            repeat_picker: None,
-        }
+        Self { props }
     }
 }
 
@@ -137,7 +133,7 @@ impl<'a> Widget for &CalendarWidget<'a> {
         let mut events = CalendarEventStore::today(Style::default().fg(Color::Yellow).bold());
         events.add(self.props.date, Style::default().bg(COLOR).fg(Color::Black));
 
-        if let Some(repeat_picker) = &self.repeat_picker {
+        if let Some(repeat_picker) = &self.props.repeat_picker {
             repeat_picker.render(inner, buf);
             return;
         }
