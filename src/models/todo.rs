@@ -33,15 +33,24 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
+/// Represents a single todo item with optional scheduling and repeat configuration.
 #[derive(Clone)]
 pub struct Todo {
+    /// Database primary key; `None` until the todo is persisted.
     pub id: Option<i32>,
+    /// The todo's display text.
     pub text: String,
+    /// Whether the todo has been completed.
     pub done: bool,
+    /// Optional date the todo is due.
     pub due_date: Option<Date>,
+    /// Optional repeat schedule applied when the todo is completed.
     pub repeat: Option<Repeat>,
+    /// Id of the todo this was spawned from, if it is a repeated occurrence.
     pub parent_id: Option<i32>,
+    /// UTC timestamp of when the todo was created.
     pub created_at: String,
+    /// UTC timestamp of the last update.
     pub updated_at: String,
 }
 
