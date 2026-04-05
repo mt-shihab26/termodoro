@@ -2,9 +2,7 @@
 //!
 //! Every UI component follows a three-part split: **Action(optional) → Props → State(optional) → Widget**.
 //!
-//! > A complete real-world example of this pattern: [`crate::widgets::layout::fps`] or [`crate::widgets::timer::todo_picker`]
-//!
-//! ---
+//! A complete real-world example of this pattern: [`crate::widgets::layout::fps`] or [`crate::widgets::timer::todo_picker`]
 //!
 //! ## The four parts
 //!
@@ -134,9 +132,9 @@
 //! - **State is never passed to the widget** — only `&props`.
 //! - **Widgets are never stored** — created and dropped each frame.
 //! - **Visibility is the caller's concern** — wrap the render call in an `if` instead of adding a flag inside the widget.
-//! - **Implement `Widget for &MyWidget`** (shared ref).
+//! - **Implement `Widget for &MyWidget`** — always use a shared ref.
 //! - **`State` is optional** — if the widget has no runtime data to track, construct `Props` directly in the caller and skip `State`.
-//! - **`Action` and `handle` are optional** — add them only when the widget handles input and needs to signal events to the caller. Pure display widgets omit both.
+//! - **`Action` and `handle` are optional** — add them only when the widget handles input and needs to signal events to the caller.
 
 /// Shared layout widgets such as borders and FPS counters.
 pub mod layout;
