@@ -2,6 +2,12 @@
 name = "orivo"
 version = "0.2.0"
 edition = "2024"
+description = "A terminal-based Todos + Pomodoro timer written in Rust"
+license = "MIT"
+repository = "https://github.com/mt-shihab26/orivo"
+readme = "README.md"
+keywords = ["tui", "pomodoro", "todo", "terminal", "productivity"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 time = { version = "0.3", features = ["local-offset"] }
