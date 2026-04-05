@@ -13,15 +13,9 @@
       <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
-
-  <!-- Background -->
   <rect width="512" height="512" rx="100" fill="url(#bgGrad)"/>
-
-  <!-- Subtle inner shadow ring -->
+  <rect x="3" y="3" width="506" height="506" rx="98" fill="none" stroke="url(#arcGrad)" stroke-width="6" opacity="0.75"/>
   <circle cx="256" cy="248" r="178" fill="none" stroke="#21262d" stroke-width="28"/>
-
-  <!-- Timer progress arc — 270° (75% of session), starts at 12 o'clock -->
-  <!-- Circumference of r=178: ~1118.4 | 75% ≈ 838.8 | 25% ≈ 279.6 -->
   <circle cx="256" cy="248" r="178"
     fill="none"
     stroke="url(#arcGrad)"
@@ -31,28 +25,16 @@
     stroke-dashoffset="0"
     transform="rotate(-90 256 248)"
     filter="url(#glow)"/>
-
-  <!-- Inner circle fill -->
   <circle cx="256" cy="248" r="138" fill="#161b22"/>
-
-  <!-- Tick marks at 12, 3, 6, 9 -->
   <line x1="256" y1="92"  x2="256" y2="112" stroke="#30363d" stroke-width="8" stroke-linecap="round"/>
   <line x1="412" y1="248" x2="392" y2="248" stroke="#30363d" stroke-width="8" stroke-linecap="round"/>
   <line x1="256" y1="404" x2="256" y2="384" stroke="#30363d" stroke-width="8" stroke-linecap="round"/>
   <line x1="100" y1="248" x2="120" y2="248" stroke="#30363d" stroke-width="8" stroke-linecap="round"/>
-
-  <!-- Minute hand (pointing to ~12) -->
   <line x1="256" y1="248" x2="256" y2="148"
     stroke="#e6edf3" stroke-width="13" stroke-linecap="round"/>
-
-  <!-- Hour hand (pointing to ~3) -->
   <line x1="256" y1="248" x2="330" y2="248"
     stroke="#e6edf3" stroke-width="10" stroke-linecap="round"/>
-
-  <!-- Center hub -->
   <circle cx="256" cy="248" r="11" fill="#ff7043"/>
-
-  <!-- Checkmark (todo complete) -->
   <path d="M186 348 L230 394 L336 298"
     fill="none"
     stroke="#3fb950"
