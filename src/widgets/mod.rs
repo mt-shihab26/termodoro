@@ -93,8 +93,6 @@
 //! }
 //! ```
 //!
-//! ---
-//!
 //! ## How the caller wires it together
 //!
 //! ### With state and input handling
@@ -124,8 +122,6 @@
 //! // 2. Pass props straight into the widget at render time
 //! MyWidget::new(&props).render(area, buf);
 //! ```
-//!
-//! ---
 //!
 //! ## Rules
 //!
