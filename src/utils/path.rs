@@ -15,7 +15,7 @@ pub fn log_path() -> PathBuf {
     return local().join("orivo.log");
 
     #[cfg(not(debug_assertions))]
-    local_state_path().join("orivo.log")
+    local_path().join("orivo.log")
 }
 
 /// Returns the path to the database file.
@@ -24,7 +24,7 @@ pub fn db_path() -> PathBuf {
     return local().join("orivo.sqlite");
 
     #[cfg(not(debug_assertions))]
-    local_state_path().join("orivo.sqlite")
+    local_path().join("orivo.sqlite")
 }
 
 /// Returns the path to the persisted timer state file.
@@ -33,30 +33,29 @@ pub fn store_path() -> PathBuf {
     return local().join("store.json");
 
     #[cfg(not(debug_assertions))]
-    local_state_path().join("store.json")
+    local_path().join("store.json")
 }
 
 /// the base directory for runtime state files
 #[cfg_attr(debug_assertions, allow(dead_code))]
-fn local_state_path() -> PathBuf {
+fn local_path() -> PathBuf {
     PathBuf::from(home())
         .join(".local")
         .join("state")
         .join(env!("CARGO_PKG_NAME"))
 }
 
-///  the base directory for initail config files
+/// The base directory for config files.
 #[cfg_attr(debug_assertions, allow(dead_code))]
 fn config_path() -> PathBuf {
-    PathBuf::from(home())
-        .join(".config")
-        .join(env!("CARGO_PKG_NAME"))
-        .join("config.toml")
+    PathBuf::from(home()).join(".config").join(env!("CARGO_PKG_NAME"))
 }
 
-/// Returns the user's home directory
+/// Returns the user's home directory, handling both Unix (`HOME`) and Windows (`USERPROFILE`).
 fn home() -> String {
-    env::var("HOME").unwrap_or_else(|_| ".".to_string())
+    env::var("HOME")
+        .or_else(|_| env::var("USERPROFILE"))
+        .unwrap_or_else(|_| ".".to_string())
 }
 
 /// Returns the local dev directory used for all files in debug builds.
