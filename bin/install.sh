@@ -40,17 +40,6 @@ detect_platform() {
     printf "%s %s\n" "$os_tag" "$arch_tag"
 }
 
-detect_fetch() {
-    if command -v curl &>/dev/null; then
-        echo "curl -fsSL"
-    elif command -v wget &>/dev/null; then
-        echo "wget -qO-"
-    else
-        echo "ERROR: curl or wget is required." >&2
-        exit 1
-    fi
-}
-
 install_sqlite() {
     echo "Checking sqlite3..."
     command -v sqlite3 &>/dev/null && {
@@ -128,7 +117,7 @@ verify_checksum() {
 }
 
 install_binary() {
-    local fetch="$1" repo="$2" binary="$3" version="$4" os_tag="$5" arch_tag="$6" bin_dir="$7"
+    local repo="$1" binary="$2" version="$3" os_tag="$4" arch_tag="$5" bin_dir="$6"
     local asset="${binary}-${version}-${os_tag}-${arch_tag}"
     local base="https://github.com/${repo}/releases/download/${version}"
     echo "Installing ${binary} ${version} (${os_tag}/${arch_tag}) -> ${bin_dir}..."
@@ -136,8 +125,8 @@ install_binary() {
     local tmp
     tmp=$(mktemp -d)
     register_tmp_dir "$tmp"
-    ${fetch} "${base}/${asset}" >"$tmp/$asset"
-    ${fetch} "${base}/SHA256SUMS.txt" >"$tmp/SHA256SUMS.txt"
+    curl -fsSL "${base}/${asset}" >"$tmp/$asset"
+    curl -fsSL "${base}/SHA256SUMS.txt" >"$tmp/SHA256SUMS.txt"
 
     verify_checksum "$tmp/$asset" "$asset" "$tmp/SHA256SUMS.txt"
 
@@ -156,7 +145,7 @@ pick_terminal() {
 }
 
 install_desktop() {
-    local fetch="$1" repo="$2" os_tag="$3" terminal="$4" apps_dir="$5" icon_dir="$6"
+    local repo="$1" os_tag="$2" terminal="$3" apps_dir="$4" icon_dir="$5"
     [ "$os_tag" != linux ] && return
 
     terminal=$(pick_terminal "$terminal")
@@ -181,9 +170,9 @@ install_desktop() {
     base="https://github.com/${repo}/releases/download/${asset_tag}"
     tmp=$(mktemp -d)
     register_tmp_dir "$tmp"
-    ${fetch} "${base}/${desktop_src}" >"$tmp/$desktop_src"
-    ${fetch} "${base}/orivo.svg" >"$tmp/orivo.svg"
-    ${fetch} "${base}/SHA256SUMS.txt" >"$tmp/SHA256SUMS.txt"
+    curl -fsSL "${base}/${desktop_src}" >"$tmp/$desktop_src"
+    curl -fsSL "${base}/orivo.svg" >"$tmp/orivo.svg"
+    curl -fsSL "${base}/SHA256SUMS.txt" >"$tmp/SHA256SUMS.txt"
 
     verify_checksum "$tmp/$desktop_src" "$desktop_src" "$tmp/SHA256SUMS.txt"
     verify_checksum "$tmp/orivo.svg" "orivo.svg" "$tmp/SHA256SUMS.txt"
@@ -244,11 +233,10 @@ done
 main() {
     echo "Install script: ${INSTALL_SCRIPT_TAG}"
 
-    local fetch os_tag arch_tag version current_version
+    local os_tag arch_tag version current_version
     read -r os_tag arch_tag < <(detect_platform)
-    fetch=$(detect_fetch)
     install_sqlite
-    version=$(resolve_version "$fetch" "$REPO")
+    version=$(resolve_version)
     current_version=$(resolve_current_version "$BIN_DIR")
 
     # Strip leading 'v' from release tag for comparison (tag: v0.1.0, binary: 0.1.0)
@@ -259,8 +247,8 @@ main() {
 
     [ -n "$current_version" ] && echo "Upgrading ${current_version} -> v${version#v}..." || true
 
-    install_binary "$fetch" "$REPO" "$BINARY" "$version" "$os_tag" "$arch_tag" "$BIN_DIR"
-    install_desktop "$fetch" "$REPO" "$os_tag" "$TERMINAL" "$APPS_DIR" "$ICON_DIR"
+    install_binary "$REPO" "$BINARY" "$version" "$os_tag" "$arch_tag" "$BIN_DIR"
+    install_desktop "$REPO" "$os_tag" "$TERMINAL" "$APPS_DIR" "$ICON_DIR"
     check_path "$BIN_DIR"
     printf "\nRun 'orivo' to start. Config: ~/.config/orivo/config.toml\n"
 }
