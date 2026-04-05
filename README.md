@@ -5,7 +5,7 @@
 # orivo
 
 [![License](https://img.shields.io/crates/l/orivo)](https://github.com/mt-shihab26/orivo/blob/main/LICENSE)
-[![Build](https://github.com/mt-shihab26/orivo/actions/workflows/release.yml/badge.svg)](https://github.com/mt-shihab26/orivo/actions/workflows/release.yml)
+[![Build](https://github.com/mt-shihab26/orivo/actions/workflows/build.yml/badge.svg)](https://github.com/mt-shihab26/orivo/actions/workflows/build.yml)
 [![Tests](https://github.com/mt-shihab26/orivo/actions/workflows/test.yml/badge.svg)](https://github.com/mt-shihab26/orivo/actions/workflows/test.yml)
 [![Crates.io](https://img.shields.io/crates/v/orivo)](https://crates.io/crates/orivo)
 [![docs.rs](https://img.shields.io/docsrs/orivo)](https://docs.rs/orivo)
