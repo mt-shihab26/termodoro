@@ -52,6 +52,7 @@ fn home() -> String {
 }
 
 /// Returns the local dev directory used for all files in debug builds.
+#[cfg(debug_assertions)]
 fn local() -> PathBuf {
     PathBuf::from("./local")
 }
