@@ -5,9 +5,9 @@ use ratatui::{
     widgets::{Block, Paragraph},
 };
 use ratatui_textarea::TextArea;
-use time::Date;
+use time::OffsetDateTime;
 
-use crate::{kinds::repeat::Repeat, tabs::todos::COLOR};
+use crate::{kinds::repeat::Repeat, tabs::todos::COLOR, utils::date::now};
 
 use super::calendar::{CalendarAction, CalendarProps, CalendarState, CalendarWidget};
 
@@ -18,7 +18,7 @@ pub enum InputAction {
         /// The trimmed text entered by the user.
         text: String,
         /// Optional due date chosen via the calendar picker.
-        date: Option<Date>,
+        date: Option<OffsetDateTime>,
         /// Optional repeat rule chosen via the repeat picker.
         repeat: Option<Repeat>,
     },
@@ -33,14 +33,14 @@ pub struct InputProps {
     /// The textarea holding the user's current text input.
     textarea: TextArea<'static>,
     /// Currently selected due date, if any.
-    date: Option<Date>,
+    date: Option<OffsetDateTime>,
     /// Currently selected repeat rule, if any.
     repeat: Option<Repeat>,
 }
 
 impl InputProps {
     /// Creates new input props, optionally pre-filling text, date, and repeat.
-    pub fn new(text: Option<&str>, date: Option<Date>, repeat: Option<&Repeat>) -> Self {
+    pub fn new(text: Option<&str>, date: Option<OffsetDateTime>, repeat: Option<&Repeat>) -> Self {
         let mut textarea = TextArea::default();
         if let Some(t) = text {
             textarea.insert_str(t);
@@ -82,7 +82,7 @@ impl InputState {
         if let Some(cal) = &mut self.calendar_state {
             match cal.handle(key) {
                 CalendarAction::Confirm { date, repeat } => {
-                    self.props.date = date;
+                    self.props.date = date.map(|d| now().replace_date(d));
                     self.props.repeat = repeat;
                     self.calendar_state = None;
                 }
@@ -106,7 +106,7 @@ impl InputState {
             KeyCode::Esc => return InputAction::Escape,
             KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                 self.calendar_state = Some(CalendarState::new(CalendarProps::new(
-                    self.props.date,
+                    self.props.date.map(|dt| dt.date()),
                     self.props.repeat.as_ref(),
                 )));
             }
@@ -173,7 +173,7 @@ impl Widget for &InputWidget<'_> {
         Widget::render(&self.props.textarea, text_area, buf);
 
         let date_str = match self.props.date {
-            Some(d) => format!("{}", d),
+            Some(d) => format!("{}", d.date()),
             None => "no date".to_string(),
         };
 

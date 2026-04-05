@@ -5,13 +5,13 @@ use sea_orm::{
     DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, Order, PaginatorTrait, PrimaryKeyTrait,
     QueryFilter, QueryOrder, QuerySelect, sea_query::Expr,
 };
-use time::{Date, Duration, OffsetDateTime};
+use time::{Duration, OffsetDateTime};
 
 use crate::{
     kinds::{page::Page, repeat::Repeat},
     log_error, log_warn,
     utils::{
-        date::{format_date, format_datetime, now, parse_date, parse_datetime, today},
+        date::{format_date, format_datetime, now, parse_datetime, today},
         db::rt,
     },
 };
@@ -25,8 +25,8 @@ pub struct Todo {
     pub text: String,
     /// Local datetime when the todo was completed, or `None` if not yet done.
     pub done_at: Option<OffsetDateTime>,
-    /// Optional date the todo is due.
-    pub due_date: Option<Date>,
+    /// Optional datetime the todo is due.
+    pub due_date: Option<OffsetDateTime>,
     /// Optional repeat schedule applied when the todo is completed.
     pub repeat: Option<Repeat>,
     /// Id of the todo this was spawned from, if it is a repeated occurrence.
@@ -39,7 +39,7 @@ pub struct Todo {
 
 impl Todo {
     /// Creates an unsaved in-memory Todo with default values.
-    pub fn new(text: String, due_date: Option<Date>, repeat: Option<Repeat>, parent_id: Option<i32>) -> Self {
+    pub fn new(text: String, due_date: Option<OffsetDateTime>, repeat: Option<Repeat>, parent_id: Option<i32>) -> Self {
         let now = now();
 
         Self {
@@ -77,7 +77,7 @@ impl Todo {
             return None;
         };
 
-        let next_date = repeat.next_date(due_date);
+        let next_date = repeat.next_date(due_date.date());
         let next_date_str = format_date(next_date);
         let parent_id = self.id;
 
@@ -94,7 +94,8 @@ impl Todo {
             return None;
         }
 
-        let mut next = Todo::new(self.text.clone(), Some(next_date), Some(Repeat::of(repeat)), parent_id);
+        let next_dt = due_date.replace_date(next_date);
+        let mut next = Todo::new(self.text.clone(), Some(next_dt), Some(Repeat::of(repeat)), parent_id);
 
         if next.save(db) { Some(next) } else { None }
     }
@@ -217,7 +218,7 @@ impl Todo {
         } else {
             self.done_at = Some(now());
             if self.due_date.is_none() {
-                self.due_date = Some(today());
+                self.due_date = Some(now());
             }
         }
 
@@ -251,7 +252,7 @@ impl Todo {
 
     /// Converts this todo into a SeaORM active model for insert or update.
     fn to_model(&self) -> ActiveModel {
-        let due_date = self.due_date.map(format_date);
+        let due_date = self.due_date.map(|dt| format_date(dt.date()));
         let repeat = self.repeat.as_ref().map(|r| r.to_db_str().to_string());
         let now = format_datetime(now());
         match self.id {
@@ -286,7 +287,7 @@ impl From<Model> for Todo {
             id: Some(m.id),
             text: m.text,
             done_at: m.done_at.as_deref().and_then(parse_datetime),
-            due_date: m.due_date.as_deref().and_then(parse_date),
+            due_date: m.due_date.as_deref().and_then(parse_datetime),
             repeat: m.repeat.as_deref().and_then(Repeat::from_db_str),
             parent_id: m.parent_id,
             created_at: parse_datetime(&m.created_at).unwrap_or_else(now),

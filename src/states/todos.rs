@@ -5,7 +5,7 @@ use std::{
 
 use ratatui::{layout::Rect, widgets::ListState};
 use sea_orm::DatabaseConnection;
-use time::Date;
+use time::OffsetDateTime;
 
 use crate::{
     caches::{timer::TimerCache, todos::TodosCache},
@@ -241,7 +241,7 @@ impl TodosState {
     }
 
     /// Adds a new todo and refreshes the list.
-    pub fn add(&mut self, page: Page, text: String, due_date: Option<Date>, repeat: Option<Repeat>) {
+    pub fn add(&mut self, page: Page, text: String, due_date: Option<OffsetDateTime>, repeat: Option<Repeat>) {
         let mut todo = Todo::new(text, due_date, repeat, None);
         if todo.save(&self.db) {
             self.refresh(page);
@@ -249,7 +249,7 @@ impl TodosState {
     }
 
     /// Updates the selected todo's text, due date, and repeat rule, then refreshes.
-    pub fn update(&mut self, page: Page, text: String, due_date: Option<Date>, repeat: Option<Repeat>) {
+    pub fn update(&mut self, page: Page, text: String, due_date: Option<OffsetDateTime>, repeat: Option<Repeat>) {
         if let Some(mut todo) = self.selected_item(page).map(|todo| todo.clone()) {
             todo.text = text;
             todo.due_date = due_date;
@@ -326,7 +326,7 @@ impl TodosState {
     }
 
     /// Returns the text, due date, and repeat rule of the selected todo for editing.
-    pub fn edit_values(&self, page: Page) -> Option<(String, Option<time::Date>, Option<Repeat>)> {
+    pub fn edit_values(&self, page: Page) -> Option<(String, Option<OffsetDateTime>, Option<Repeat>)> {
         self.selected_item(page)
             .map(|todo| (todo.text.clone(), todo.due_date, todo.repeat.clone()))
     }

@@ -17,7 +17,7 @@ use crate::{
     kinds::{page::Page, todos_mode::TodosMode},
     models::todo::Todo,
     states::todos::TodosState,
-    utils::date::today,
+    utils::date::now,
     widgets::todos::{
         hint::{HintProps, HintWidget},
         input::{InputAction, InputProps, InputState, InputWidget},
@@ -111,7 +111,7 @@ impl Tab for TodosTab {
                 }
                 KeyCode::Char('a') => {
                     self.mode = TodosMode::Adding;
-                    let date = if self.page == Page::Today { Some(today()) } else { None };
+                    let date = if self.page == Page::Today { Some(now()) } else { None };
                     self.input_state = Some(InputState::new(InputProps::new(None, date, None)));
                 }
                 KeyCode::Char('e') => {

@@ -142,13 +142,14 @@ impl ListWidget<'_> {
         let mut last_date = None;
 
         for (index, todo) in self.props.items.iter().enumerate() {
-            if todo.due_date != last_date {
+            let todo_date = todo.due_date.map(|dt| dt.date());
+            if todo_date != last_date {
                 rows.push(Row::Header(section_line(
-                    todo.due_date,
+                    todo_date,
                     area.width as usize,
                     self.props.color,
                 )));
-                last_date = todo.due_date;
+                last_date = todo_date;
             }
             if index == self.props.selected {
                 selected_row = rows.len();

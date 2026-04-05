@@ -87,7 +87,7 @@ impl<'a> ItemWidget<'a> {
         }
 
         if let Some(date) = self.props.todo.due_date {
-            label.push_str(&format!("  [{}]", date));
+            label.push_str(&format!("  [{}]", date.date()));
         }
         label
     }

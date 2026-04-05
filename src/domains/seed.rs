@@ -1,15 +1,11 @@
 use sea_orm::DatabaseConnection;
-use time::{Date, Duration};
+use time::{Duration, OffsetDateTime};
 
-use crate::{
-    kinds::repeat::Repeat,
-    models::todo::Todo,
-    utils::date::{now, today},
-};
+use crate::{kinds::repeat::Repeat, models::todo::Todo, utils::date::now};
 
 /// Seeds the database with fake todos and returns how many were inserted.
 pub fn seed_todos(count: usize, db: &DatabaseConnection) -> usize {
-    let base = today();
+    let base = now();
     let projects = [
         "Inbox",
         "Home",
@@ -88,7 +84,7 @@ pub fn seed_todos(count: usize, db: &DatabaseConnection) -> usize {
 }
 
 /// Inserts a small curated set of todos for common demo states.
-fn seed_focused(base: Date, db: &DatabaseConnection) -> usize {
+fn seed_focused(base: OffsetDateTime, db: &DatabaseConnection) -> usize {
     let items = [
         Todo::new("Today: pay electricity bill".to_string(), Some(base), None, None),
         Todo::new(
