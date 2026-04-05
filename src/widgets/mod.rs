@@ -2,7 +2,7 @@
 //!
 //! Every UI component follows a three-part split: **Action(optional) → Props → State(optional) → Widget**.
 //!
-//! > A complete real-world example of this pattern: `src/widgets/layout/fps.rs` or `src/widgets/timer/todo_picker.rs`
+//! > A complete real-world example of this pattern: [`crate::widgets::layout::fps`] or [`crate::widgets::timer::todo_picker`]
 //!
 //! ---
 //!
@@ -67,7 +67,7 @@
 //!     // optional — only add if the widget handles input
 //!     pub fn handle(&mut self, key: KeyEvent) -> MyAction {
 //!         match key.code {
-//!             KeyCode::Enter => { /* ... */ MyAction::Select(…) }
+//!             KeyCode::Enter => { /* ... */ MyAction::Select((0, String::new())) }
 //!             KeyCode::Esc   => MyAction::Cancel,
 //!             _              => MyAction::None,
 //!         }
