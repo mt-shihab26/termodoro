@@ -41,13 +41,13 @@ Download the Windows release binary from the latest GitHub Release:
 
 
 ```powershell
-mv orivo-v0.1.3-windows-x86_64.exe orivo
+mv orivo-vX.Y.Z-windows-x86_64.exe orivo.exe
 ```
 
 Then place it somewhere on your `PATH`, or keep it in a directory of your choice and run it directly:
 
 ```powershell
-.\orivo
+.\orivo.exe
 ```
 
 ## Configuration
