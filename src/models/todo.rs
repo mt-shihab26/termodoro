@@ -23,8 +23,8 @@ pub struct Todo {
     pub id: Option<i32>,
     /// The todo's display text.
     pub text: String,
-    /// Whether the todo has been completed.
-    pub done: bool,
+    /// Local datetime when the todo was completed, or `None` if not yet done.
+    pub done_at: Option<OffsetDateTime>,
     /// Optional date the todo is due.
     pub due_date: Option<Date>,
     /// Optional repeat schedule applied when the todo is completed.
@@ -45,7 +45,7 @@ impl Todo {
         Self {
             id: None,
             text,
-            done: false,
+            done_at: None,
             due_date,
             repeat,
             parent_id,
@@ -138,7 +138,12 @@ impl Todo {
     /// `done` filters by completion state: `false` for Index, `true` for History.
     pub fn count_before_today(db: &DatabaseConnection, done: bool) -> usize {
         let today = format_date(today());
-        let query = Entity::find().filter(Column::Done.eq(done)).filter(
+        let done_filter = if done {
+            Column::DoneAt.is_not_null()
+        } else {
+            Column::DoneAt.is_null()
+        };
+        let query = Entity::find().filter(done_filter).filter(
             Condition::any()
                 .add(Expr::cust_with_values("substr(due_date, 1, 10) < ?", [&today]))
                 .add(Column::DueDate.is_null()),
@@ -159,7 +164,7 @@ impl Todo {
 
         match page {
             Page::Due => Entity::find()
-                .filter(Column::Done.eq(false))
+                .filter(Column::DoneAt.is_null())
                 .filter(Expr::cust_with_values("substr(due_date, 1, 10) < ?", [today.clone()]))
                 .order_by_desc(Column::DueDate)
                 .order_by_desc(Column::CreatedAt),
@@ -169,7 +174,7 @@ impl Todo {
             Page::Index => {
                 let null_key = format!("{}~", format_date(today_date - Duration::days(1)));
                 Entity::find()
-                    .filter(Column::Done.eq(false))
+                    .filter(Column::DoneAt.is_null())
                     .order_by(
                         Expr::cust_with_values("CASE WHEN due_date IS NULL THEN ? ELSE due_date END", [null_key]),
                         Order::Asc,
@@ -179,7 +184,7 @@ impl Todo {
             Page::History => {
                 let null_key = format!("{}~", format_date(today_date - Duration::days(1)));
                 Entity::find()
-                    .filter(Column::Done.eq(true))
+                    .filter(Column::DoneAt.is_not_null())
                     .order_by(
                         Expr::cust_with_values("CASE WHEN due_date IS NULL THEN ? ELSE due_date END", [null_key]),
                         Order::Asc,
@@ -205,18 +210,23 @@ impl Todo {
 
     /// Toggles the done state and spawns the next repeat occurrence when marked done.
     pub fn toggle(&mut self, db: &DatabaseConnection) -> Option<Todo> {
-        self.done = !self.done;
+        let prev_done_at = self.done_at;
 
-        if self.done && self.due_date.is_none() {
-            self.due_date = Some(today());
+        if self.done_at.is_some() {
+            self.done_at = None;
+        } else {
+            self.done_at = Some(now());
+            if self.due_date.is_none() {
+                self.due_date = Some(today());
+            }
         }
 
         if !self.update(db) {
-            self.done = !self.done;
+            self.done_at = prev_done_at;
             return None;
         }
 
-        if !self.done {
+        if self.done_at.is_none() {
             return None;
         }
 
@@ -248,7 +258,7 @@ impl Todo {
             Some(id) => ActiveModel {
                 id: Set(id),
                 text: Set(self.text.clone()),
-                done: Set(self.done),
+                done_at: Set(self.done_at.map(format_datetime)),
                 due_date: Set(due_date),
                 repeat: Set(repeat),
                 parent_id: Set(self.parent_id),
@@ -257,7 +267,7 @@ impl Todo {
             },
             None => ActiveModel {
                 text: Set(self.text.clone()),
-                done: Set(self.done),
+                done_at: Set(self.done_at.map(format_datetime)),
                 due_date: Set(due_date),
                 repeat: Set(repeat),
                 parent_id: Set(self.parent_id),
@@ -275,7 +285,7 @@ impl From<Model> for Todo {
         Self {
             id: Some(m.id),
             text: m.text,
-            done: m.done,
+            done_at: m.done_at.as_deref().and_then(parse_datetime),
             due_date: m.due_date.as_deref().and_then(parse_date),
             repeat: m.repeat.as_deref().and_then(Repeat::from_db_str),
             parent_id: m.parent_id,
@@ -292,7 +302,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
     id: i32,
     text: String,
-    done: bool,
+    done_at: Option<String>,
     due_date: Option<String>,
     repeat: Option<String>,
     parent_id: Option<i32>,

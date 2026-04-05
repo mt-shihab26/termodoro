@@ -119,7 +119,8 @@ impl TodosState {
 
     /// Returns a borrowed reference to the currently selected todo, if any.
     pub fn selected_item(&self, page: Page) -> Option<Ref<'_, Todo>> {
-        self.todos_cache.get_item_at(page, self.offset, self.page_size(), self.selected)
+        self.todos_cache
+            .get_item_at(page, self.offset, self.page_size(), self.selected)
     }
 
     /// Updates the visible capacity based on the rendered list area and invalidates caches on change.
@@ -158,7 +159,7 @@ impl TodosState {
 
     /// Returns `true` if the selected todo on the given page can be deleted.
     pub fn can_delete(&self, page: Page, items: &[Todo]) -> bool {
-        !matches!(page, Page::History) && items.get(self.selected).is_some_and(|todo| !todo.done)
+        !matches!(page, Page::History) && items.get(self.selected).is_some_and(|todo| todo.done_at.is_none())
     }
 
     /// Clamps the selection to valid bounds, scrolling back a page if the current page is empty.
@@ -313,7 +314,7 @@ impl TodosState {
                 Some(todo) => todo,
                 None => return (),
             };
-            if todo.done {
+            if todo.done_at.is_some() {
                 return ();
             }
             todo.delete(&self.db)

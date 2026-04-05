@@ -1,7 +1,11 @@
 use sea_orm::DatabaseConnection;
 use time::{Date, Duration};
 
-use crate::{kinds::repeat::Repeat, models::todo::Todo, utils::date::today};
+use crate::{
+    kinds::repeat::Repeat,
+    models::todo::Todo,
+    utils::date::{now, today},
+};
 
 /// Seeds the database with fake todos and returns how many were inserted.
 pub fn seed_todos(count: usize, db: &DatabaseConnection) -> usize {
@@ -62,7 +66,7 @@ pub fn seed_todos(count: usize, db: &DatabaseConnection) -> usize {
 
         let is_repeating = repeat.is_some();
         let mut todo = Todo::new(text, due_date, repeat, None);
-        todo.done = i % 3 != 0;
+        todo.done_at = if i % 3 != 0 { Some(now()) } else { None };
         if todo.save(db) {
             inserted += 1;
             if is_repeating {

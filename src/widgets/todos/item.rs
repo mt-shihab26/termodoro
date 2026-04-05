@@ -63,7 +63,11 @@ impl<'a> ItemWidget<'a> {
 
     /// Builds the display label including checkbox, repeat icon, text, stats, and due date.
     fn label(&self) -> String {
-        let check = if self.props.todo.done { "[✓]" } else { "[ ]" };
+        let check = if self.props.todo.done_at.is_some() {
+            "[✓]"
+        } else {
+            "[ ]"
+        };
         let repeat_icon = if self.props.todo.repeat.is_some() {
             format!("{} ", Repeat::icon())
         } else {
@@ -90,7 +94,7 @@ impl<'a> ItemWidget<'a> {
 
     /// Returns the base text style, applying dim/strikethrough for done or history rows.
     fn base_style(&self) -> Style {
-        if self.props.dimmed || self.props.todo.done {
+        if self.props.dimmed || self.props.todo.done_at.is_some() {
             Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)
         } else {
             Style::default().fg(Color::White)
