@@ -87,11 +87,12 @@ token = "your-auth-token"                  # auth token from: turso db tokens cr
 # Pomodoro timer settings — controls session lengths and when long breaks are triggered.
 [timer]
 show_millis         = false   # show milliseconds in the timer display
-work_duration       = 25     # work session length in minutes        (min: 1, max: 120)
-break_duration      = 5      # short break length in minutes         (min: 1, max: 60)
-long_break_duration = 15     # long break length in minutes          (min: 1, max: 60)
-long_break_interval = 4      # work sessions before a long break     (min: 1, max: 10)
-daily_session_goal  = 16     # target work sessions to complete today (min: 1, max: 24)
+work_duration       = 25      # work session length in minutes         (min: 1, max: 120)
+break_duration      = 5       # short break length in minutes          (min: 1, max: 60)
+long_break_duration = 15      # long break length in minutes           (min: 1, max: 60)
+long_break_interval = 4       # work sessions before a long break      (min: 1, max: 10)
+daily_session_goal  = 16      # target work sessions to complete today (min: 1, max: 24)
+
 ```
 
 ### Root Options
