@@ -99,3 +99,110 @@ fn days_in_month(year: i32, month: Month) -> u8 {
     }
     28
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use time::Month;
+
+    #[test]
+    fn format_date_pads_month_and_day() {
+        let date = Date::from_calendar_date(2024, Month::January, 5).unwrap();
+        assert_eq!(format_date(date), "2024-01-05");
+    }
+
+    #[test]
+    fn parse_date_full() {
+        let date = parse_date("2024-03-15").unwrap();
+        assert_eq!(date.year(), 2024);
+        assert_eq!(date.month(), Month::March);
+        assert_eq!(date.day(), 15);
+    }
+
+    #[test]
+    fn parse_date_from_datetime_string() {
+        let date = parse_date("2024-03-15T12:00:00Z").unwrap();
+        assert_eq!(date.year(), 2024);
+        assert_eq!(date.month(), Month::March);
+        assert_eq!(date.day(), 15);
+    }
+
+    #[test]
+    fn parse_date_invalid_returns_none() {
+        assert!(parse_date("not-a-date").is_none());
+    }
+
+    #[test]
+    fn format_datetime_positive_offset() {
+        let date = Date::from_calendar_date(2024, Month::June, 1).unwrap();
+        let time = Time::from_hms(10, 30, 0).unwrap();
+        let offset = time::UtcOffset::from_hms(5, 30, 0).unwrap();
+        let dt = PrimitiveDateTime::new(date, time).assume_offset(offset);
+        assert_eq!(format_datetime(dt), "2024-06-01T10:30:00+05:30");
+    }
+
+    #[test]
+    fn format_datetime_utc() {
+        let date = Date::from_calendar_date(2024, Month::January, 1).unwrap();
+        let time = Time::from_hms(0, 0, 0).unwrap();
+        let dt = PrimitiveDateTime::new(date, time).assume_utc();
+        assert_eq!(format_datetime(dt), "2024-01-01T00:00:00+00:00");
+    }
+
+    #[test]
+    fn parse_datetime_with_offset() {
+        let dt = parse_datetime("2024-06-01T10:30:00+05:30").unwrap();
+        assert_eq!(dt.year(), 2024);
+        assert_eq!(dt.hour(), 10);
+        assert_eq!(dt.minute(), 30);
+    }
+
+    #[test]
+    fn parse_datetime_utc_z() {
+        let dt = parse_datetime("2024-01-15T08:00:00Z").unwrap();
+        assert_eq!(dt.offset(), time::UtcOffset::UTC);
+        assert_eq!(dt.day(), 15);
+    }
+
+    #[test]
+    fn parse_datetime_date_only() {
+        let dt = parse_datetime("2024-03-20").unwrap();
+        assert_eq!(dt.year(), 2024);
+        assert_eq!(dt.month(), Month::March);
+        assert_eq!(dt.day(), 20);
+        assert_eq!(dt.hour(), 0);
+    }
+
+    #[test]
+    fn shift_month_forward() {
+        let date = Date::from_calendar_date(2024, Month::January, 15).unwrap();
+        let result = shift_month(date, 2);
+        assert_eq!(result.month(), Month::March);
+        assert_eq!(result.day(), 15);
+    }
+
+    #[test]
+    fn shift_month_crosses_year() {
+        let date = Date::from_calendar_date(2024, Month::November, 10).unwrap();
+        let result = shift_month(date, 3);
+        assert_eq!(result.year(), 2025);
+        assert_eq!(result.month(), Month::February);
+    }
+
+    #[test]
+    fn shift_month_clamps_day_to_month_end() {
+        // Jan 31 + 1 month = Feb 29 (2024 is a leap year)
+        let date = Date::from_calendar_date(2024, Month::January, 31).unwrap();
+        let result = shift_month(date, 1);
+        assert_eq!(result.month(), Month::February);
+        assert_eq!(result.day(), 29);
+    }
+
+    #[test]
+    fn shift_month_backward() {
+        let date = Date::from_calendar_date(2024, Month::March, 15).unwrap();
+        let result = shift_month(date, -1);
+        assert_eq!(result.month(), Month::February);
+        assert_eq!(result.day(), 15);
+    }
+}
