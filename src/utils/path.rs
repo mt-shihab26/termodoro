@@ -1,7 +1,7 @@
 use std::{env, path::PathBuf};
 
 /// Returns the path to the config file.
-pub fn config_toml_path() -> PathBuf {
+pub fn config_path() -> PathBuf {
     config_base_path().join("config.toml")
 }
 
@@ -20,6 +20,16 @@ pub fn store_path() -> PathBuf {
     state_base_path().join("store.json")
 }
 
+/// The base directory for config files.
+#[cfg_attr(debug_assertions, allow(dead_code))]
+fn config_base_path() -> PathBuf {
+    #[cfg(debug_assertions)]
+    return local();
+
+    #[cfg(not(debug_assertions))]
+    PathBuf::from(home()).join(".config").join(env!("CARGO_PKG_NAME"))
+}
+
 /// the base directory for runtime state files
 #[cfg_attr(debug_assertions, allow(dead_code))]
 fn state_base_path() -> PathBuf {
@@ -31,16 +41,6 @@ fn state_base_path() -> PathBuf {
         .join(".local")
         .join("state")
         .join(env!("CARGO_PKG_NAME"))
-}
-
-/// The base directory for config files.
-#[cfg_attr(debug_assertions, allow(dead_code))]
-fn config_base_path() -> PathBuf {
-    #[cfg(debug_assertions)]
-    return local();
-
-    #[cfg(not(debug_assertions))]
-    PathBuf::from(home()).join(".config").join(env!("CARGO_PKG_NAME"))
 }
 
 /// Returns the user's home directory, handling both Unix (`HOME`) and Windows (`USERPROFILE`).
