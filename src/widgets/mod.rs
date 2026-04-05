@@ -99,11 +99,13 @@
 //!
 //! ## How the caller wires it together
 //!
+//! ### With state and input handling
+//!
 //! ```rust,ignore
 //! // 1. Own the state
 //! my_state: MyState,
 //!
-//! // 2. Handle input (optional — only when Action/handle are present)
+//! // 2. Handle input
 //! let action = self.my_state.handle(key_event);
 //! match action {
 //!     MyAction::Select(item) => { /* do something with item */ }
@@ -115,6 +117,16 @@
 //! MyWidget::new(self.my_state.props()).render(area, buf);
 //! ```
 //!
+//! ### Stateless widget (no State, no Action)
+//!
+//! ```rust,ignore
+//! // 1. Construct props directly — no state needed
+//! let props = MyProps::new(items);
+//!
+//! // 2. Pass props straight into the widget at render time
+//! MyWidget::new(&props).render(area, buf);
+//! ```
+//!
 //! ---
 //!
 //! ## Rules
@@ -122,7 +134,7 @@
 //! - **State is never passed to the widget** — only `&props`.
 //! - **Widgets are never stored** — created and dropped each frame.
 //! - **Visibility is the caller's concern** — wrap the render call in an `if` instead of adding a flag inside the widget.
-//! - **Implement `Widget for &MyWidget`** (shared ref) unless the widget must mutate itself during render, in which case use `&mut MyWidget`.
+//! - **Implement `Widget for &MyWidget`** (shared ref).
 //! - **`State` is optional** — if the widget has no runtime data to track, construct `Props` directly in the caller and skip `State`.
 //! - **`Action` and `handle` are optional** — add them only when the widget handles input and needs to signal events to the caller. Pure display widgets omit both.
 
