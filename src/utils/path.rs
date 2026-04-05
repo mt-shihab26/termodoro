@@ -44,6 +44,7 @@ fn config_base_path() -> PathBuf {
 }
 
 /// Returns the user's home directory, handling both Unix (`HOME`) and Windows (`USERPROFILE`).
+#[cfg_attr(debug_assertions, allow(dead_code))]
 fn home() -> String {
     env::var("HOME")
         .or_else(|_| env::var("USERPROFILE"))
