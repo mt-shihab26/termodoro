@@ -10,7 +10,7 @@
 [![Crates.io](https://img.shields.io/crates/v/orivo)](https://crates.io/crates/orivo)
 [![docs.rs](https://img.shields.io/docsrs/orivo)](https://docs.rs/orivo)
 
-A terminal-based Todos + Pomodoro timer written in Rust
+A terminal-based (TUI) Todos + Pomodoro timer written in [Rust](https://www.rust-lang.org)
 
 ## Installation
 
