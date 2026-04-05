@@ -110,3 +110,8 @@ A full cycle = `work_duration` × `long_break_interval` work sessions. After tha
 ```
 work → break → work → break → work → break → work → LONG BREAK  (cycle of 4)
 ```
+
+**Daily session goal** (`daily_session_goal`) sets how many work sessions you aim to complete each day. Progress is shown as a session tracker in the timer tab. Once the goal is reached the tracker fills completely.
+
+- Default: `16` sessions
+- Range: `1` – `24` sessions
