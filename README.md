@@ -50,6 +50,12 @@ Then place it somewhere on your `PATH`, or keep it in a directory of your choice
 .\orivo.exe
 ```
 
+### Cargo (any OS, builds from source)
+
+```sh
+cargo install orivo
+```
+
 ## Configuration
 
 Config file location: `~/.config/orivo/config.toml`
