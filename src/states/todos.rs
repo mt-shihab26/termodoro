@@ -94,8 +94,8 @@ impl TodosState {
     }
 
     /// Returns `true` if there are hidden items below the visible window.
-    pub fn show_more_below(&self, loaded_len: usize) -> bool {
-        loaded_len == self.page_size()
+    pub fn show_more_below(&self, loaded_len: usize, total: usize) -> bool {
+        self.offset + loaded_len < total
     }
 
     /// Returns session stats for each visible todo on the given page.

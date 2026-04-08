@@ -201,7 +201,7 @@ impl Tab for TodosTab {
                 self.state.selected(),
                 self.color(),
                 self.state.show_more_above(),
-                self.state.show_more_below(items.len()),
+                self.state.show_more_below(items.len(), total),
             )),
             list_area,
         );
