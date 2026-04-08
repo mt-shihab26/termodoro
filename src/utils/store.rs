@@ -15,6 +15,9 @@ pub struct Store {
     /// Remaining milliseconds per todo, keyed by todo id (or `"none"` when no todo is selected).
     #[serde(default)]
     timer_remaining_millis: HashMap<String, u32>,
+    /// UTC timestamp of when the current phase was first started, per todo id.
+    #[serde(default)]
+    timer_phase_started_at: HashMap<String, OffsetDateTime>,
 }
 
 impl Default for Store {
@@ -23,6 +26,7 @@ impl Default for Store {
             timer_todo_id: None,
             timer_cycle_phase: Phase::Work,
             timer_remaining_millis: HashMap::new(),
+            timer_phase_started_at: HashMap::new(),
         }
     }
 }
@@ -91,6 +95,23 @@ impl Store {
     /// Removes the persisted remaining milliseconds for the given todo and returns `&Self` for chaining.
     pub fn clear_timer_remaining_for_todo(&mut self, todo_id: Option<i32>) -> &Self {
         self.timer_remaining_millis.remove(&todo_key(todo_id));
+        self
+    }
+
+    /// Returns the persisted phase start timestamp for the given todo, if any.
+    pub fn timer_phase_started_at_for_todo(&self, todo_id: Option<i32>) -> Option<OffsetDateTime> {
+        self.timer_phase_started_at.get(&todo_key(todo_id)).copied()
+    }
+
+    /// Sets the phase start timestamp for the given todo and returns `&Self` for chaining.
+    pub fn set_timer_phase_started_at_for_todo(&mut self, todo_id: Option<i32>, started_at: OffsetDateTime) -> &Self {
+        self.timer_phase_started_at.insert(todo_key(todo_id), started_at);
+        self
+    }
+
+    /// Removes the phase start timestamp for the given todo and returns `&Self` for chaining.
+    pub fn clear_timer_phase_started_at_for_todo(&mut self, todo_id: Option<i32>) -> &Self {
+        self.timer_phase_started_at.remove(&todo_key(todo_id));
         self
     }
 }
