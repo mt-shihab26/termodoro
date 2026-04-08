@@ -106,7 +106,7 @@ impl Tab for TodosTab {
                 KeyCode::Char('g') => self.state.go_to_start(pending_g),
                 KeyCode::Char('G') => self.state.go_to_end(self.page),
                 KeyCode::Char(' ') | KeyCode::Enter => self.state.toggle_selected(self.page),
-                KeyCode::Char('d') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                KeyCode::Char('r') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                     self.state.delete_selected(self.page)
                 }
                 KeyCode::Char('a') => {

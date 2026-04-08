@@ -39,7 +39,7 @@ impl Widget for &HintWidget<'_> {
         let hint = match self.props.ui_mode {
             TodosMode::Normal => {
                 if self.props.can_delete {
-                    "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^d]Delete"
+                    "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^r]Delete"
                 } else {
                     "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit"
                 }
