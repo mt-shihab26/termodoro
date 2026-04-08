@@ -151,7 +151,7 @@ impl TimerState {
 
     /// Records the current session and moves to the next phase.
     pub fn advance(&mut self) {
-        self.phase_notifiction();
+        self.phase_notification();
 
         Session::record(
             &self.db,
@@ -167,7 +167,7 @@ impl TimerState {
                     c.invalidate_stats();
                     c.get_today_sessions()
                 } else {
-                    0
+                    1
                 };
                 self.cycle_phase = self.which_break_phase(sessions_count);
                 self.is_running = true;
@@ -179,13 +179,13 @@ impl TimerState {
         }
 
         self.remaining_millis = self.cycle_phase.duration(&self.config);
-        self.started_at = None;
-        self.phase_started_at = None;
+        self.started_at = if self.is_running { Some(Instant::now()) } else { None };
+        self.phase_started_at = if self.is_running { Some(now()) } else { None };
         self.store.set_timer_cycle_phase(self.cycle_phase.clone()).save();
     }
 
     /// Sends a desktop notification describing the completed phase.
-    fn phase_notifiction(&self) {
+    fn phase_notification(&self) {
         let todo_name = self
             .todo_id
             .and_then(|id| self.cache.lock().ok()?.get_todo(id).map(|t| t.text.clone()));
