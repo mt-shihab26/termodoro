@@ -7,12 +7,17 @@ use ratatui::{
 pub struct HintProps {
     /// Whether the todo-picker overlay is currently open.
     selecting_todo: bool,
+    /// Whether the reduce-time dialog is currently open.
+    reducing_time: bool,
 }
 
 impl HintProps {
-    /// Creates new hint props indicating whether todo selection is active.
-    pub fn new(selecting_todo: bool) -> Self {
-        Self { selecting_todo }
+    /// Creates new hint props indicating which overlay, if any, is active.
+    pub fn new(selecting_todo: bool, reducing_time: bool) -> Self {
+        Self {
+            selecting_todo,
+            reducing_time,
+        }
     }
 }
 
@@ -34,8 +39,10 @@ impl Widget for &HintWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let text = if self.props.selecting_todo {
             "[j/k] Navigate   [Enter] Select   [Esc] Cancel"
+        } else if self.props.reducing_time {
+            "[0-9] Enter time   [Backspace] Delete   [Enter] Apply   [Esc] Cancel"
         } else {
-            "[Space] Toggle   [r] Reset   [n] Skip   [t] Select Todo   [T] Clear todo   [m] Millis"
+            "[Space] Toggle   [r] Reset   [n] Skip   [t] Todo   [T] Clear   [m] Millis   [d] Reduce"
         };
         Paragraph::new(text).centered().fg(Color::DarkGray).render(area, buf);
     }

@@ -1,6 +1,6 @@
 [package]
 name = "orivo"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2024"
 description = "A terminal-based Todos + Pomodoro timer written in Rust"
 license = "MIT"
@@ -10,7 +10,7 @@ keywords = ["tui", "pomodoro", "todo", "terminal", "productivity"]
 categories = ["command-line-utilities"]
 
 [dependencies]
-time = { version = "0.3", features = ["local-offset"] }
+time = { version = "0.3", features = ["local-offset", "serde"] }
 tokio = { version = "1", features = ["rt", "rt-multi-thread"] }
 ratatui = { version = "0.30.0", features = ["widget-calendar"] }
 tui-big-text = "0.8.2"

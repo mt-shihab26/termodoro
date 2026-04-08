@@ -34,6 +34,7 @@ pub fn spawn(
 
     thread::spawn(move || {
         let mut last_render_count: u8 = u8::MAX;
+        let mut last_save = std::time::Instant::now();
 
         loop {
             let (interval, running) = {
@@ -46,6 +47,11 @@ pub fn spawn(
                 };
 
                 state.tick();
+
+                if last_save.elapsed() >= Duration::from_secs(60) {
+                    state.save_remaining();
+                    last_save = std::time::Instant::now();
+                }
 
                 (TimerConfig::tick_interval(state.show_millis()), state.is_running())
             };
