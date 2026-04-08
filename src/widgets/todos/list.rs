@@ -73,36 +73,6 @@ impl<'a> ListWidget<'a> {
     }
 }
 
-impl Widget for &ListWidget<'_> {
-    /// Renders the todo list with padding and overflow indicators.
-    fn render(self, area: Rect, buf: &mut Buffer) {
-        let horizontal_padding = 2;
-        let top_padding = 1;
-        let bottom_padding = 1;
-        let padded_area = Rect {
-            x: area.x + horizontal_padding,
-            y: area.y + top_padding,
-            width: area.width.saturating_sub(horizontal_padding * 2),
-            height: area.height.saturating_sub(top_padding + bottom_padding),
-        };
-
-        if padded_area.height == 0 {
-            return;
-        }
-
-        match self.props.page {
-            Page::Index | Page::History => self.render_index(padded_area, buf),
-            Page::Due | Page::Today => self.render_flat(padded_area, buf),
-        }
-
-        IndicatorWidget::new(&IndicatorProps::new(
-            self.props.show_more_above,
-            self.props.show_more_below,
-        ))
-        .render(area, buf);
-    }
-}
-
 impl ListWidget<'_> {
     /// Renders todos as a plain sequential list without date section headers.
     fn render_flat(&self, area: Rect, buf: &mut Buffer) {
@@ -193,6 +163,36 @@ impl ListWidget<'_> {
                 }
             }
         }
+    }
+}
+
+impl Widget for &ListWidget<'_> {
+    /// Renders the todo list with padding and overflow indicators.
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let horizontal_padding = 2;
+        let top_padding = 1;
+        let bottom_padding = 1;
+        let padded_area = Rect {
+            x: area.x + horizontal_padding,
+            y: area.y + top_padding,
+            width: area.width.saturating_sub(horizontal_padding * 2),
+            height: area.height.saturating_sub(top_padding + bottom_padding),
+        };
+
+        if padded_area.height == 0 {
+            return;
+        }
+
+        match self.props.page {
+            Page::Index | Page::History => self.render_index(padded_area, buf),
+            Page::Due | Page::Today => self.render_flat(padded_area, buf),
+        }
+
+        IndicatorWidget::new(&IndicatorProps::new(
+            self.props.show_more_above,
+            self.props.show_more_below,
+        ))
+        .render(area, buf);
     }
 }
 
