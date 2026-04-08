@@ -136,9 +136,7 @@ impl TimerTab {
 
     /// Increments the render counter so the worker thread knows a new frame was drawn.
     fn tick_render_count(&self) {
-        let current = self.count.load(Ordering::Relaxed);
-        let next = (current + 1) % u8::MAX;
-        self.count.store(next, Ordering::Relaxed);
+        self.count.fetch_add(1, Ordering::Relaxed);
     }
 
     /// Returns the todo and stat for the currently selected todo id, if any.
