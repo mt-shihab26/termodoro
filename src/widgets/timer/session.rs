@@ -1,6 +1,7 @@
 use ratatui::{
-    prelude::{Buffer, Rect, Stylize, Widget},
-    widgets::Paragraph,
+    layout::{Constraint, Layout},
+    prelude::{Buffer, Color, Rect, Style, Stylize, Widget},
+    widgets::{LineGauge, Paragraph},
 };
 
 use crate::kinds::phase::COLOR;
@@ -23,7 +24,7 @@ impl SessionProps {
     }
 }
 
-/// Stateless widget that renders "Session X / Y" progress text.
+/// Stateless widget that renders "Session X / Y" text and a centered 50%-wide progress bar.
 pub struct SessionWidget<'a> {
     /// Borrowed session props for this render pass.
     props: &'a SessionProps,
@@ -37,14 +38,42 @@ impl<'a> SessionWidget<'a> {
 }
 
 impl Widget for &SessionWidget<'_> {
-    /// Renders the session count centered into the buffer.
+    /// Renders the session count and a horizontally centered progress bar.
     fn render(self, area: Rect, buf: &mut Buffer) {
+        let [text_row, gauge_row] =
+            Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).areas(area);
+
         Paragraph::new(format!(
             "Session {} / {}",
             self.props.sessions, self.props.daily_session_goal
         ))
         .centered()
         .fg(COLOR)
-        .render(area, buf);
+        .render(text_row, buf);
+
+        let [_, gauge_col, _] = Layout::horizontal([
+            Constraint::Fill(1),
+            Constraint::Percentage(50),
+            Constraint::Fill(1),
+        ])
+        .areas(gauge_row);
+
+        let ratio = if self.props.daily_session_goal == 0 {
+            1.0
+        } else {
+            (self.props.sessions as f64 / self.props.daily_session_goal as f64).min(1.0)
+        };
+
+        let unfilled_color = if self.props.sessions >= self.props.daily_session_goal {
+            COLOR
+        } else {
+            Color::DarkGray
+        };
+
+        LineGauge::default()
+            .ratio(ratio)
+            .filled_style(Style::new().fg(COLOR))
+            .unfilled_style(Style::new().fg(unfilled_color))
+            .render(gauge_col, buf);
     }
 }

@@ -269,7 +269,7 @@ impl Tab for TimerTab {
             _,
             hint_row,
         ] = Layout::vertical([
-            Constraint::Length(1),
+            Constraint::Length(2),
             Constraint::Fill(1),
             Constraint::Length(1),
             Constraint::Length(1),
