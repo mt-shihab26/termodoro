@@ -44,17 +44,24 @@ impl TimerState {
     /// Creates a new `TimerState` in the initial paused work phase.
     pub fn new(db: DatabaseConnection, config: TimerConfig, cache: Arc<Mutex<TimerCache>>, store: Store) -> Self {
         let show_millis = config.show_millis();
-        let remaining_millis = store.timer_cycle_phase().duration(&config);
+
+        let todo_id = store.timer_todo_id();
+
+        let cycle_phase = store.timer_cycle_phase().clone();
+
+        let remaining_millis = store
+            .timer_remaining_for_todo(todo_id)
+            .unwrap_or_else(|| cycle_phase.duration(&config));
 
         Self {
-            cycle_phase: store.timer_cycle_phase().clone(),
+            cycle_phase,
             remaining_millis,
             started_at: None,
             phase_started_at: None,
             is_running: false,
             config,
             db,
-            todo_id: store.timer_todo_id(),
+            todo_id,
             cache,
             show_millis,
             store,
@@ -102,8 +109,30 @@ impl TimerState {
 
     /// Sets the currently associated todo on the timer state and persists it to disk.
     pub fn set_todo_id(&mut self, todo_id: Option<i32>) {
+        // Persist remaining time for the outgoing todo before switching.
+        let current = self.current_millis();
+        self.store.set_timer_remaining_for_todo(self.todo_id, current);
+
         self.todo_id = todo_id;
+
+        // Restore saved remaining for the incoming todo, falling back to the full phase duration.
+        self.remaining_millis = self
+            .store
+            .timer_remaining_for_todo(self.todo_id)
+            .unwrap_or_else(|| self.cycle_phase.duration(&self.config));
+
+        // Re-anchor the wall-clock start so the restored time is used correctly.
+        if self.is_running {
+            self.started_at = Some(Instant::now());
+        }
+
         self.store.set_timer_todo_id(self.todo_id).save();
+    }
+
+    /// Saves the current remaining time for the active todo to the store.
+    pub fn save_remaining(&mut self) {
+        let millis = self.current_millis();
+        self.store.set_timer_remaining_for_todo(self.todo_id, millis).save();
     }
 
     /// Returns the current remaining time derived from the wall clock.
@@ -120,6 +149,9 @@ impl TimerState {
             self.remaining_millis = self.current_millis();
             self.started_at = None;
             self.is_running = false;
+            self.store
+                .set_timer_remaining_for_todo(self.todo_id, self.remaining_millis)
+                .save();
         } else {
             if self.phase_started_at.is_none() {
                 self.phase_started_at = Some(now());
@@ -140,6 +172,7 @@ impl TimerState {
         self.started_at = None;
         self.phase_started_at = None;
         self.is_running = false;
+        self.store.clear_timer_remaining_for_todo(self.todo_id).save();
     }
 
     /// Called every tick — advances the phase if time has expired.
@@ -181,6 +214,8 @@ impl TimerState {
         self.remaining_millis = self.cycle_phase.duration(&self.config);
         self.started_at = if self.is_running { Some(Instant::now()) } else { None };
         self.phase_started_at = if self.is_running { Some(now()) } else { None };
+        // Clear saved remaining — the phase just changed, so the full duration applies.
+        self.store.clear_timer_remaining_for_todo(self.todo_id);
         self.store.set_timer_cycle_phase(self.cycle_phase.clone()).save();
     }
 

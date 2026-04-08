@@ -153,6 +153,14 @@ impl TimerTab {
     }
 }
 
+impl Drop for TimerTab {
+    fn drop(&mut self) {
+        if let Ok(mut state) = self.state.lock() {
+            state.save_remaining();
+        }
+    }
+}
+
 impl Tab for TimerTab {
     /// Returns the tab label shown in the tab bar.
     fn name(&self) -> &str {
