@@ -4,6 +4,8 @@ pub mod clock;
 pub mod hint;
 /// Phase label widget for work and break states.
 pub mod phase;
+/// Reduce-remaining dialog for subtracting a MM:SS amount from the timer.
+pub mod reduce_picker;
 /// Session progress widget showing completed sessions versus the goal.
 pub mod session;
 /// Running and paused status label widget.

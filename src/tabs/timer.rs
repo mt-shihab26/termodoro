@@ -31,6 +31,7 @@ use crate::{
             clock::{ClockProps, ClockWidget},
             hint::{HintProps, HintWidget},
             phase::{PhaseProps, PhaseWidget},
+            reduce_picker::{ReducePickerAction, ReducePickerState, ReducePickerWidget},
             session::{SessionProps, SessionWidget},
             status::{StatusProps, StatusWidget},
             todo_picker::{TodoPickerAction, TodoPickerProps, TodoPickerState, TodoPickerWidget},
@@ -52,6 +53,8 @@ pub struct TimerTab {
     state: Arc<Mutex<TimerState>>,
     /// Active todo picker overlay, `None` when closed.
     picker: Option<TodoPickerState>,
+    /// Active reduce-time dialog, `None` when closed.
+    reduce_state: Option<ReducePickerState>,
 }
 
 impl TimerTab {
@@ -71,6 +74,7 @@ impl TimerTab {
             cache,
             state,
             picker: None,
+            reduce_state: None,
         }
     }
 
@@ -127,6 +131,24 @@ impl TimerTab {
         self.set_todo(None);
     }
 
+    /// Opens the reduce-time dialog.
+    fn open_reduce_picker(&mut self) {
+        self.reduce_state = Some(ReducePickerState::new());
+    }
+
+    /// Applies the reduction and closes the dialog.
+    fn reduce_picker_apply(&mut self, millis: u32) {
+        if let Ok(mut state) = self.state.lock() {
+            state.reduce_remaining(millis);
+        }
+        self.reduce_state = None;
+    }
+
+    /// Closes the reduce dialog without applying.
+    fn reduce_picker_cancel(&mut self) {
+        self.reduce_state = None;
+    }
+
     /// Toggles millisecond display on the clock.
     fn toggle_millis(&self) {
         if let Ok(mut state) = self.state.lock() {
@@ -172,13 +194,22 @@ impl Tab for TimerTab {
         COLOR
     }
 
-    /// Handles a key event, delegating to the picker overlay or timer controls.
+    /// Handles a key event, delegating to the active overlay or timer controls.
     fn handle(&mut self, key: KeyEvent) -> Result<()> {
         if let Some(picker) = &mut self.picker {
             match picker.handle(key) {
                 TodoPickerAction::Select(id) => self.picker_select(id),
                 TodoPickerAction::Cancel => self.picker_cancel(),
                 TodoPickerAction::None => {}
+            }
+            return Ok(());
+        }
+
+        if let Some(reduce) = &mut self.reduce_state {
+            match reduce.handle(key) {
+                ReducePickerAction::Reduce(millis) => self.reduce_picker_apply(millis),
+                ReducePickerAction::Cancel => self.reduce_picker_cancel(),
+                ReducePickerAction::None => {}
             }
             return Ok(());
         }
@@ -190,6 +221,7 @@ impl Tab for TimerTab {
             KeyCode::Char('t') => self.open_picker(),
             KeyCode::Char('T') => self.clear_todo(),
             KeyCode::Char('m') => self.toggle_millis(),
+            KeyCode::Char('d') => self.open_reduce_picker(),
             _ => {}
         }
 
@@ -258,10 +290,14 @@ impl Tab for TimerTab {
         let (todo, stat) = self.todo_info();
 
         TodoShowWidget::new(&TodoShowProps::new(todo.as_ref(), stat.as_ref())).render(todo_row, buf);
-        HintWidget::new(&HintProps::new(self.picker.is_some())).render(hint_row, buf);
+        HintWidget::new(&HintProps::new(self.picker.is_some(), self.reduce_state.is_some())).render(hint_row, buf);
 
         if let Some(picker) = &self.picker {
             TodoPickerWidget::new(&picker.props()).render(inner, buf);
+        }
+
+        if let Some(reduce) = &self.reduce_state {
+            ReducePickerWidget::new(reduce.props()).render(inner, buf);
         }
     }
 }

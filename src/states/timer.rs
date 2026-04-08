@@ -143,6 +143,18 @@ impl TimerState {
         self.store.set_timer_todo_id(self.todo_id).save();
     }
 
+    /// Subtracts `millis` from the current remaining time and persists the result.
+    pub fn reduce_remaining(&mut self, millis: u32) {
+        let new_remaining = self.current_millis().saturating_sub(millis);
+        self.remaining_millis = new_remaining;
+        if self.is_running {
+            self.started_at = Some(Instant::now());
+        }
+        self.store
+            .set_timer_remaining_for_todo(self.todo_id, new_remaining)
+            .save();
+    }
+
     /// Saves the current remaining time and phase start for the active todo to the store.
     pub fn save_remaining(&mut self) {
         let millis = self.current_millis();
