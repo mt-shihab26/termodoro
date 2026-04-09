@@ -7,8 +7,7 @@ use std::{
 use ratatui::{
     Frame,
     crossterm::event::{KeyCode, KeyEvent, KeyModifiers},
-    prelude::{Color, Constraint, Layout, Rect, Stylize, Widget},
-    widgets::Block,
+    prelude::{Color, Constraint, Layout, Rect, Widget},
 };
 use sea_orm::DatabaseConnection;
 
@@ -18,13 +17,16 @@ use crate::{
     models::todo::Todo,
     states::todos::TodosState,
     utils::date::now,
-    widgets::todos::{
-        hint::{HintProps, HintWidget},
-        input::{InputAction, InputProps, InputState, InputWidget},
-        list::{ListProps, ListWidget},
-        search::{SearchAction, SearchProps, SearchState, SearchWidget},
-        status::{StatusProps, StatusWidget},
-        tabs::{TabsProps, TabsWidget},
+    widgets::{
+        layout::border::{BorderProps, BorderWidget},
+        todos::{
+            hint::{HintProps, HintWidget},
+            input::{InputAction, InputProps, InputState, InputWidget},
+            list::{ListProps, ListWidget},
+            search::{SearchAction, SearchProps, SearchState, SearchWidget},
+            status::{StatusProps, StatusWidget},
+            tabs::{TabsProps, TabsWidget},
+        },
     },
 };
 
@@ -197,11 +199,7 @@ impl Tab for TodosTab {
     fn render(&self, frame: &mut Frame, area: Rect) {
         let buf = frame.buffer_mut();
 
-        let block = Block::bordered().fg(self.color());
-        let inner = block.inner(area);
-        block.render(area, buf);
-
-        let area = inner;
+        let area = BorderWidget::new(&BorderProps::new(self.color()), area).render(area, buf);
 
         let (tabs_area, list_area, hint_area, bottom_area) =
             if matches!(self.mode, TodosMode::Adding | TodosMode::Editing) {
