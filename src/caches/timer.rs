@@ -1,10 +1,8 @@
 use sea_orm::DatabaseConnection;
 
-use crate::{
-    models::{
-        session::{Session, Stat},
-        todo::Todo,
-    },
+use crate::models::{
+    session::{Session, Stat},
+    todo::Todo,
 };
 
 /// Per-tab cache for today's todos and their session stats.
