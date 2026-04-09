@@ -7,4 +7,6 @@ pub enum TodosMode {
     Adding,
     /// Input mode for editing the selected todo.
     Editing,
+    /// Search mode for filtering todos by text on the current page.
+    Searching,
 }

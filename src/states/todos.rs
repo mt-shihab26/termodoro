@@ -34,6 +34,12 @@ pub struct TodosState {
     todos_cache: TodosCache,
     /// Shared timer cache, invalidated when todos change.
     timer_cache: Arc<Mutex<TimerCache>>,
+    /// Active search query; empty string means no search is active.
+    search_query: String,
+    /// Cached search result page; invalidated when query or offset changes.
+    search_items: RefCell<Option<Vec<Todo>>>,
+    /// Cached total count of search results; invalidated when query or data changes.
+    search_count: RefCell<Option<usize>>,
 }
 
 impl TodosState {
@@ -48,6 +54,9 @@ impl TodosState {
             page_size: Cell::new(1),
             list_state: RefCell::new(ListState::default()),
             timer_cache,
+            search_query: String::new(),
+            search_items: RefCell::new(None),
+            search_count: RefCell::new(None),
         }
     }
 
@@ -98,10 +107,50 @@ impl TodosState {
         self.offset + loaded_len < total
     }
 
+    /// Returns the active search query (empty string means no search is active).
+    pub fn search_query(&self) -> &str {
+        &self.search_query
+    }
+
+    /// Returns `true` when a non-empty search filter is applied.
+    pub fn is_searching(&self) -> bool {
+        !self.search_query.is_empty()
+    }
+
+    /// Sets the search query and resets pagination; re-fetches results on the next access.
+    pub fn set_search_query(&mut self, query: String, page: Page) {
+        self.search_query = query;
+        *self.search_items.borrow_mut() = None;
+        *self.search_count.borrow_mut() = None;
+        self.offset = 0;
+        self.selected = 0;
+        self.clamp_selected(page);
+    }
+
+    /// Clears the search query and invalidates search caches.
+    pub fn clear_search(&mut self) {
+        self.search_query.clear();
+        *self.search_items.borrow_mut() = None;
+        *self.search_count.borrow_mut() = None;
+    }
+
+    /// Returns a cached page of search results, querying the DB if the cache is empty.
+    fn get_search_items(&self, page: Page) -> Ref<'_, [Todo]> {
+        if self.search_items.borrow().is_none() {
+            *self.search_items.borrow_mut() = Some(Todo::list_search(
+                &self.db,
+                page,
+                &self.search_query,
+                self.offset,
+                self.page_size(),
+            ));
+        }
+        Ref::map(self.search_items.borrow(), |c| c.as_deref().unwrap_or(&[]))
+    }
+
     /// Returns session stats for each visible todo on the given page.
     pub fn stats(&self, page: Page) -> Vec<Option<Stat>> {
-        self.todos_cache
-            .get_items(page, self.offset, self.page_size())
+        self.items(page)
             .iter()
             .map(|t| t.id.map(|id| Session::stat(&self.db, id)))
             .collect()
@@ -109,18 +158,38 @@ impl TodosState {
 
     /// Returns a borrowed slice of the visible todos for the given page.
     pub fn items(&self, page: Page) -> Ref<'_, [Todo]> {
-        self.todos_cache.get_items(page, self.offset, self.page_size())
+        if self.search_query.is_empty() {
+            self.todos_cache.get_items(page, self.offset, self.page_size())
+        } else {
+            self.get_search_items(page)
+        }
     }
 
     /// Returns the total number of todos for the given page.
     pub fn count(&self, page: Page) -> usize {
-        self.todos_cache.get_count(page)
+        if self.search_query.is_empty() {
+            self.todos_cache.get_count(page)
+        } else {
+            let mut count = self.search_count.borrow_mut();
+            if count.is_none() {
+                *count = Some(Todo::count_search(&self.db, page, &self.search_query));
+            }
+            count.unwrap_or(0)
+        }
     }
 
     /// Returns a borrowed reference to the currently selected todo, if any.
     pub fn selected_item(&self, page: Page) -> Option<Ref<'_, Todo>> {
-        self.todos_cache
-            .get_item_at(page, self.offset, self.page_size(), self.selected)
+        if self.search_query.is_empty() {
+            self.todos_cache
+                .get_item_at(page, self.offset, self.page_size(), self.selected)
+        } else {
+            let items = self.get_search_items(page);
+            if items.get(self.selected).is_none() {
+                return None;
+            }
+            Some(Ref::map(items, |items| &items[self.selected]))
+        }
     }
 
     /// Updates the visible capacity based on the rendered list area and invalidates caches on change.
@@ -140,9 +209,11 @@ impl TodosState {
         self.page_size.get().max(1)
     }
 
-    /// Invalidates all todo caches.
+    /// Invalidates all todo caches including search results.
     fn clear_caches(&self) {
         self.todos_cache.invalidate_all();
+        *self.search_items.borrow_mut() = None;
+        *self.search_count.borrow_mut() = None;
     }
 
     /// Invalidates the timer cache's todo list so the picker reflects recent changes.
@@ -152,9 +223,10 @@ impl TodosState {
         }
     }
 
-    /// Invalidates only the items cache, keeping counts intact.
+    /// Invalidates only the items cache (keeping counts), including the search items page.
     fn invalidate_items(&self) {
         self.todos_cache.invalidate_items();
+        *self.search_items.borrow_mut() = None;
     }
 
     /// Returns `true` if the selected todo on the given page can be deleted.

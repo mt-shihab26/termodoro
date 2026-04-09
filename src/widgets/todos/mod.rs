@@ -16,3 +16,5 @@ pub mod repeat;
 pub mod status;
 /// Page tab bar for switching todo views.
 pub mod tabs;
+/// Search bar widget and state for filtering todos by text.
+pub mod search;
