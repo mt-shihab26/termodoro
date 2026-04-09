@@ -23,20 +23,11 @@ curl -fsSL https://github.com/mt-shihab26/orivo/releases/latest/download/install
 The script will:
 
 - **Install sqlite3** — the only system dependency, detected and installed automatically for your distro
-- **Download the binary** — fetches the latest release for your OS and architecture
-- **Install the binary** — places `orivo` in `~/.local/bin`
-- **Install the desktop entry** *(Linux only)* — registers orivo as an app so it appears in your launcher
-- **Support desktop terminal selection** *(Linux only)* — use `--terminal kitty` or `--terminal alacritty` for the desktop entry
-- **Install the icon** *(Linux only)* — installs the app icon to the hicolor theme
+- **Install the binary** — fetches the latest release for your OS and architecture. places `orivo` in `~/.local/bin`
+- **Install the desktop entry** *(Linux only)* — registers orivo in your launcher. Defaults to kitty; pass `-s -- --terminal alacritty` to use alacritty instead
+- **Install the icon** *(Linux only)* — installs the app icon to the hicolor theme for the desktop entry
 
-Running the same command again will **upgrade** to the latest version, or do nothing if already up to date.
-
-Options:
-
-```sh
-# Choose terminal for the desktop entry (default: kitty)
-curl -fsSL https://github.com/mt-shihab26/orivo/releases/latest/download/install.sh | bash -s -- --terminal alacritty
-```
+> Running the same command again will **upgrade** to the latest version, or do nothing if already up to date.
 
 ### Windows
 
