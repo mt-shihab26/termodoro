@@ -1,6 +1,7 @@
 /// Help command that prints usage for all available commands.
 pub mod help;
-/// Development command that resets and seeds the database.
+/// Development command that resets and seeds the database (excluded from release builds).
+#[cfg(debug_assertions)]
 pub mod seed;
 /// Command that launches the terminal UI.
 pub mod tui;
