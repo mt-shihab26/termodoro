@@ -14,7 +14,7 @@ A terminal-based (TUI) Todos + Pomodoro timer written in [Rust](https://www.rust
 
 ## Installation
 
-### Linux and macOS
+### Linux Or macOS
 
 ```sh
 curl -fsSL https://github.com/mt-shihab26/orivo/releases/latest/download/install.sh | bash
@@ -30,6 +30,8 @@ The script will:
 > Running the same command again will **upgrade** to the latest version, or do nothing if already up to date.
 
 ### Windows
+
+> **Requires sqlite3** — install it and ensure it's on your `PATH` before running.
 
 Download the Windows release binary from the latest GitHub Release:
 
@@ -48,6 +50,8 @@ Then place it somewhere on your `PATH`, or keep it in a directory of your choice
 ```
 
 ### Cargo (any OS, builds from source)
+
+> **Requires sqlite3** — install it for your OS and ensure it's on your `PATH` before building.
 
 ```sh
 cargo install orivo
