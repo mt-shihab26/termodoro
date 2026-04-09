@@ -34,7 +34,7 @@ Usage:
 1. Search for orivo in your launcher (opens in Kitty or Alacritty)
 2. Run from any terminal (`~/.local/bin` must be in your `PATH`):
 ```sh
-orivo
+$ orivo
 ```
 
 ### Windows
@@ -47,14 +47,14 @@ Download the Windows release binary from the latest GitHub Release:
 - `orivo-vX.Y.Z-windows-aarch64.exe`
 
 ```powershell
-mv orivo-vX.Y.Z-windows-x86_64.exe orivo.exe
+PS> mv orivo-vX.Y.Z-windows-x86_64.exe orivo.exe
 ```
 
 Then place the binary somewhere on your `PATH`.
 
 Run from any terminal:
 ```powershell
-orivo
+PS> orivo
 ```
 
 ### Cargo (any OS, builds from source)
@@ -62,12 +62,12 @@ orivo
 **Requires sqlite3** — install it for your OS and ensure it's on your `PATH` before building.
 
 ```sh
-cargo install orivo
+$ cargo install orivo
 ```
 
 Run from any terminal:
 ```sh
-orivo
+$ orivo
 ```
 
 ## Configuration
@@ -112,10 +112,10 @@ daily_session_goal  = 16      # target work sessions to complete today (min: 1, 
 Orivo uses [Turso](https://turso.tech) as its database — a libSQL-compatible SQLite database. You need a `url` and `token` to connect.
 
 ```sh
-turso auth login
-turso db create orivo
-turso db show orivo --url      # → paste as url
-turso db tokens create orivo   # → paste as token
+$ turso auth login
+$ turso db create orivo
+$ turso db show orivo --url      # → paste as url
+$ turso db tokens create orivo   # → paste as token
 ```
 
 ### Timer (`[timer]`)
