@@ -12,6 +12,8 @@ pub mod item;
 pub mod list;
 /// Repeat-rule picker overlay for recurring todos.
 pub mod repeat;
+/// Search bar widget and state for filtering todos by text.
+pub mod search;
 /// Pagination and list status bar widget.
 pub mod status;
 /// Page tab bar for switching todo views.

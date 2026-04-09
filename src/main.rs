@@ -21,7 +21,7 @@ use std::{
 };
 
 use orivo::{
-    cmds::{Cmd, help::Help, seed::Seed, tui::Tui, version::Version},
+    cmds::{Cmd, help::Help, tui::Tui, version::Version},
     config::Config,
     utils::db,
 };
@@ -30,7 +30,8 @@ use orivo::{
 fn main() -> Result<()> {
     match env::args().nth(1).as_deref() {
         None | Some("tui") => Box::new(Tui::new(Config::load()?, db::connect()?)).run(),
-        Some("seed") => Box::new(Seed::new()).run(),
+        #[cfg(debug_assertions)]
+        Some("seed") => Box::new(orivo::cmds::seed::Seed::new()).run(),
         Some("version") | Some("--version") | Some("-V") => Box::new(Version::new()).run(),
         Some("help") | Some("--help") | Some("-h") => help(),
         Some(cmd) => unknown(cmd),
@@ -39,7 +40,10 @@ fn main() -> Result<()> {
 
 /// Builds and runs the aggregated help command.
 fn help() -> Result<()> {
-    let helps = [Tui::help, Seed::help, Version::help, Help::help];
+    #[cfg(debug_assertions)]
+    let helps = [Tui::help, orivo::cmds::seed::Seed::help, Version::help, Help::help];
+    #[cfg(not(debug_assertions))]
+    let helps = [Tui::help, Version::help, Help::help];
     Box::new(Help::new(&helps)).run()
 }
 

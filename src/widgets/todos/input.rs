@@ -1,6 +1,6 @@
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent, KeyModifiers},
-    prelude::{Buffer, Color, Constraint, Frame, Layout, Rect, Style, Stylize, Widget},
+    prelude::{Buffer, Color, Constraint, Layout, Rect, Style, Stylize, Widget},
     text::Span,
     widgets::{Block, Paragraph},
 };
@@ -117,10 +117,10 @@ impl InputState {
         InputAction::None
     }
 
-    /// Renders the calendar overlay into the frame if it is currently open.
-    pub fn render_calendar(&self, frame: &mut Frame, area: Rect) {
+    /// Renders the calendar overlay into the buffer if it is currently open.
+    pub fn render_calendar(&self, area: Rect, buf: &mut Buffer) {
         if let Some(cal) = &self.calendar_state {
-            frame.render_widget(&CalendarWidget::new(cal.props()), area);
+            CalendarWidget::new(cal.props()).render(area, buf);
         }
     }
 }

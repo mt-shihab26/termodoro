@@ -117,6 +117,40 @@ impl Todo {
         }
     }
 
+    fn base_search_query(page: Page, query: &str) -> sea_orm::Select<Entity> {
+        let pattern = format!("%{}%", query.to_lowercase());
+        Self::base_query(page).filter(Expr::cust_with_values("lower(text) LIKE ?", [pattern]))
+    }
+
+    /// Returns a paginated list of todos matching `query` (case-insensitive) on the given page.
+    pub fn list_search(db: &DatabaseConnection, page: Page, query: &str, offset: usize, limit: usize) -> Vec<Todo> {
+        if limit == 0 {
+            return vec![];
+        }
+        let query_stmt = Self::base_search_query(page, query)
+            .offset(offset as u64)
+            .limit(limit as u64);
+        match rt().block_on(async { query_stmt.all(db).await.map_err(io_err) }) {
+            Ok(models) => models.into_iter().map(Todo::from).collect(),
+            Err(e) => {
+                log_error!("failed to search todos: {e}");
+                vec![]
+            }
+        }
+    }
+
+    /// Returns the total number of todos matching `query` (case-insensitive) on the given page.
+    pub fn count_search(db: &DatabaseConnection, page: Page, query: &str) -> usize {
+        let query_stmt = Self::base_search_query(page, query);
+        match rt().block_on(async { query_stmt.count(db).await.map_err(io_err) }) {
+            Ok(count) => count as usize,
+            Err(e) => {
+                log_error!("failed to count search results: {e}");
+                0
+            }
+        }
+    }
+
     /// Returns a paginated list of todos for the given page filter.
     pub fn list(db: &DatabaseConnection, page: Page, offset: usize, limit: usize) -> Vec<Todo> {
         if limit == 0 {
