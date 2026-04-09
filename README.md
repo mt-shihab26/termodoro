@@ -52,8 +52,6 @@ mv orivo-vX.Y.Z-windows-x86_64.exe orivo.exe
 
 Then place the binary somewhere on your `PATH`.
 
-Usage:
-
 Run from any terminal:
 ```powershell
 orivo
@@ -61,13 +59,11 @@ orivo
 
 ### Cargo (any OS, builds from source)
 
-> **Requires sqlite3** — install it for your OS and ensure it's on your `PATH` before building.
+**Requires sqlite3** — install it for your OS and ensure it's on your `PATH` before building.
 
 ```sh
 cargo install orivo
 ```
-
-Usage:
 
 Run from any terminal:
 ```sh
