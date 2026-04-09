@@ -8,4 +8,5 @@
 6. [x] Add option for reducing remaining time with a input box
 7. Implement database backup system.
 8. Add work session target on the todo.
+9. Use the same session color on everywhere on the timer tab
 
