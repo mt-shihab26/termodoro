@@ -14,7 +14,7 @@ A terminal-based (TUI) Todos + Pomodoro timer written in [Rust](https://www.rust
 
 ## Installation
 
-### Linux Or macOS
+### Linux or macOS
 
 ```sh
 curl -fsSL https://github.com/mt-shihab26/orivo/releases/latest/download/install.sh | bash
@@ -23,30 +23,40 @@ curl -fsSL https://github.com/mt-shihab26/orivo/releases/latest/download/install
 The script will:
 
 - **Install sqlite3** — the only system dependency, detected and installed automatically for your distro
-- **Install the binary** — fetches the latest release for your OS and architecture. places `orivo` in `~/.local/bin`
-- **Install the desktop entry** *(Linux only)* — registers orivo in your launcher. Defaults to kitty; pass `-s -- --terminal alacritty` to use alacritty instead
+- **Install the binary** — fetches the latest release for your OS and architecture, then places `orivo` in `~/.local/bin`
+- **Install the desktop entry** *(Linux only)* — registers orivo in your launcher (defaults to Kitty; pass `-s -- --terminal alacritty` to use Alacritty instead)
 - **Install the icon** *(Linux only)* — installs the app icon to the hicolor theme for the desktop entry
 
 > Running the same command again will **upgrade** to the latest version, or do nothing if already up to date.
 
+Usage:
+
+1. Search for orivo in your launcher (opens in Kitty or Alacritty)
+2. Run from any terminal (`~/.local/bin` must be in your `PATH`):
+```sh
+orivo
+```
+
 ### Windows
 
-> **Requires sqlite3** — install it and ensure it's on your `PATH` before running.
+**Requires sqlite3** — install it and ensure it's on your `PATH` before running.
 
 Download the Windows release binary from the latest GitHub Release:
 
 - `orivo-vX.Y.Z-windows-x86_64.exe`
 - `orivo-vX.Y.Z-windows-aarch64.exe`
 
-
 ```powershell
 mv orivo-vX.Y.Z-windows-x86_64.exe orivo.exe
 ```
 
-Then place it somewhere on your `PATH`, or keep it in a directory of your choice and run it directly:
+Then place the binary somewhere on your `PATH`.
 
+Usage:
+
+Run from any terminal:
 ```powershell
-.\orivo.exe
+orivo
 ```
 
 ### Cargo (any OS, builds from source)
@@ -55,6 +65,13 @@ Then place it somewhere on your `PATH`, or keep it in a directory of your choice
 
 ```sh
 cargo install orivo
+```
+
+Usage:
+
+Run from any terminal:
+```sh
+orivo
 ```
 
 ## Configuration
@@ -96,7 +113,7 @@ daily_session_goal  = 16      # target work sessions to complete today (min: 1, 
 
 ### Database (`[db]`)
 
-Orivo uses [Turso](https://turso.tech) as its database — a libSQL-compatible SQLite database built on top of SQLite. You need a `url` and `token` to connect.
+Orivo uses [Turso](https://turso.tech) as its database — a libSQL-compatible SQLite database. You need a `url` and `token` to connect.
 
 ```sh
 turso auth login
@@ -119,7 +136,7 @@ A full cycle = `work_duration` × `long_break_interval` work sessions. After tha
 work → break → work → break → work → break → work → LONG BREAK  (cycle of 4)
 ```
 
-**Daily session goal** (`daily_session_goal`) sets how many work sessions you aim to complete each day. Progress is shown as a session tracker in the timer tab. Once the goal is reached the tracker fills completely.
+**Daily session goal** (`daily_session_goal`) sets how many work sessions you aim to complete each day. Progress is shown as a session tracker in the timer tab. Once the goal is reached, the tracker fills completely.
 
 - Default: `16` sessions
 - Range: `1` – `24` sessions
