@@ -100,6 +100,23 @@ impl Todo {
         if next.save(db) { Some(next) } else { None }
     }
 
+    /// Returns today's todos that are not yet done, for the timer picker.
+    pub fn list_today_pending(db: &DatabaseConnection) -> Vec<Todo> {
+        let today = format_date(today());
+        let query = Entity::find()
+            .filter(Expr::cust_with_values("substr(due_date, 1, 10) = ?", [today]))
+            .filter(Column::DoneAt.is_null())
+            .order_by_desc(Column::CreatedAt);
+
+        match rt().block_on(async { query.all(db).await.map_err(io_err) }) {
+            Ok(models) => models.into_iter().map(Todo::from).collect(),
+            Err(e) => {
+                log_error!("failed to load today's pending todos: {e}");
+                vec![]
+            }
+        }
+    }
+
     /// Returns a paginated list of todos for the given page filter.
     pub fn list(db: &DatabaseConnection, page: Page, offset: usize, limit: usize) -> Vec<Todo> {
         if limit == 0 {

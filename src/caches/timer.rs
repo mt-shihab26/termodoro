@@ -1,7 +1,6 @@
 use sea_orm::DatabaseConnection;
 
 use crate::{
-    kinds::page::Page,
     models::{
         session::{Session, Stat},
         todo::Todo,
@@ -31,10 +30,10 @@ impl TimerCache {
         }
     }
 
-    /// Returns the cached todo list, querying the DB if needed.
+    /// Returns the cached todo list (excluding done todos), querying the DB if needed.
     pub fn get_todos(&mut self) -> &[Todo] {
         if self.todos.is_none() {
-            self.todos = Some(Todo::list(&self.db, Page::Today, 0, 100));
+            self.todos = Some(Todo::list_today_pending(&self.db));
         }
         self.todos.as_deref().unwrap_or(&[])
     }
