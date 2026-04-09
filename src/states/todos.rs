@@ -119,9 +119,11 @@ impl TodosState {
 
     /// Sets the search query and resets pagination; re-fetches results on the next access.
     pub fn set_search_query(&mut self, query: String, page: Page) {
+        if self.search_query == query {
+            return;
+        }
         self.search_query = query;
-        *self.search_items.borrow_mut() = None;
-        *self.search_count.borrow_mut() = None;
+        self.invalidate_search_caches();
         self.offset = 0;
         self.selected = 0;
         self.clamp_selected(page);
@@ -130,6 +132,10 @@ impl TodosState {
     /// Clears the search query and invalidates search caches.
     pub fn clear_search(&mut self) {
         self.search_query.clear();
+        self.invalidate_search_caches();
+    }
+
+    fn invalidate_search_caches(&self) {
         *self.search_items.borrow_mut() = None;
         *self.search_count.borrow_mut() = None;
     }
@@ -212,8 +218,7 @@ impl TodosState {
     /// Invalidates all todo caches including search results.
     fn clear_caches(&self) {
         self.todos_cache.invalidate_all();
-        *self.search_items.borrow_mut() = None;
-        *self.search_count.borrow_mut() = None;
+        self.invalidate_search_caches();
     }
 
     /// Invalidates the timer cache's todo list so the picker reflects recent changes.
