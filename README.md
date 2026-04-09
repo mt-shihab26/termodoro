@@ -47,14 +47,14 @@ Download the Windows release binary from the latest GitHub Release:
 - `orivo-vX.Y.Z-windows-aarch64.exe`
 
 ```powershell
-PS> mv orivo-vX.Y.Z-windows-x86_64.exe orivo.exe
+> mv orivo-vX.Y.Z-windows-x86_64.exe orivo.exe
 ```
 
 Then place the binary somewhere on your `PATH`.
 
 Run from any terminal:
 ```powershell
-PS> orivo
+> orivo
 ```
 
 ### Cargo (any OS, builds from source)
