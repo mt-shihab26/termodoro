@@ -11,20 +11,19 @@ pub struct HintProps {
     ui_mode: TodosMode,
     /// Whether the delete action is available for the selected todo.
     can_delete: bool,
-    /// Active search query shown inline; empty string means no search is active.
-    search_query: String,
+    /// Whether a search filter is currently active.
+    is_searching: bool,
 }
 
 impl HintProps {
-    /// Creates new hint props from the current mode, delete availability, and active search query.
-    pub fn new(ui_mode: TodosMode, can_delete: bool, search_query: String) -> Self {
-        Self { ui_mode, can_delete, search_query }
+    /// Creates new hint props from the current mode, delete availability, and search state.
+    pub fn new(ui_mode: TodosMode, can_delete: bool, is_searching: bool) -> Self {
+        Self { ui_mode, can_delete, is_searching }
     }
 }
 
 /// Stateless widget that renders context-sensitive key hints for the todos tab.
 pub struct HintWidget<'a> {
-    /// Borrowed hint props for this render pass.
     props: &'a HintProps,
 }
 
@@ -36,27 +35,16 @@ impl<'a> HintWidget<'a> {
 }
 
 impl Widget for &HintWidget<'_> {
-    /// Renders the appropriate hint text centered in the buffer.
     fn render(self, area: Rect, buf: &mut Buffer) {
         let hint = match self.props.ui_mode {
-            TodosMode::Normal => {
-                let base = if self.props.can_delete {
-                    "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^r]Delete  [/]Search"
-                } else {
-                    "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [/]Search"
-                };
-                if !self.props.search_query.is_empty() {
-                    format!("{}  \"{}\"", base, self.props.search_query)
-                } else {
-                    base.to_string()
-                }
-            }
-            TodosMode::Adding | TodosMode::Editing => {
-                "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char".to_string()
-            }
-            TodosMode::Searching => {
-                "[Enter]Confirm search  [Esc]Cancel search  [Backspace]Delete char".to_string()
-            }
+            TodosMode::Normal => match (self.props.can_delete, self.props.is_searching) {
+                (true, false) => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^r]Delete  [/]Search",
+                (false, false) => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [/]Search",
+                (true, true) => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^r]Delete  [Esc]Search",
+                (false, true) => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [Esc]Search",
+            },
+            TodosMode::Adding | TodosMode::Editing => "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char",
+            TodosMode::Searching => "[Enter]Confirm search  [Esc]Cancel search",
         };
 
         Paragraph::new(hint).centered().fg(Color::DarkGray).render(area, buf);

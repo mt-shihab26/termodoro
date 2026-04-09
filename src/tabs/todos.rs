@@ -22,7 +22,7 @@ use crate::{
         hint::{HintProps, HintWidget},
         input::{InputAction, InputProps, InputState, InputWidget},
         list::{ListProps, ListWidget},
-        search::{SearchAction, SearchState, SearchWidget},
+        search::{SearchAction, SearchProps, SearchState, SearchWidget},
         status::{StatusProps, StatusWidget},
         tabs::{TabsProps, TabsWidget},
     },
@@ -203,13 +203,8 @@ impl Tab for TodosTab {
 
         let area = inner;
 
-        let (tabs_area, list_area, hint_area, bottom_area) = match self.mode {
-            TodosMode::Normal => {
-                let [tabs, list, hint] =
-                    Layout::vertical([Constraint::Length(1), Constraint::Fill(1), Constraint::Length(1)]).areas(area);
-                (tabs, list, hint, None)
-            }
-            TodosMode::Adding | TodosMode::Editing | TodosMode::Searching => {
+        let (tabs_area, list_area, hint_area, bottom_area) =
+            if matches!(self.mode, TodosMode::Adding | TodosMode::Editing) {
                 let [tabs, list, hint, bottom] = Layout::vertical([
                     Constraint::Length(1),
                     Constraint::Fill(1),
@@ -218,8 +213,24 @@ impl Tab for TodosTab {
                 ])
                 .areas(area);
                 (tabs, list, hint, Some(bottom))
-            }
-        };
+            } else if matches!(self.mode, TodosMode::Searching) || self.state.is_searching() {
+                let [tabs, list, hint, bottom] = Layout::vertical([
+                    Constraint::Length(1),
+                    Constraint::Fill(1),
+                    Constraint::Length(1),
+                    Constraint::Length(1),
+                ])
+                .areas(area);
+                (tabs, list, hint, Some(bottom))
+            } else {
+                let [tabs, list, hint] = Layout::vertical([
+                    Constraint::Length(1),
+                    Constraint::Fill(1),
+                    Constraint::Length(1),
+                ])
+                .areas(area);
+                (tabs, list, hint, None)
+            };
 
         self.state.set_visible_capacity(list_area);
         let items = self.items();
@@ -229,44 +240,39 @@ impl Tab for TodosTab {
         let to = self.state.to(items.len());
         let page = self.state.page();
 
-        frame.render_widget(&StatusWidget::new(&StatusProps::new(total, from, to, page)), area);
-        frame.render_widget(&TabsWidget::new(&TabsProps::new(self.page, self.color())), tabs_area);
-        frame.render_widget(
-            &ListWidget::new(&ListProps::new(
-                &items,
-                &stats,
-                self.state.offset(),
-                self.page,
-                self.state.selected(),
-                self.color(),
-                self.state.show_more_above(),
-                self.state.show_more_below(items.len(), total),
-            )),
-            list_area,
-        );
-
-        HintWidget::new(&HintProps::new(
-            self.mode,
-            self.state.can_delete(self.page, &items),
-            self.state.search_query().to_owned(),
+        StatusWidget::new(&StatusProps::new(total, from, to, page)).render(area, buf);
+        TabsWidget::new(&TabsProps::new(self.page, self.color())).render(tabs_area, buf);
+        ListWidget::new(&ListProps::new(
+            &items,
+            &stats,
+            self.state.offset(),
+            self.page,
+            self.state.selected(),
+            self.color(),
+            self.state.show_more_above(),
+            self.state.show_more_below(items.len(), total),
         ))
-        .render(hint_area, frame.buffer_mut());
+        .render(list_area, buf);
+        HintWidget::new(&HintProps::new(self.mode, self.state.can_delete(self.page, &items), self.state.is_searching()))
+            .render(hint_area, buf);
 
         if let Some(bottom_rect) = bottom_area {
             match self.mode {
                 TodosMode::Adding | TodosMode::Editing => {
                     if let Some(input_state) = &self.input_state {
-                        let props = input_state.props();
-                        frame.render_widget(&InputWidget::new(props), bottom_rect);
-                        input_state.render_calendar(frame, area);
+                        InputWidget::new(input_state.props()).render(bottom_rect, buf);
+                        input_state.render_calendar(area, buf);
                     }
                 }
                 TodosMode::Searching => {
                     if let Some(search_state) = &self.search_state {
-                        SearchWidget::new(search_state).render(bottom_rect, frame.buffer_mut());
+                        SearchWidget::new(search_state.props()).render(bottom_rect, buf);
                     }
                 }
-                TodosMode::Normal => {}
+                TodosMode::Normal => {
+                    let props = SearchProps::new(self.state.search_query(), false);
+                    SearchWidget::new(&props).render(bottom_rect, buf);
+                }
             }
         }
     }
