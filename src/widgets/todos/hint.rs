@@ -18,7 +18,11 @@ pub struct HintProps {
 impl HintProps {
     /// Creates new hint props from the current mode, delete availability, and search state.
     pub fn new(ui_mode: TodosMode, can_delete: bool, is_searching: bool) -> Self {
-        Self { ui_mode, can_delete, is_searching }
+        Self {
+            ui_mode,
+            can_delete,
+            is_searching,
+        }
     }
 }
 

@@ -30,7 +30,10 @@ pub struct SearchProps {
 impl SearchProps {
     /// Creates new search props.
     pub fn new(query: impl Into<String>, active: bool) -> Self {
-        Self { query: query.into(), active }
+        Self {
+            query: query.into(),
+            active,
+        }
     }
 }
 
@@ -42,7 +45,9 @@ pub struct SearchState {
 impl SearchState {
     /// Creates a new `SearchState`, optionally pre-filling with an existing query.
     pub fn new(existing_query: &str) -> Self {
-        Self { props: SearchProps::new(existing_query, true) }
+        Self {
+            props: SearchProps::new(existing_query, true),
+        }
     }
 
     /// Returns a reference to the props for rendering.

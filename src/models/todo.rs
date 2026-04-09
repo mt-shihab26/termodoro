@@ -127,7 +127,9 @@ impl Todo {
         if limit == 0 {
             return vec![];
         }
-        let query_stmt = Self::base_search_query(page, query).offset(offset as u64).limit(limit as u64);
+        let query_stmt = Self::base_search_query(page, query)
+            .offset(offset as u64)
+            .limit(limit as u64);
         match rt().block_on(async { query_stmt.all(db).await.map_err(io_err) }) {
             Ok(models) => models.into_iter().map(Todo::from).collect(),
             Err(e) => {

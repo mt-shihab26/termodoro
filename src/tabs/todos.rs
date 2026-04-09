@@ -221,12 +221,8 @@ impl Tab for TodosTab {
                 .areas(area);
                 (tabs, list, hint, Some(bottom))
             } else {
-                let [tabs, list, hint] = Layout::vertical([
-                    Constraint::Length(1),
-                    Constraint::Fill(1),
-                    Constraint::Length(1),
-                ])
-                .areas(area);
+                let [tabs, list, hint] =
+                    Layout::vertical([Constraint::Length(1), Constraint::Fill(1), Constraint::Length(1)]).areas(area);
                 (tabs, list, hint, None)
             };
 
@@ -251,8 +247,12 @@ impl Tab for TodosTab {
             self.state.show_more_below(items.len(), total),
         ))
         .render(list_area, buf);
-        HintWidget::new(&HintProps::new(self.mode, self.state.can_delete(self.page, &items), self.state.is_searching()))
-            .render(hint_area, buf);
+        HintWidget::new(&HintProps::new(
+            self.mode,
+            self.state.can_delete(self.page, &items),
+            self.state.is_searching(),
+        ))
+        .render(hint_area, buf);
 
         if let Some(bottom_rect) = bottom_area {
             match self.mode {
