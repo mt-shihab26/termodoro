@@ -109,11 +109,12 @@ impl App {
     fn render_frame(&mut self, frame: &mut Frame) {
         let area = frame.area();
         let buf = frame.buffer_mut();
+        let active_tab = &self.tabs[self.selected];
 
         let [top, tabs_header, tab_content] =
             Layout::vertical([Constraint::Length(1), Constraint::Length(3), Constraint::Fill(1)]).areas(area);
 
-        Paragraph::new(Span::from(self.get_app_name()).bold().fg(Color::Green))
+        Paragraph::new(Span::from(self.get_app_name()).bold().fg(active_tab.color()))
             .centered()
             .render(top, buf);
 
@@ -140,7 +141,7 @@ impl App {
                 .render(inner, buf);
         }
 
-        self.tabs[self.selected].render(frame, tab_content);
+        active_tab.render(frame, tab_content);
     }
 
     /// Returns the application name string.
