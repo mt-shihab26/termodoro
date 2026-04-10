@@ -11,9 +11,12 @@ use sea_orm::DatabaseConnection;
 
 use ratatui::{
     DefaultTerminal, Frame,
-    crossterm::event::{KeyCode, KeyModifiers},
+    crossterm::{
+        event::{DisableMouseCapture, EnableMouseCapture, KeyCode, KeyModifiers, MouseButton, MouseEventKind},
+        execute,
+    },
     init,
-    prelude::{Color, Constraint, Layout, Line, Span, Stylize, Widget},
+    prelude::{Color, Constraint, Layout, Line, Rect, Span, Stylize, Widget},
     restore,
     style::Style,
     widgets::{Block, Paragraph},
@@ -42,6 +45,8 @@ pub struct App {
     events: Receiver<Event>,
     /// FPS counter state, `None` when disabled.
     fps_state: Option<FpsState>,
+    /// Bounding rects of each tab header, updated every frame for click detection.
+    tab_rects: Vec<Rect>,
 }
 
 impl App {
@@ -63,15 +68,18 @@ impl App {
             ],
             events,
             fps_state: config.show_fps.then(FpsState::new),
+            tab_rects: Vec::new(),
         }
     }
 
     /// Initialises the terminal, runs the event loop, then restores the terminal on exit.
     pub fn run(&mut self) -> Result<()> {
         let mut terminal = init();
+        execute!(std::io::stdout(), EnableMouseCapture)?;
 
         let result = self.event_loop(&mut terminal);
 
+        execute!(std::io::stdout(), DisableMouseCapture)?;
         restore();
 
         result
@@ -109,11 +117,12 @@ impl App {
     fn render_frame(&mut self, frame: &mut Frame) {
         let area = frame.area();
         let buf = frame.buffer_mut();
+        let active_tab = &self.tabs[self.selected];
 
         let [top, tabs_header, tab_content] =
             Layout::vertical([Constraint::Length(1), Constraint::Length(3), Constraint::Fill(1)]).areas(area);
 
-        Paragraph::new(Span::from(self.get_app_name()).bold().fg(Color::Green))
+        Paragraph::new(Span::from(self.get_app_name()).bold().fg(active_tab.color()))
             .centered()
             .render(top, buf);
 
@@ -126,6 +135,7 @@ impl App {
         }
 
         let tab_areas = Layout::horizontal(vec![Constraint::Fill(1); self.tabs.len()]).split(tabs_header);
+        self.tab_rects = tab_areas.to_vec();
 
         for index in 0..self.tabs.len() {
             let color = self.get_tab_color(index);
@@ -140,7 +150,7 @@ impl App {
                 .render(inner, buf);
         }
 
-        self.tabs[self.selected].render(frame, tab_content);
+        active_tab.render(frame, tab_content);
     }
 
     /// Returns the application name string.
@@ -210,6 +220,20 @@ impl App {
                 KeyCode::Tab => self.next_tab(),
                 _ => self.handle_key(key)?,
             },
+            Some(Event::Mouse(mouse)) => {
+                if mouse.kind == MouseEventKind::Down(MouseButton::Left) {
+                    for (i, rect) in self.tab_rects.iter().enumerate() {
+                        if mouse.column >= rect.x
+                            && mouse.column < rect.x + rect.width
+                            && mouse.row >= rect.y
+                            && mouse.row < rect.y + rect.height
+                        {
+                            self.select_tab(i);
+                            break;
+                        }
+                    }
+                }
+            }
             Some(Event::Resize(width, height)) => {
                 log_info!("resized width: {width}, height: {height}")
             }

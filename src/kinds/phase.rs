@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::config::timer::TimerConfig;
 
 /// Accent color used for the work phase across the UI.
-pub const COLOR: Color = Color::Red;
+// pub const COLOR: Color = Color::Red;
 
 /// A phase in the pomodoro cycle.
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -30,7 +30,7 @@ impl Phase {
     /// Returns the accent color for the phase.
     pub fn color(&self) -> Color {
         match self {
-            Phase::Work => COLOR,
+            Phase::Work => Color::Red,
             Phase::Break => Color::Green,
             Phase::LongBreak => Color::Cyan,
         }
