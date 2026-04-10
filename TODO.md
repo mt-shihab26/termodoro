@@ -8,5 +8,5 @@
 6. [x] Add option for reducing remaining time with a input box.
 7. Implement database backup system.
 8. [x] Use the same session color on everywhere on the timer tab.
-9. Add mouse support click on tab header tabs.
+9. [x] Add mouse support click on tab header tabs.
 10. [x] Show session tab color to orivo name of the application.
