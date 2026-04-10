@@ -9,4 +9,4 @@
 7. Implement database backup system.
 8. Add work session target on the todo.
 9. Use the same session color on everywhere on the timer tab
-
+10. Add mouse support.
