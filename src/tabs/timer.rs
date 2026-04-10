@@ -20,7 +20,7 @@ use ratatui::{
 use crate::{
     caches::timer::TimerCache,
     config::timer::TimerConfig,
-    kinds::{event::Event, phase::COLOR},
+    kinds::{event::Event, phase::Phase},
     log_warn,
     models::{session::Stat, todo::Todo},
     states::timer::TimerState,
@@ -31,7 +31,7 @@ use crate::{
             clock::{ClockProps, ClockWidget},
             hint::{HintProps, HintWidget},
             phase::{PhaseProps, PhaseWidget},
-            reduce_picker::{ReducePickerAction, ReducePickerState, ReducePickerWidget},
+            reduce_picker::{ReducePickerAction, ReducePickerProps, ReducePickerState, ReducePickerWidget},
             session::{SessionProps, SessionWidget},
             status::{StatusProps, StatusWidget},
             todo_picker::{TodoPickerAction, TodoPickerProps, TodoPickerState, TodoPickerWidget},
@@ -122,7 +122,7 @@ impl TimerTab {
         if let Ok(mut cache) = self.cache.lock() {
             let todos = cache.get_todos().to_vec();
             let stats = cache.get_stats().to_vec();
-            self.picker = Some(TodoPickerState::new(TodoPickerProps::new(todos, stats)));
+            self.picker = Some(TodoPickerState::new(TodoPickerProps::new(todos, stats, self.color())));
         }
     }
 
@@ -133,7 +133,7 @@ impl TimerTab {
 
     /// Opens the reduce-time dialog.
     fn open_reduce_picker(&mut self) {
-        self.reduce_state = Some(ReducePickerState::new());
+        self.reduce_state = Some(ReducePickerState::new(ReducePickerProps::new(self.color())));
     }
 
     /// Applies the reduction and closes the dialog.
@@ -191,7 +191,11 @@ impl Tab for TimerTab {
 
     /// Returns the accent color for the timer tab.
     fn color(&self) -> Color {
-        COLOR
+        if let Ok(state) = self.state.lock() {
+            state.cycle_phase().color()
+        } else {
+            Phase::Work.color()
+        }
     }
 
     /// Handles a key event, delegating to the active overlay or timer controls.
@@ -282,14 +286,14 @@ impl Tab for TimerTab {
         ])
         .areas(inner);
 
-        SessionWidget::new(&SessionProps::new(sessions, daily_session_goal)).render(session_row, buf);
+        SessionWidget::new(&SessionProps::new(sessions, daily_session_goal, phase_color)).render(session_row, buf);
         PhaseWidget::new(&PhaseProps::new(phase_label, phase_color)).render(phase_row, buf);
         ClockWidget::new(&ClockProps::new(show_millis, time_millis, phase_color)).render(time_row, buf);
-        StatusWidget::new(&StatusProps::new(running)).render(status_row, buf);
+        StatusWidget::new(&StatusProps::new(running, phase_color)).render(status_row, buf);
 
         let (todo, stat) = self.todo_info();
 
-        TodoShowWidget::new(&TodoShowProps::new(todo.as_ref(), stat.as_ref())).render(todo_row, buf);
+        TodoShowWidget::new(&TodoShowProps::new(todo.as_ref(), stat.as_ref(), phase_color)).render(todo_row, buf);
         HintWidget::new(&HintProps::new(self.picker.is_some(), self.reduce_state.is_some())).render(hint_row, buf);
 
         if let Some(picker) = &self.picker {

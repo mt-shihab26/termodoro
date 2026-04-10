@@ -4,10 +4,7 @@ use ratatui::{
     widgets::{Block, Clear, List, ListItem, Paragraph},
 };
 
-use crate::{
-    kinds::phase::COLOR,
-    models::{session::Stat, todo::Todo},
-};
+use crate::models::{session::Stat, todo::Todo};
 
 /// Action returned by the todo-picker after handling a key event.
 pub enum TodoPickerAction {
@@ -27,15 +24,18 @@ pub struct TodoPickerProps {
     stats: Vec<Stat>,
     /// Index of the currently highlighted todo.
     cursor: usize,
+    /// Pass the phase color to use in everywhere
+    color: Color,
 }
 
 impl TodoPickerProps {
     /// Creates new todo-picker props from the todo and stats lists.
-    pub fn new(todos: Vec<Todo>, stats: Vec<Stat>) -> Self {
+    pub fn new(todos: Vec<Todo>, stats: Vec<Stat>, color: Color) -> Self {
         Self {
             todos,
             stats,
             cursor: 0,
+            color,
         }
     }
 }
@@ -106,7 +106,7 @@ impl Widget for &TodoPickerWidget<'_> {
         let block = Block::bordered()
             .title(" Select Todo ")
             .title_bottom(" [j/k] ↑↓  [Enter] confirm  [Esc] cancel ")
-            .border_style(Style::default().fg(COLOR).bold());
+            .border_style(Style::default().fg(self.props.color).bold());
 
         let inner = block.inner(popup);
         block.render(popup, buf);
@@ -149,7 +149,8 @@ impl Widget for &TodoPickerWidget<'_> {
                     todo.text.clone()
                 };
                 if i == self.props.cursor {
-                    ListItem::new(format!("> {serial:>serial_width$}. {label}")).style(Style::new().fg(COLOR).bold())
+                    ListItem::new(format!("> {serial:>serial_width$}. {label}"))
+                        .style(Style::new().fg(self.props.color).bold())
                 } else {
                     ListItem::new(format!("  {serial:>serial_width$}. {label}")).style(Style::new().fg(Color::White))
                 }

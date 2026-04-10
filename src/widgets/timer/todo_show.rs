@@ -1,12 +1,9 @@
 use ratatui::{
-    prelude::{Buffer, Rect, Stylize, Widget},
+    prelude::{Buffer, Color, Rect, Stylize, Widget},
     widgets::Paragraph,
 };
 
-use crate::{
-    kinds::phase::COLOR,
-    models::{session::Stat, todo::Todo},
-};
+use crate::models::{session::Stat, todo::Todo};
 
 /// Props for the active-todo display bar at the bottom of the timer.
 pub struct TodoShowProps<'a> {
@@ -14,12 +11,14 @@ pub struct TodoShowProps<'a> {
     todo: Option<&'a Todo>,
     /// Accumulated session statistics for the active todo, if any.
     stat: Option<&'a Stat>,
+    /// Pass the phase color to use in everywhere
+    color: Color,
 }
 
 impl<'a> TodoShowProps<'a> {
     /// Creates new todo-show props with an optional todo and its stats.
-    pub fn new(todo: Option<&'a Todo>, stat: Option<&'a Stat>) -> Self {
-        Self { todo, stat }
+    pub fn new(todo: Option<&'a Todo>, stat: Option<&'a Stat>, color: Color) -> Self {
+        Self { todo, stat, color }
     }
 }
 
@@ -53,6 +52,6 @@ impl Widget for &TodoShowWidget<'_> {
             },
             None => "No todo selected  [t] pick".to_string(),
         };
-        Paragraph::new(text).centered().fg(COLOR).render(area, buf);
+        Paragraph::new(text).centered().fg(self.props.color).render(area, buf);
     }
 }

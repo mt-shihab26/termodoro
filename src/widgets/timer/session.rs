@@ -4,22 +4,23 @@ use ratatui::{
     widgets::{LineGauge, Paragraph},
 };
 
-use crate::kinds::phase::COLOR;
-
 /// Props for the session progress widget.
 pub struct SessionProps {
     /// Number of completed sessions so far today.
     sessions: u32,
     /// Target number of sessions for the day.
     daily_session_goal: u32,
+    /// Pass the phase color to use in everywhere
+    color: Color,
 }
 
 impl SessionProps {
     /// Creates new session props with the current count and daily goal.
-    pub fn new(sessions: u32, daily_session_goal: u32) -> Self {
+    pub fn new(sessions: u32, daily_session_goal: u32, color: Color) -> Self {
         Self {
             sessions,
             daily_session_goal,
+            color,
         }
     }
 }
@@ -47,7 +48,7 @@ impl Widget for &SessionWidget<'_> {
             self.props.sessions, self.props.daily_session_goal
         ))
         .centered()
-        .fg(COLOR)
+        .fg(self.props.color)
         .render(text_row, buf);
 
         let [_, gauge_col, _] =
@@ -60,14 +61,14 @@ impl Widget for &SessionWidget<'_> {
         };
 
         let unfilled_color = if self.props.sessions >= self.props.daily_session_goal {
-            COLOR
+            self.props.color
         } else {
             Color::DarkGray
         };
 
         LineGauge::default()
             .ratio(ratio)
-            .filled_style(Style::new().fg(COLOR))
+            .filled_style(Style::new().fg(self.props.color))
             .unfilled_style(Style::new().fg(unfilled_color))
             .render(gauge_col, buf);
     }

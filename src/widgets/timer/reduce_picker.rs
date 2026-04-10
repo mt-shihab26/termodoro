@@ -5,8 +5,6 @@ use ratatui::{
     widgets::{Block, Clear, Paragraph},
 };
 
-use crate::kinds::phase::COLOR;
-
 /// Action returned by the reduce-picker after handling a key event.
 pub enum ReducePickerAction {
     /// User confirmed; carries the number of milliseconds to subtract.
@@ -21,13 +19,16 @@ pub enum ReducePickerAction {
 pub struct ReducePickerProps {
     /// Up to four digits entered so far: [tens-min, units-min, tens-sec, units-sec].
     digits: Vec<u8>,
+    /// Pass the phase color to use in everywhere
+    color: Color,
 }
 
 impl ReducePickerProps {
     /// Creates empty props with no digits entered.
-    pub fn new() -> Self {
+    pub fn new(color: Color) -> Self {
         Self {
             digits: Vec::with_capacity(4),
+            color,
         }
     }
 }
@@ -40,10 +41,8 @@ pub struct ReducePickerState {
 
 impl ReducePickerState {
     /// Creates a new picker state with an empty digit buffer.
-    pub fn new() -> Self {
-        Self {
-            props: ReducePickerProps::new(),
-        }
+    pub fn new(props: ReducePickerProps) -> Self {
+        Self { props }
     }
 
     /// Returns a shared reference to the current props.
@@ -106,7 +105,7 @@ impl Widget for &ReducePickerWidget<'_> {
         let block = Block::bordered()
             .title(" Reduce Remaining ")
             .title_bottom(" [Enter] Apply  [Esc] Cancel ")
-            .border_style(Style::default().fg(COLOR).bold());
+            .border_style(Style::default().fg(self.props.color).bold());
 
         let inner = block.inner(popup);
         block.render(popup, buf);
@@ -126,7 +125,7 @@ impl Widget for &ReducePickerWidget<'_> {
         Paragraph::new(display)
             .centered()
             .bold()
-            .fg(COLOR)
+            .fg(self.props.color)
             .render(display_row, buf);
 
         Paragraph::new("minutes : seconds")

@@ -7,6 +7,5 @@
 5. [x] Store the remaining time on persist state every minute and when pause and quit etc.
 6. [x] Add option for reducing remaining time with a input box
 7. Implement database backup system.
-8. Add work session target on the todo.
-9. Use the same session color on everywhere on the timer tab
-10. Add mouse support.
+8. Use the same session color on everywhere on the timer tab
+9. Add mouse support.
