@@ -186,7 +186,7 @@ impl Drop for TimerTab {
 impl Tab for TimerTab {
     /// Returns the tab label shown in the tab bar.
     fn name(&self) -> &str {
-        "Timer [^x]"
+        "Timer [^y]"
     }
 
     /// Returns the accent color for the timer tab.

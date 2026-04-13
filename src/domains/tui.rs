@@ -220,7 +220,7 @@ impl App {
                 KeyCode::Char('f') if ctrl(&key) => self.toggle_fps(),
                 KeyCode::Char('r') if ctrl(&key) => self.invalidate_caches(),
                 KeyCode::Char('t') if ctrl(&key) => self.select_tab(0),
-                KeyCode::Char('x') if ctrl(&key) => self.select_tab(1),
+                KeyCode::Char('y') if ctrl(&key) => self.select_tab(1),
                 KeyCode::Tab => self.next_tab(),
                 _ => self.handle_key(key)?,
             },
