@@ -6,13 +6,15 @@ pub enum Repeat {
     /// Repeats every day.
     Daily,
     /// Repeats on the same weekday each week.
-    WeeklySameDay,
+    Weekly,
+    /// Repeats on weekends only (Saturday–Sunday).
+    Weekends,
     /// Repeats on weekdays only (Monday–Friday).
-    WeekdaysMonFri,
+    Weekdays,
     /// Repeats on the same day of each month.
-    MonthlyOnDay,
+    Monthly,
     /// Repeats on the same day each year.
-    YearlyOnDay,
+    Yearly,
 }
 
 impl Repeat {
@@ -24,20 +26,22 @@ impl Repeat {
     /// All repeat variants in display order.
     pub const ALL: &'static [Repeat] = &[
         Repeat::Daily,
-        Repeat::WeeklySameDay,
-        Repeat::WeekdaysMonFri,
-        Repeat::MonthlyOnDay,
-        Repeat::YearlyOnDay,
+        Repeat::Weekly,
+        Repeat::Weekends,
+        Repeat::Weekdays,
+        Repeat::Monthly,
+        Repeat::Yearly,
     ];
 
     /// Clones a `Repeat` value from a reference.
     pub fn of(r: &Repeat) -> Repeat {
         match r {
             Repeat::Daily => Repeat::Daily,
-            Repeat::WeeklySameDay => Repeat::WeeklySameDay,
-            Repeat::WeekdaysMonFri => Repeat::WeekdaysMonFri,
-            Repeat::MonthlyOnDay => Repeat::MonthlyOnDay,
-            Repeat::YearlyOnDay => Repeat::YearlyOnDay,
+            Repeat::Weekly => Repeat::Weekly,
+            Repeat::Weekends => Repeat::Weekends,
+            Repeat::Weekdays => Repeat::Weekdays,
+            Repeat::Monthly => Repeat::Monthly,
+            Repeat::Yearly => Repeat::Yearly,
         }
     }
 
@@ -45,10 +49,11 @@ impl Repeat {
     pub fn label(&self) -> &str {
         match self {
             Repeat::Daily => "Daily",
-            Repeat::WeeklySameDay => "Weekly (same day)",
-            Repeat::WeekdaysMonFri => "Weekdays (Mon-Fri)",
-            Repeat::MonthlyOnDay => "Monthly on day",
-            Repeat::YearlyOnDay => "Yearly on day",
+            Repeat::Weekly => "Weekly (same day)",
+            Repeat::Weekends => "Weekends (Sat-Sun)",
+            Repeat::Weekdays => "Weekdays (Mon-Fri)",
+            Repeat::Monthly => "Monthly on day",
+            Repeat::Yearly => "Yearly on day",
         }
     }
 
@@ -56,10 +61,11 @@ impl Repeat {
     pub fn to_db_str(&self) -> &str {
         match self {
             Repeat::Daily => "daily",
-            Repeat::WeeklySameDay => "weekly_same_day",
-            Repeat::WeekdaysMonFri => "weekdays_mon_fri",
-            Repeat::MonthlyOnDay => "monthly_on_day",
-            Repeat::YearlyOnDay => "yearly_on_day",
+            Repeat::Weekly => "weekly_same_day",
+            Repeat::Weekends => "weekends_sat_sun",
+            Repeat::Weekdays => "weekdays_mon_fri",
+            Repeat::Monthly => "monthly_on_day",
+            Repeat::Yearly => "yearly_on_day",
         }
     }
 
@@ -67,10 +73,11 @@ impl Repeat {
     pub fn from_db_str(s: &str) -> Option<Self> {
         match s {
             "daily" => Some(Repeat::Daily),
-            "weekly_same_day" => Some(Repeat::WeeklySameDay),
-            "weekdays_mon_fri" => Some(Repeat::WeekdaysMonFri),
-            "monthly_on_day" => Some(Repeat::MonthlyOnDay),
-            "yearly_on_day" => Some(Repeat::YearlyOnDay),
+            "weekly_same_day" => Some(Repeat::Weekly),
+            "weekends_sat_sun" => Some(Repeat::Weekends),
+            "weekdays_mon_fri" => Some(Repeat::Weekdays),
+            "monthly_on_day" => Some(Repeat::Monthly),
+            "yearly_on_day" => Some(Repeat::Yearly),
             _ => None,
         }
     }
@@ -79,15 +86,29 @@ impl Repeat {
     pub fn next_date(&self, from: Date) -> Date {
         match self {
             Repeat::Daily => from + Duration::days(1),
-            Repeat::WeeklySameDay => from + Duration::weeks(1),
-            Repeat::WeekdaysMonFri => {
+            Repeat::Weekly => from + Duration::weeks(1),
+            Repeat::Weekends => {
+                let mut next = from + Duration::days(1);
+                while matches!(
+                    next.weekday(),
+                    time::Weekday::Monday
+                        | time::Weekday::Tuesday
+                        | time::Weekday::Wednesday
+                        | time::Weekday::Thursday
+                        | time::Weekday::Friday
+                ) {
+                    next = next + Duration::days(1);
+                }
+                next
+            }
+            Repeat::Weekdays => {
                 let mut next = from + Duration::days(1);
                 while matches!(next.weekday(), time::Weekday::Saturday | time::Weekday::Sunday) {
                     next = next + Duration::days(1);
                 }
                 next
             }
-            Repeat::MonthlyOnDay => {
+            Repeat::Monthly => {
                 let month = from.month().next();
                 let year = if month == time::Month::January {
                     from.year() + 1
@@ -96,7 +117,7 @@ impl Repeat {
                 };
                 Date::from_calendar_date(year, month, from.day()).unwrap_or(from)
             }
-            Repeat::YearlyOnDay => Date::from_calendar_date(from.year() + 1, from.month(), from.day()).unwrap_or(from),
+            Repeat::Yearly => Date::from_calendar_date(from.year() + 1, from.month(), from.day()).unwrap_or(from),
         }
     }
 }

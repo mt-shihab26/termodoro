@@ -304,4 +304,11 @@ impl Tab for TimerTab {
             ReducePickerWidget::new(reduce.props()).render(inner, buf);
         }
     }
+
+    /// Drops any cached data held by this tab.
+    fn invalidate_cache(&mut self) {
+        if let Ok(mut cache) = self.cache.lock() {
+            cache.invalidate_todos();
+        }
+    }
 }

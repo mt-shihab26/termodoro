@@ -274,4 +274,9 @@ impl Tab for TodosTab {
             }
         }
     }
+
+    /// Drops any cached data held by this tab.
+    fn invalidate_cache(&mut self) {
+        self.state.refresh(self.page);
+    }
 }

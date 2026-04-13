@@ -163,6 +163,9 @@ impl App {
         let mut hints = vec![
             Span::from("^q").fg(Color::DarkGray).bold(),
             Span::from(" quit").fg(Color::DarkGray),
+            Span::from("  ").fg(Color::DarkGray),
+            Span::from("^r").fg(Color::DarkGray).bold(),
+            Span::from(" reload").fg(Color::DarkGray),
         ];
 
         if self.fps_state.is_some() {
@@ -215,6 +218,7 @@ impl App {
             Some(Event::Key(key)) => match key.code {
                 KeyCode::Char('c' | 'q') if ctrl(&key) => self.quit(),
                 KeyCode::Char('f') if ctrl(&key) => self.toggle_fps(),
+                KeyCode::Char('r') if ctrl(&key) => self.invalidate_caches(),
                 KeyCode::Char('t') if ctrl(&key) => self.select_tab(0),
                 KeyCode::Char('x') if ctrl(&key) => self.select_tab(1),
                 KeyCode::Tab => self.next_tab(),
@@ -256,6 +260,13 @@ impl App {
         } else {
             None
         };
+    }
+
+    /// Drops all cached data across all tabs.
+    fn invalidate_caches(&mut self) {
+        for tab in &mut self.tabs {
+            tab.invalidate_cache();
+        }
     }
 
     /// Switches the active tab to `index`.
