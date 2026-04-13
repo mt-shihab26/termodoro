@@ -219,6 +219,7 @@ impl TodosState {
     pub fn clear_caches(&self) {
         self.todos_cache.invalidate_all();
         self.invalidate_search_caches();
+        self.invalidate_timer_todos();
     }
 
     /// Invalidates the timer cache's todo list so the picker reflects recent changes.
@@ -313,7 +314,6 @@ impl TodosState {
     /// Refreshes caches and clamps the selection after a data mutation.
     pub fn refresh(&mut self, page: Page) {
         self.clear_caches();
-        self.invalidate_timer_todos();
         self.clamp_selected(page);
     }
 

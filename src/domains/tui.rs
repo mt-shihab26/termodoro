@@ -164,7 +164,7 @@ impl App {
             Span::from("^q").fg(Color::DarkGray).bold(),
             Span::from(" quit").fg(Color::DarkGray),
             Span::from("  ").fg(Color::DarkGray),
-            Span::from("^l").fg(Color::DarkGray).bold(),
+            Span::from("^r").fg(Color::DarkGray).bold(),
             Span::from(" reload").fg(Color::DarkGray),
         ];
 
@@ -218,7 +218,7 @@ impl App {
             Some(Event::Key(key)) => match key.code {
                 KeyCode::Char('c' | 'q') if ctrl(&key) => self.quit(),
                 KeyCode::Char('f') if ctrl(&key) => self.toggle_fps(),
-                KeyCode::Char('l') if ctrl(&key) => self.invalidate_caches(),
+                KeyCode::Char('r') if ctrl(&key) => self.invalidate_caches(),
                 KeyCode::Char('t') if ctrl(&key) => self.select_tab(0),
                 KeyCode::Char('x') if ctrl(&key) => self.select_tab(1),
                 KeyCode::Tab => self.next_tab(),
