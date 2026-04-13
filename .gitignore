@@ -2,3 +2,4 @@
 /local/*
 !/local/config.toml
 .codex
+.junie

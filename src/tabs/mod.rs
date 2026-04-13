@@ -25,4 +25,6 @@ pub trait Tab {
     fn next_tick(&mut self) -> Result<()> {
         Ok(())
     }
+    /// Drops any cached data held by this tab; defaults to no-op.
+    fn invalidate_cache(&mut self) {}
 }

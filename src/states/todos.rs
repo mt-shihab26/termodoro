@@ -216,7 +216,7 @@ impl TodosState {
     }
 
     /// Invalidates all todo caches including search results.
-    fn clear_caches(&self) {
+    pub fn clear_caches(&self) {
         self.todos_cache.invalidate_all();
         self.invalidate_search_caches();
     }
