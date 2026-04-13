@@ -54,9 +54,10 @@ pub fn seed_todos(count: usize, db: &DatabaseConnection) -> usize {
 
         let repeat = match i % 10 {
             0 => Some(Repeat::Daily),
-            1 => Some(Repeat::WeeklySameDay),
-            2 => Some(Repeat::WeekdaysMonFri),
-            3 => Some(Repeat::MonthlyOnDay),
+            1 => Some(Repeat::Weekly),
+            2 => Some(Repeat::Weekends),
+            3 => Some(Repeat::Weekdays),
+            4 => Some(Repeat::Monthly),
             _ => None,
         };
 
@@ -87,12 +88,7 @@ pub fn seed_todos(count: usize, db: &DatabaseConnection) -> usize {
 fn seed_focused(base: OffsetDateTime, db: &DatabaseConnection) -> usize {
     let items = [
         Todo::new("Today: pay electricity bill".to_string(), Some(base), None, None),
-        Todo::new(
-            "Today: call mom".to_string(),
-            Some(base),
-            Some(Repeat::WeeklySameDay),
-            None,
-        ),
+        Todo::new("Today: call mom".to_string(), Some(base), Some(Repeat::Weekly), None),
         Todo::new(
             "Overdue: renew passport".to_string(),
             Some(base - Duration::days(2)),
@@ -108,7 +104,7 @@ fn seed_focused(base: OffsetDateTime, db: &DatabaseConnection) -> usize {
         Todo::new(
             "Upcoming: yearly health check".to_string(),
             Some(base + Duration::days(30)),
-            Some(Repeat::YearlyOnDay),
+            Some(Repeat::Yearly),
             None,
         ),
         Todo::new("No date: reorganize bookshelf".to_string(), None, None, None),
