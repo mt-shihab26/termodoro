@@ -42,9 +42,9 @@ impl Widget for &HintWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let hint = match self.props.ui_mode {
             TodosMode::Normal => match (self.props.can_delete, self.props.is_searching) {
-                (true, false) => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^r]Delete  [/]Search",
+                (true, false) => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^x]Delete  [/]Search",
                 (false, false) => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [/]Search",
-                (true, true) => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^r]Delete  [Esc]Search",
+                (true, true) => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [^x]Delete  [Esc]Search",
                 (false, true) => "[[/]]Page  [j/k]Navigate  [Space]Toggle  [a]Add  [e]Edit  [Esc]Search",
             },
             TodosMode::Adding | TodosMode::Editing => "[Enter]Confirm  [Esc]Cancel  [Backspace]Delete char",
