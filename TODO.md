@@ -10,3 +10,5 @@
 8. [x] Use the same session color on everywhere on the timer tab.
 9. [x] Add mouse support click on tab header tabs.
 10. [x] Show session tab color to orivo name of the application.
+11. Load due todo also on the todo picker on timer due todo should be a seperate section.
+
