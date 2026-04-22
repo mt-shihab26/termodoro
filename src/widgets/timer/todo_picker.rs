@@ -1,7 +1,7 @@
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
-    prelude::{Buffer, Color, Rect, Style, Stylize, Widget},
-    widgets::{Block, Clear, List, ListItem, Paragraph},
+    prelude::{Buffer, Color, Modifier, Rect, Style, Stylize, Widget},
+    widgets::{Block, Clear, Paragraph},
 };
 
 use crate::models::{session::Stat, todo::Todo};
@@ -177,13 +177,18 @@ impl Widget for &TodoPickerWidget<'_> {
             .saturating_sub(visible / 2)
             .min(rows.len().saturating_sub(visible));
 
-        let items: Vec<ListItem> = rows
-            .iter()
-            .enumerate()
-            .skip(start)
-            .take(visible)
-            .map(|(_, row)| match row {
-                Row::Header(label) => ListItem::new(format!("── {label} ──")).style(Style::new().fg(Color::DarkGray)),
+        for (row_offset, row) in rows.iter().skip(start).take(visible).enumerate() {
+            let row_rect = Rect {
+                y: inner.y + row_offset as u16,
+                height: 1,
+                ..inner
+            };
+            match row {
+                Row::Header(label) => {
+                    Paragraph::new(format!("── {label} ──"))
+                        .style(Style::default().fg(Color::DarkGray))
+                        .render(row_rect, buf);
+                }
                 Row::Item(logical_idx) => {
                     let (todo, stat) = if *logical_idx < due_len {
                         (&self.props.due_todos[*logical_idx], &self.props.due_stats[*logical_idx])
@@ -202,18 +207,20 @@ impl Widget for &TodoPickerWidget<'_> {
                     } else {
                         todo.text.clone()
                     };
-                    if *logical_idx == self.props.cursor {
-                        ListItem::new(format!("> {serial:>serial_width$}. {label}"))
-                            .style(Style::new().fg(self.props.color).bold())
+                    let (prefix, style) = if *logical_idx == self.props.cursor {
+                        (
+                            ">",
+                            Style::default().fg(self.props.color).add_modifier(Modifier::BOLD),
+                        )
                     } else {
-                        ListItem::new(format!("  {serial:>serial_width$}. {label}"))
-                            .style(Style::new().fg(Color::White))
-                    }
+                        ("  ", Style::default().fg(Color::White))
+                    };
+                    Paragraph::new(format!("{prefix} {serial:>serial_width$}. {label}"))
+                        .style(style)
+                        .render(row_rect, buf);
                 }
-            })
-            .collect();
-
-        List::new(items).render(inner, buf);
+            }
+        }
     }
 }
 
