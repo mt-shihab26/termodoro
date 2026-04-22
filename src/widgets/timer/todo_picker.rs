@@ -33,13 +33,20 @@ pub struct TodoPickerProps {
 }
 
 impl TodoPickerProps {
-    pub fn new(due_todos: Vec<Todo>, due_stats: Vec<Stat>, todos: Vec<Todo>, stats: Vec<Stat>, color: Color) -> Self {
+    pub fn new(
+        due_todos: Vec<Todo>,
+        due_stats: Vec<Stat>,
+        todos: Vec<Todo>,
+        stats: Vec<Stat>,
+        color: Color,
+        initial_cursor: usize,
+    ) -> Self {
         Self {
             due_todos,
             due_stats,
             todos,
             stats,
-            cursor: 0,
+            cursor: initial_cursor,
             color,
         }
     }

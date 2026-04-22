@@ -124,12 +124,22 @@ impl TimerTab {
             let due_stats = cache.get_due_stats().to_vec();
             let todos = cache.get_todos().to_vec();
             let stats = cache.get_stats().to_vec();
+            let current_id = self.state.lock().ok().and_then(|s| s.todo_id());
+            let cursor = current_id
+                .and_then(|id| {
+                    due_todos
+                        .iter()
+                        .position(|t| t.id == Some(id))
+                        .or_else(|| todos.iter().position(|t| t.id == Some(id)).map(|i| due_todos.len() + i))
+                })
+                .unwrap_or(0);
             self.picker = Some(TodoPickerState::new(TodoPickerProps::new(
                 due_todos,
                 due_stats,
                 todos,
                 stats,
                 self.color(),
+                cursor,
             )));
         }
     }
