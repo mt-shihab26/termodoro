@@ -117,6 +117,24 @@ impl Todo {
         }
     }
 
+    /// Returns overdue todos that are not yet done (due_date < today), for the timer picker.
+    pub fn list_due_pending(db: &DatabaseConnection) -> Vec<Todo> {
+        let today = format_date(today());
+        let query = Entity::find()
+            .filter(Expr::cust_with_values("substr(due_date, 1, 10) < ?", [today]))
+            .filter(Column::DoneAt.is_null())
+            .order_by_desc(Column::DueDate)
+            .order_by_desc(Column::CreatedAt);
+
+        match rt().block_on(async { query.all(db).await.map_err(io_err) }) {
+            Ok(models) => models.into_iter().map(Todo::from).collect(),
+            Err(e) => {
+                log_error!("failed to load overdue pending todos: {e}");
+                vec![]
+            }
+        }
+    }
+
     fn base_search_query(page: Page, query: &str) -> sea_orm::Select<Entity> {
         let pattern = format!("%{}%", query.to_lowercase());
         Self::base_query(page).filter(Expr::cust_with_values("lower(text) LIKE ?", [pattern]))
