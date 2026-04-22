@@ -9,6 +9,10 @@ use crate::models::{
 pub struct TimerCache {
     /// Database connection used to refresh cache entries on demand.
     db: DatabaseConnection,
+    /// Cached list of overdue todos, `None` until first fetch.
+    due_todos: Option<Vec<Todo>>,
+    /// Cached stats parallel to `due_todos`, `None` until first fetch.
+    due_stats: Option<Vec<Stat>>,
     /// Cached list of today's todos, `None` until first fetch.
     todos: Option<Vec<Todo>>,
     /// Cached stats parallel to `todos`, `None` until first fetch.
@@ -22,10 +26,33 @@ impl TimerCache {
     pub fn new(db: DatabaseConnection) -> Self {
         Self {
             db,
+            due_todos: None,
+            due_stats: None,
             todos: None,
             stats: None,
             today_sessions: None,
         }
+    }
+
+    /// Returns the cached overdue todo list, querying the DB if needed.
+    pub fn get_due_todos(&mut self) -> &[Todo] {
+        if self.due_todos.is_none() {
+            self.due_todos = Some(Todo::list_due_pending(&self.db));
+        }
+        self.due_todos.as_deref().unwrap_or(&[])
+    }
+
+    /// Returns stats for all cached overdue todos, querying the DB if needed.
+    pub fn get_due_stats(&mut self) -> &[Stat] {
+        if self.due_stats.is_none() {
+            let ids: Vec<Option<i32>> = self.get_due_todos().iter().map(|t| t.id).collect();
+            let stats = ids
+                .into_iter()
+                .map(|id| id.map(|id| Session::stat(&self.db, id)).unwrap_or(Stat::new(0, 0)))
+                .collect();
+            self.due_stats = Some(stats);
+        }
+        self.due_stats.as_deref().unwrap_or(&[])
     }
 
     /// Returns the cached todo list (excluding done todos), querying the DB if needed.
@@ -38,8 +65,13 @@ impl TimerCache {
 
     /// Returns the cached todo with the given id, querying the DB if needed.
     pub fn get_todo(&mut self, id: i32) -> Option<&Todo> {
+        self.get_due_todos();
         self.get_todos();
-        self.todos.as_deref()?.iter().find(|t| t.id == Some(id))
+        self.due_todos
+            .as_deref()?
+            .iter()
+            .chain(self.todos.as_deref().unwrap_or(&[]).iter())
+            .find(|t| t.id == Some(id))
     }
 
     /// Returns stats for all cached todos, querying the DB if needed.
@@ -57,7 +89,11 @@ impl TimerCache {
 
     /// Returns the cached session stats for the given todo id, querying the DB if needed.
     pub fn get_stat(&mut self, todo_id: i32) -> Option<&Stat> {
+        self.get_due_stats();
         self.get_stats();
+        if let Some(idx) = self.due_todos.as_deref()?.iter().position(|t| t.id == Some(todo_id)) {
+            return self.due_stats.as_deref()?.get(idx);
+        }
         let idx = self.todos.as_deref()?.iter().position(|t| t.id == Some(todo_id))?;
         self.stats.as_deref()?.get(idx)
     }
@@ -72,6 +108,8 @@ impl TimerCache {
 
     /// Drops the cached todo list so the next call to `get_todos()` re-queries.
     pub fn invalidate_todos(&mut self) {
+        self.due_todos = None;
+        self.due_stats = None;
         self.todos = None;
         self.stats = None;
         self.today_sessions = None;
@@ -79,6 +117,7 @@ impl TimerCache {
 
     /// Drops the cached session stats so they are re-fetched on next render.
     pub fn invalidate_stats(&mut self) {
+        self.due_stats = None;
         self.stats = None;
         self.today_sessions = None;
     }

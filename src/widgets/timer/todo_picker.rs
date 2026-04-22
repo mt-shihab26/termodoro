@@ -1,7 +1,7 @@
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
-    prelude::{Buffer, Color, Rect, Style, Stylize, Widget},
-    widgets::{Block, Clear, List, ListItem, Paragraph},
+    prelude::{Buffer, Color, Modifier, Rect, Style, Stylize, Widget},
+    widgets::{Block, Clear, Paragraph},
 };
 
 use crate::models::{session::Stat, todo::Todo};
@@ -18,51 +18,78 @@ pub enum TodoPickerAction {
 
 /// Props for the todo-picker overlay.
 pub struct TodoPickerProps {
-    /// Todos available for selection.
+    /// Overdue todos (due_date < today).
+    due_todos: Vec<Todo>,
+    /// Session stats parallel to `due_todos`.
+    due_stats: Vec<Stat>,
+    /// Today's todos.
     todos: Vec<Todo>,
-    /// Session stats corresponding to each todo in order.
+    /// Session stats parallel to `todos`.
     stats: Vec<Stat>,
-    /// Index of the currently highlighted todo.
+    /// Index of the currently highlighted todo (across both sections combined).
     cursor: usize,
-    /// Pass the phase color to use in everywhere
+    /// The id of the todo currently assigned to the timer, shown in phase color.
+    selected_id: Option<i32>,
+    /// Phase color used for borders and the selected todo.
     color: Color,
 }
 
 impl TodoPickerProps {
-    /// Creates new todo-picker props from the todo and stats lists.
-    pub fn new(todos: Vec<Todo>, stats: Vec<Stat>, color: Color) -> Self {
+    pub fn new(
+        due_todos: Vec<Todo>,
+        due_stats: Vec<Stat>,
+        todos: Vec<Todo>,
+        stats: Vec<Stat>,
+        color: Color,
+        selected_id: Option<i32>,
+    ) -> Self {
+        // Position cursor on the currently selected todo, default to 0.
+        let cursor = selected_id
+            .and_then(|id| {
+                due_todos
+                    .iter()
+                    .position(|t| t.id == Some(id))
+                    .or_else(|| todos.iter().position(|t| t.id == Some(id)).map(|i| due_todos.len() + i))
+            })
+            .unwrap_or(0);
+
         Self {
+            due_todos,
+            due_stats,
             todos,
             stats,
-            cursor: 0,
+            cursor,
+            selected_id,
             color,
         }
+    }
+
+    fn total(&self) -> usize {
+        self.due_todos.len() + self.todos.len()
     }
 }
 
 /// Stateful container for the todo-picker, owns its props and cursor.
 pub struct TodoPickerState {
-    /// Mutable props updated as the user navigates.
     props: TodoPickerProps,
 }
 
 impl TodoPickerState {
-    /// Creates a new picker state wrapping the given props.
     pub fn new(props: TodoPickerProps) -> Self {
         Self { props }
     }
 
-    /// Returns a shared reference to the current props.
     pub fn props(&self) -> &TodoPickerProps {
         &self.props
     }
 
     /// Handles a key event and returns the resulting action.
     pub fn handle(&mut self, key: KeyEvent) -> TodoPickerAction {
+        let total = self.props.total();
         match key.code {
             KeyCode::Char('j') | KeyCode::Down => {
-                if !self.props.todos.is_empty() {
-                    self.props.cursor = (self.props.cursor + 1).min(self.props.todos.len() - 1);
+                if total > 0 {
+                    self.props.cursor = (self.props.cursor + 1).min(total - 1);
                 }
                 TodoPickerAction::None
             }
@@ -71,7 +98,14 @@ impl TodoPickerState {
                 TodoPickerAction::None
             }
             KeyCode::Enter => {
-                if let Some(id) = self.props.todos.get(self.props.cursor).and_then(|t| t.id) {
+                let due_len = self.props.due_todos.len();
+                let cursor = self.props.cursor;
+                let id = if cursor < due_len {
+                    self.props.due_todos.get(cursor).and_then(|t| t.id)
+                } else {
+                    self.props.todos.get(cursor - due_len).and_then(|t| t.id)
+                };
+                if let Some(id) = id {
                     TodoPickerAction::Select(id)
                 } else {
                     TodoPickerAction::Cancel
@@ -85,19 +119,23 @@ impl TodoPickerState {
 
 /// Stateless widget that renders the todo-picker popup.
 pub struct TodoPickerWidget<'a> {
-    /// Borrowed picker props for this render pass.
     props: &'a TodoPickerProps,
 }
 
 impl<'a> TodoPickerWidget<'a> {
-    /// Creates a new picker widget from the given props.
     pub fn new(props: &'a TodoPickerProps) -> Self {
         Self { props }
     }
 }
 
+/// A display row: either a non-selectable section header or a selectable todo item.
+enum Row {
+    Header(&'static str),
+    /// logical index into the combined due+today list
+    Item(usize),
+}
+
 impl Widget for &TodoPickerWidget<'_> {
-    /// Renders the centered popup list into the buffer.
     fn render(self, area: Rect, buf: &mut Buffer) {
         let popup = centered_rect(area, 60, area.height.saturating_sub(4));
 
@@ -111,7 +149,9 @@ impl Widget for &TodoPickerWidget<'_> {
         let inner = block.inner(popup);
         block.render(popup, buf);
 
-        if self.props.todos.is_empty() {
+        let total = self.props.total();
+
+        if total == 0 {
             Paragraph::new("No todos for today")
                 .centered()
                 .fg(Color::DarkGray)
@@ -119,45 +159,96 @@ impl Widget for &TodoPickerWidget<'_> {
             return;
         }
 
-        let visible = inner.height as usize;
-        let serial_width = self.props.todos.len().max(1).to_string().len();
+        // Build display rows (headers + items)
+        let mut rows: Vec<Row> = vec![];
+        if !self.props.due_todos.is_empty() {
+            rows.push(Row::Header("Overdue"));
+            for i in 0..self.props.due_todos.len() {
+                rows.push(Row::Item(i));
+            }
+        }
+        if !self.props.todos.is_empty() {
+            rows.push(Row::Header("Today"));
+            let due_len = self.props.due_todos.len();
+            for i in 0..self.props.todos.len() {
+                rows.push(Row::Item(due_len + i));
+            }
+        }
 
-        let start = self
-            .props
-            .cursor
-            .saturating_sub(visible / 2)
-            .min(self.props.todos.len().saturating_sub(visible));
-
-        let items: Vec<ListItem> = self
-            .props
-            .todos
+        // Find which display row the cursor item is on
+        let cursor_row = rows
             .iter()
-            .zip(self.props.stats.iter())
-            .enumerate()
-            .skip(start)
-            .take(visible)
-            .map(|(i, (todo, stat))| {
-                let serial = i + 1;
-                let label = if stat.completed_sessions > 0 {
-                    format!(
-                        "{}  ·  {}× {}m",
-                        todo.text,
-                        stat.completed_sessions,
-                        stat.completed_secs / 60
-                    )
-                } else {
-                    todo.text.clone()
-                };
-                if i == self.props.cursor {
-                    ListItem::new(format!("> {serial:>serial_width$}. {label}"))
-                        .style(Style::new().fg(self.props.color).bold())
-                } else {
-                    ListItem::new(format!("  {serial:>serial_width$}. {label}")).style(Style::new().fg(Color::White))
-                }
-            })
-            .collect();
+            .position(|r| matches!(r, Row::Item(i) if *i == self.props.cursor))
+            .unwrap_or(0);
 
-        List::new(items).render(inner, buf);
+        let visible = inner.height as usize;
+        let serial_width = total.max(1).to_string().len();
+        let due_len = self.props.due_todos.len();
+
+        // Center scroll around the cursor's display row
+        let start = cursor_row
+            .saturating_sub(visible / 2)
+            .min(rows.len().saturating_sub(visible));
+
+        for (row_offset, row) in rows.iter().skip(start).take(visible).enumerate() {
+            let row_rect = Rect {
+                y: inner.y + row_offset as u16,
+                height: 1,
+                ..inner
+            };
+            match row {
+                Row::Header(label) => {
+                    Paragraph::new(format!("── {label} ──"))
+                        .fg(Color::DarkGray)
+                        .render(row_rect, buf);
+                }
+                Row::Item(logical_idx) => {
+                    let (todo, stat) = if *logical_idx < due_len {
+                        (&self.props.due_todos[*logical_idx], &self.props.due_stats[*logical_idx])
+                    } else {
+                        let i = logical_idx - due_len;
+                        (&self.props.todos[i], &self.props.stats[i])
+                    };
+                    let serial = logical_idx + 1;
+                    let label = if stat.completed_sessions > 0 {
+                        format!(
+                            "{}  ·  {}× {}m",
+                            todo.text,
+                            stat.completed_sessions,
+                            stat.completed_secs / 60
+                        )
+                    } else {
+                        todo.text.clone()
+                    };
+
+                    let is_cursor = *logical_idx == self.props.cursor;
+                    let is_selected = todo.id.is_some() && todo.id == self.props.selected_id;
+
+                    let prefix = if is_cursor { ">" } else { " " };
+                    let text = format!("{prefix} {serial:>serial_width$}. {label}");
+
+                    if is_selected {
+                        // Fill row with phase color background, render text in black
+                        buf.set_style(
+                            row_rect,
+                            Style::default()
+                                .bg(self.props.color)
+                                .fg(Color::Black)
+                                .add_modifier(Modifier::BOLD),
+                        );
+                        Paragraph::new(text).render(row_rect, buf);
+                    } else if is_cursor {
+                        buf.set_style(
+                            row_rect,
+                            Style::default().fg(self.props.color).add_modifier(Modifier::BOLD),
+                        );
+                        Paragraph::new(text).render(row_rect, buf);
+                    } else {
+                        Paragraph::new(text).fg(Color::White).render(row_rect, buf);
+                    }
+                }
+            }
+        }
     }
 }
 
