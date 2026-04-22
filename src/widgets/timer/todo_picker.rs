@@ -229,10 +229,19 @@ impl Widget for &TodoPickerWidget<'_> {
 
                     if is_selected {
                         // Fill row with phase color background, render text in black
-                        buf.set_style(row_rect, Style::default().bg(self.props.color).fg(Color::Black).add_modifier(Modifier::BOLD));
+                        buf.set_style(
+                            row_rect,
+                            Style::default()
+                                .bg(self.props.color)
+                                .fg(Color::Black)
+                                .add_modifier(Modifier::BOLD),
+                        );
                         Paragraph::new(text).render(row_rect, buf);
                     } else if is_cursor {
-                        buf.set_style(row_rect, Style::default().fg(self.props.color).add_modifier(Modifier::BOLD));
+                        buf.set_style(
+                            row_rect,
+                            Style::default().fg(self.props.color).add_modifier(Modifier::BOLD),
+                        );
                         Paragraph::new(text).render(row_rect, buf);
                     } else {
                         Paragraph::new(text).fg(Color::White).render(row_rect, buf);
