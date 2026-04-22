@@ -28,7 +28,9 @@ pub struct TodoPickerProps {
     stats: Vec<Stat>,
     /// Index of the currently highlighted todo (across both sections combined).
     cursor: usize,
-    /// Pass the phase color to use everywhere.
+    /// The id of the todo currently assigned to the timer, shown in phase color.
+    selected_id: Option<i32>,
+    /// Phase color used for borders and the selected todo.
     color: Color,
 }
 
@@ -39,14 +41,25 @@ impl TodoPickerProps {
         todos: Vec<Todo>,
         stats: Vec<Stat>,
         color: Color,
-        initial_cursor: usize,
+        selected_id: Option<i32>,
     ) -> Self {
+        // Position cursor on the currently selected todo, default to 0.
+        let cursor = selected_id
+            .and_then(|id| {
+                due_todos
+                    .iter()
+                    .position(|t| t.id == Some(id))
+                    .or_else(|| todos.iter().position(|t| t.id == Some(id)).map(|i| due_todos.len() + i))
+            })
+            .unwrap_or(0);
+
         Self {
             due_todos,
             due_stats,
             todos,
             stats,
-            cursor: initial_cursor,
+            cursor,
+            selected_id,
             color,
         }
     }
@@ -186,7 +199,7 @@ impl Widget for &TodoPickerWidget<'_> {
             match row {
                 Row::Header(label) => {
                     Paragraph::new(format!("── {label} ──"))
-                        .style(Style::default().fg(Color::DarkGray))
+                        .fg(Color::DarkGray)
                         .render(row_rect, buf);
                 }
                 Row::Item(logical_idx) => {
@@ -207,17 +220,23 @@ impl Widget for &TodoPickerWidget<'_> {
                     } else {
                         todo.text.clone()
                     };
-                    let (prefix, style) = if *logical_idx == self.props.cursor {
-                        (
-                            ">",
-                            Style::default().fg(self.props.color).add_modifier(Modifier::BOLD),
-                        )
+
+                    let is_cursor = *logical_idx == self.props.cursor;
+                    let is_selected = todo.id.is_some() && todo.id == self.props.selected_id;
+
+                    let prefix = if is_cursor { ">" } else { " " };
+                    let text = format!("{prefix} {serial:>serial_width$}. {label}");
+
+                    if is_selected {
+                        // Fill row with phase color background, render text in black
+                        buf.set_style(row_rect, Style::default().bg(self.props.color).fg(Color::Black).add_modifier(Modifier::BOLD));
+                        Paragraph::new(text).render(row_rect, buf);
+                    } else if is_cursor {
+                        buf.set_style(row_rect, Style::default().fg(self.props.color).add_modifier(Modifier::BOLD));
+                        Paragraph::new(text).render(row_rect, buf);
                     } else {
-                        ("  ", Style::default().fg(Color::White))
-                    };
-                    Paragraph::new(format!("{prefix} {serial:>serial_width$}. {label}"))
-                        .style(style)
-                        .render(row_rect, buf);
+                        Paragraph::new(text).fg(Color::White).render(row_rect, buf);
+                    }
                 }
             }
         }
