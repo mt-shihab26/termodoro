@@ -33,13 +33,7 @@ pub struct TodoPickerProps {
 }
 
 impl TodoPickerProps {
-    pub fn new(
-        due_todos: Vec<Todo>,
-        due_stats: Vec<Stat>,
-        todos: Vec<Todo>,
-        stats: Vec<Stat>,
-        color: Color,
-    ) -> Self {
+    pub fn new(due_todos: Vec<Todo>, due_stats: Vec<Stat>, todos: Vec<Todo>, stats: Vec<Stat>, color: Color) -> Self {
         Self {
             due_todos,
             due_stats,
@@ -162,7 +156,10 @@ impl Widget for &TodoPickerWidget<'_> {
         }
 
         // Find which display row the cursor item is on
-        let cursor_row = rows.iter().position(|r| matches!(r, Row::Item(i) if *i == self.props.cursor)).unwrap_or(0);
+        let cursor_row = rows
+            .iter()
+            .position(|r| matches!(r, Row::Item(i) if *i == self.props.cursor))
+            .unwrap_or(0);
 
         let visible = inner.height as usize;
         let serial_width = total.max(1).to_string().len();
@@ -179,8 +176,7 @@ impl Widget for &TodoPickerWidget<'_> {
             .skip(start)
             .take(visible)
             .map(|(_, row)| match row {
-                Row::Header(label) => ListItem::new(format!("── {label} ──"))
-                    .style(Style::new().fg(Color::DarkGray)),
+                Row::Header(label) => ListItem::new(format!("── {label} ──")).style(Style::new().fg(Color::DarkGray)),
                 Row::Item(logical_idx) => {
                     let (todo, stat) = if *logical_idx < due_len {
                         (&self.props.due_todos[*logical_idx], &self.props.due_stats[*logical_idx])
