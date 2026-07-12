@@ -104,10 +104,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.target }}-cargo-
 
-      # Linux native deps (sqlite3 required by sqlx-sqlite)
+      # Linux native deps (sqlite3 required by sqlx-sqlite, alsa required by rodio)
       - name: Install system dependencies (Linux native)
         if: matrix.os == 'ubuntu-latest' && matrix.use_cross == false
-        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libasound2-dev
 
       - name: Install cross
         if: matrix.use_cross == true
@@ -197,6 +197,9 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-dev libasound2-dev
 
       - name: Publish to crates.io
         env:
