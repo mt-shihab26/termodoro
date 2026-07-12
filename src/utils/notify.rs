@@ -17,16 +17,18 @@ pub fn notify(summary: &str, body: &str) {
     {
         log_error!("failed to send notification: {e}");
     }
+    sound();
 }
 
-pub fn notify_sound() {
+fn sound() {
     thread::spawn(|| {
         let result = (|| -> Result<(), Box<dyn std::error::Error>> {
-            let stream_handle = rodio::DeviceSinkBuilder::open_default_sink()?;
+            let mut stream_handle = rodio::DeviceSinkBuilder::open_default_sink()?;
+            stream_handle.log_on_drop(false);
             let mixer = stream_handle.mixer();
-            let wave = SineWave::new(740.0).amplify(0.2).take_duration(Duration::from_secs(3));
+            let wave = SineWave::new(880.0).amplify(0.15).take_duration(Duration::from_millis(120));
             mixer.add(wave);
-            thread::sleep(Duration::from_millis(1500));
+            thread::sleep(Duration::from_millis(150));
             Ok(())
         })();
         if let Err(e) = result {
