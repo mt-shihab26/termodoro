@@ -22,3 +22,4 @@ log = "0.4"
 sea-orm = { version = "1", features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
 sea-orm-migration = { version = "1", features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
 notify-rust = "4.12.0"
+rodio = "0.22.2"
