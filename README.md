@@ -14,7 +14,7 @@ A terminal-based (TUI) Todos + Pomodoro timer written in [Rust](https://www.rust
 
 ## Installation
 
-### Omarchy
+### [Omarchy](https://omarchy.org)
 
 <!-- ```sh -->
 <!-- omarchy pkg add orivo -->
