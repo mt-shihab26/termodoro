@@ -30,49 +30,6 @@ Usage:
 $ orivo
 ```
 
-### Linux or macOS
-
-```sh
-curl -fsSL https://github.com/mt-shihab26/orivo/releases/latest/download/install.sh | bash
-```
-
-The script will:
-
-- **Install sqlite3** — the only system dependency, detected and installed automatically for your distro
-- **Install the binary** — fetches the latest release for your OS and architecture, then places `orivo` in `~/.local/bin`
-- **Install the desktop entry** *(Linux only)* — registers orivo in your launcher. On [Omarchy](https://omarchy.org), this is auto-detected and launches via `omarchy-launch-terminal` (respecting your configured default terminal); otherwise it defaults to Kitty. Pass `-s -- --terminal alacritty` (or `kitty`/`omarchy`) to override.
-- **Install the icon** *(Linux only)* — installs the app icon to the hicolor theme for the desktop entry
-
-> Running the same command again will **upgrade** to the latest version, or do nothing if already up to date.
-
-Usage:
-
-1. Search for orivo in your launcher (opens in Kitty or Alacritty)
-2. Run from any terminal (`~/.local/bin` must be in your `PATH`):
-```sh
-$ orivo
-```
-
-### Windows
-
-**Requires sqlite3** — install it and ensure it's on your `PATH` before running.
-
-Download the Windows release binary from the latest GitHub Release:
-
-- `orivo-vX.Y.Z-windows-x86_64.exe`
-- `orivo-vX.Y.Z-windows-aarch64.exe`
-
-```powershell
-> mv orivo-vX.Y.Z-windows-x86_64.exe orivo.exe
-```
-
-Then place the binary somewhere on your `PATH`.
-
-Run from any terminal:
-```powershell
-> orivo
-```
-
 ### Cargo (any OS, builds from source)
 
 **Requires sqlite3** — install it for your OS and ensure it's on your `PATH` before building.
