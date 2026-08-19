@@ -21,7 +21,7 @@ A terminal-based (TUI) Todos + Pomodoro timer written in [Rust](https://www.rust
 <!-- ``` -->
 
 ```sh
-git clone https://github.com/mt-shihab26/orivo.git /tmp/orivo
+git clone --depth 1 https://github.com/mt-shihab26/orivo.git /tmp/orivo
 cd /tmp/orivo
 makepkg -si
 ```
