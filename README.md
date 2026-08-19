@@ -16,8 +16,14 @@ A terminal-based (TUI) Todos + Pomodoro timer written in [Rust](https://www.rust
 
 ### Omarchy
 
+<!-- ```sh -->
+<!-- omarchy pkg add orivo -->
+<!-- ``` -->
+
 ```sh
-omarchy pkg add orivo
+git clone https://github.com/mt-shihab26/orivo.git /tmp/orivo
+cd /tmp/orivo
+makepkg -si
 ```
 
 Installs the AUR package (see [`PKGBUILD`](PKGBUILD)), which places `orivo` on `/usr/bin` and registers a desktop entry that launches it via `omarchy-launch-terminal` — so it opens in whatever terminal you've configured as default.
