@@ -135,10 +135,18 @@ install_binary() {
     echo "Binary:  $bin_dir/$binary"
 }
 
+is_omarchy() {
+    command -v omarchy-launch-terminal &>/dev/null
+}
+
 pick_terminal() {
     local terminal="$1"
     [ -n "$terminal" ] && {
         echo "$terminal"
+        return
+    }
+    is_omarchy && {
+        echo "omarchy"
         return
     }
     echo "kitty"
@@ -152,10 +160,11 @@ install_desktop() {
 
     local desktop_src
     case "$terminal" in
+    omarchy) desktop_src="orivo-omarchy.desktop" ;;
     kitty) desktop_src="orivo-kitty.desktop" ;;
     alacritty) desktop_src="orivo-alacritty.desktop" ;;
     *)
-        echo "ERROR: Unknown terminal '$terminal'. Choose kitty or alacritty." >&2
+        echo "ERROR: Unknown terminal '$terminal'. Choose omarchy, kitty, or alacritty." >&2
         exit 1
         ;;
     esac
@@ -219,8 +228,9 @@ while [[ $# -gt 0 ]]; do
         shift
         ;;
     -h | --help)
-        echo "Usage: $0 [--terminal kitty|alacritty]"
-        echo "  --terminal kitty|alacritty  Terminal for the desktop entry"
+        echo "Usage: $0 [--terminal omarchy|kitty|alacritty]"
+        echo "  --terminal omarchy|kitty|alacritty  Terminal for the desktop entry"
+        echo "                                      (defaults to omarchy when detected, else kitty)"
         exit 0
         ;;
     *)

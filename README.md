@@ -14,6 +14,22 @@ A terminal-based (TUI) Todos + Pomodoro timer written in [Rust](https://www.rust
 
 ## Installation
 
+### Omarchy
+
+```sh
+omarchy pkg add orivo
+```
+
+Installs the AUR package (see [`aur/PKGBUILD`](aur/PKGBUILD)), which places `orivo` on `/usr/bin` and registers a desktop entry that launches it via `omarchy-launch-terminal` — so it opens in whatever terminal you've configured as default.
+
+Usage:
+
+1. Search for orivo in your launcher
+2. Run from any terminal:
+```sh
+$ orivo
+```
+
 ### Linux or macOS
 
 ```sh
@@ -24,7 +40,7 @@ The script will:
 
 - **Install sqlite3** — the only system dependency, detected and installed automatically for your distro
 - **Install the binary** — fetches the latest release for your OS and architecture, then places `orivo` in `~/.local/bin`
-- **Install the desktop entry** *(Linux only)* — registers orivo in your launcher (defaults to Kitty; pass `-s -- --terminal alacritty` to use Alacritty instead)
+- **Install the desktop entry** *(Linux only)* — registers orivo in your launcher. On [Omarchy](https://omarchy.org), this is auto-detected and launches via `omarchy-launch-terminal` (respecting your configured default terminal); otherwise it defaults to Kitty. Pass `-s -- --terminal alacritty` (or `kitty`/`omarchy`) to override.
 - **Install the icon** *(Linux only)* — installs the app icon to the hicolor theme for the desktop entry
 
 > Running the same command again will **upgrade** to the latest version, or do nothing if already up to date.

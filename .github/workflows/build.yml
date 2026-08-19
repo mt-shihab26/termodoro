@@ -163,12 +163,13 @@ jobs:
           cp bin/install.sh dist/install.sh
           cp xdg/orivo-kitty.desktop dist/orivo-kitty.desktop
           cp xdg/orivo-alacritty.desktop dist/orivo-alacritty.desktop
+          cp xdg/orivo-omarchy.desktop dist/orivo-omarchy.desktop
           cp xdg/orivo.svg dist/orivo.svg
 
       - name: Generate checksums
         run: |
           cd dist
-          sha256sum orivo-v* install.sh orivo-kitty.desktop orivo-alacritty.desktop orivo.svg > SHA256SUMS.txt
+          sha256sum orivo-v* install.sh orivo-kitty.desktop orivo-alacritty.desktop orivo-omarchy.desktop orivo.svg > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
       - name: Create release and upload assets
@@ -185,6 +186,7 @@ jobs:
             dist/install.sh \
             dist/orivo-kitty.desktop \
             dist/orivo-alacritty.desktop \
+            dist/orivo-omarchy.desktop \
             dist/orivo.svg \
             --clobber
 
