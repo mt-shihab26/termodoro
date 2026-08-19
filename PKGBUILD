@@ -1,6 +1,6 @@
 # Maintainer: Shihab Mahamud <mt.shihab26@gmail.com>
 pkgname=orivo
-pkgver=0.3.0
+pkgver=0.3.1
 pkgrel=1
 pkgdesc="A terminal-based (TUI) Todos + Pomodoro timer written in Rust"
 arch=('x86_64' 'aarch64')
