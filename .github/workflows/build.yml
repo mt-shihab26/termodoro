@@ -35,40 +35,40 @@ jobs:
             asset_suffix: ""
 
           # macOS x86_64 (Intel)
-          - target: x86_64-apple-darwin
-            os: macos-latest
-            os_tag: macos
-            arch_tag: x86_64
-            use_cross: false
-            binary_name: orivo
-            asset_suffix: ""
+          # - target: x86_64-apple-darwin
+          #   os: macos-latest
+          #   os_tag: macos
+          #   arch_tag: x86_64
+          #   use_cross: false
+          #   binary_name: orivo
+          #   asset_suffix: ""
 
           # macOS aarch64 (Apple Silicon)
-          - target: aarch64-apple-darwin
-            os: macos-latest
-            os_tag: macos
-            arch_tag: aarch64
-            use_cross: false
-            binary_name: orivo
-            asset_suffix: ""
+          # - target: aarch64-apple-darwin
+          #   os: macos-latest
+          #   os_tag: macos
+          #   arch_tag: aarch64
+          #   use_cross: false
+          #   binary_name: orivo
+          #   asset_suffix: ""
 
           # Windows x86_64
-          - target: x86_64-pc-windows-msvc
-            os: windows-latest
-            os_tag: windows
-            arch_tag: x86_64
-            use_cross: false
-            binary_name: orivo.exe
-            asset_suffix: ".exe"
+          # - target: x86_64-pc-windows-msvc
+          #   os: windows-latest
+          #   os_tag: windows
+          #   arch_tag: x86_64
+          #   use_cross: false
+          #   binary_name: orivo.exe
+          #   asset_suffix: ".exe"
 
           # Windows aarch64
-          - target: aarch64-pc-windows-msvc
-            os: windows-11-arm
-            os_tag: windows
-            arch_tag: aarch64
-            use_cross: false
-            binary_name: orivo.exe
-            asset_suffix: ".exe"
+          # - target: aarch64-pc-windows-msvc
+          #   os: windows-11-arm
+          #   os_tag: windows
+          #   arch_tag: aarch64
+          #   use_cross: false
+          #   binary_name: orivo.exe
+          #   asset_suffix: ".exe"
 
     steps:
       - name: Checkout
@@ -156,15 +156,13 @@ jobs:
 
       - name: Prepare release assets
         run: |
-          cp xdg/orivo-kitty.desktop dist/orivo-kitty.desktop
-          cp xdg/orivo-alacritty.desktop dist/orivo-alacritty.desktop
-          cp xdg/orivo-omarchy.desktop dist/orivo-omarchy.desktop
-          cp xdg/orivo.svg dist/orivo.svg
+          cp orivo-omarchy.desktop dist/orivo-omarchy.desktop
+          cp orivo.svg dist/orivo.svg
 
       - name: Generate checksums
         run: |
           cd dist
-          sha256sum orivo-v* orivo-kitty.desktop orivo-alacritty.desktop orivo-omarchy.desktop orivo.svg > SHA256SUMS.txt
+          sha256sum orivo-v* orivo-omarchy.desktop orivo.svg > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
       - name: Create release and upload assets
@@ -178,8 +176,6 @@ jobs:
           gh release upload "${GITHUB_REF_NAME}" \
             dist/orivo-v* \
             dist/SHA256SUMS.txt \
-            dist/orivo-kitty.desktop \
-            dist/orivo-alacritty.desktop \
             dist/orivo-omarchy.desktop \
             dist/orivo.svg \
             --clobber

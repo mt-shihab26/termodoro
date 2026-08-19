@@ -1,5 +1,5 @@
 <p>
-  <img src="xdg/orivo.svg" width="120" alt="orivo logo"/>
+  <img src="orivo.svg" width="120" alt="orivo logo"/>
 </p>
 
 # orivo
@@ -20,12 +20,15 @@ A terminal-based (TUI) Todos + Pomodoro timer written in [Rust](https://www.rust
 omarchy pkg add orivo
 ```
 
-Installs the AUR package (see [`aur/PKGBUILD`](aur/PKGBUILD)), which places `orivo` on `/usr/bin` and registers a desktop entry that launches it via `omarchy-launch-terminal` — so it opens in whatever terminal you've configured as default.
+Installs the AUR package (see [`PKGBUILD`](PKGBUILD)), which places `orivo` on `/usr/bin` and registers a desktop entry that launches it via `omarchy-launch-terminal` — so it opens in whatever terminal you've configured as default.
 
-Usage:
+Usage (app launcher):
 
-1. Search for orivo in your launcher
-2. Run from any terminal:
+1. Press `SUPER + ALT + SPACE` to open the app launcher
+2. Search for orivo
+
+Usage (terminal):
+
 ```sh
 $ orivo
 ```
