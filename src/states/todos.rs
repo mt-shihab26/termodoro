@@ -165,7 +165,8 @@ impl TodosState {
     /// Returns a borrowed slice of the visible todos for the given page.
     pub fn items(&self, page: Page) -> Ref<'_, [Todo]> {
         if self.search_query.is_empty() {
-            self.todos_cache.get_items(page, self.offset, self.page_size())
+            self.todos_cache
+                .get_items(page, self.offset, self.page_size())
         } else {
             self.get_search_items(page)
         }
@@ -237,7 +238,10 @@ impl TodosState {
 
     /// Returns `true` if the selected todo on the given page can be deleted.
     pub fn can_delete(&self, page: Page, items: &[Todo]) -> bool {
-        !matches!(page, Page::History) && items.get(self.selected).is_some_and(|todo| todo.done_at.is_none())
+        !matches!(page, Page::History)
+            && items
+                .get(self.selected)
+                .is_some_and(|todo| todo.done_at.is_none())
     }
 
     /// Clamps the selection to valid bounds, scrolling back a page if the current page is empty.
@@ -318,7 +322,13 @@ impl TodosState {
     }
 
     /// Adds a new todo and refreshes the list.
-    pub fn add(&mut self, page: Page, text: String, due_date: Option<OffsetDateTime>, repeat: Option<Repeat>) {
+    pub fn add(
+        &mut self,
+        page: Page,
+        text: String,
+        due_date: Option<OffsetDateTime>,
+        repeat: Option<Repeat>,
+    ) {
         let mut todo = Todo::new(text, due_date, repeat, None);
         if todo.save(&self.db) {
             self.refresh(page);
@@ -326,7 +336,13 @@ impl TodosState {
     }
 
     /// Updates the selected todo's text, due date, and repeat rule, then refreshes.
-    pub fn update(&mut self, page: Page, text: String, due_date: Option<OffsetDateTime>, repeat: Option<Repeat>) {
+    pub fn update(
+        &mut self,
+        page: Page,
+        text: String,
+        due_date: Option<OffsetDateTime>,
+        repeat: Option<Repeat>,
+    ) {
         if let Some(mut todo) = self.selected_item(page).map(|todo| todo.clone()) {
             todo.text = text;
             todo.due_date = due_date;
@@ -403,7 +419,10 @@ impl TodosState {
     }
 
     /// Returns the text, due date, and repeat rule of the selected todo for editing.
-    pub fn edit_values(&self, page: Page) -> Option<(String, Option<OffsetDateTime>, Option<Repeat>)> {
+    pub fn edit_values(
+        &self,
+        page: Page,
+    ) -> Option<(String, Option<OffsetDateTime>, Option<Repeat>)> {
         self.selected_item(page)
             .map(|todo| (todo.text.clone(), todo.due_date, todo.repeat.clone()))
     }

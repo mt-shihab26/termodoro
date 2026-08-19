@@ -27,7 +27,9 @@ fn config_base_path() -> PathBuf {
     return local();
 
     #[cfg(not(debug_assertions))]
-    PathBuf::from(home()).join(".config").join(env!("CARGO_PKG_NAME"))
+    PathBuf::from(home())
+        .join(".config")
+        .join(env!("CARGO_PKG_NAME"))
 }
 
 /// the base directory for runtime state files

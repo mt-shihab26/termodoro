@@ -31,7 +31,9 @@ use crate::{
             clock::{ClockProps, ClockWidget},
             hint::{HintProps, HintWidget},
             phase::{PhaseProps, PhaseWidget},
-            reduce_picker::{ReducePickerAction, ReducePickerProps, ReducePickerState, ReducePickerWidget},
+            reduce_picker::{
+                ReducePickerAction, ReducePickerProps, ReducePickerState, ReducePickerWidget,
+            },
             session::{SessionProps, SessionWidget},
             status::{StatusProps, StatusWidget},
             todo_picker::{TodoPickerAction, TodoPickerProps, TodoPickerState, TodoPickerWidget},
@@ -67,7 +69,14 @@ impl TimerTab {
         store: Store,
     ) -> Self {
         let count = Arc::new(AtomicU8::new(1));
-        let state = spawn(Arc::clone(&count), sender, db, config, Arc::clone(&cache), store);
+        let state = spawn(
+            Arc::clone(&count),
+            sender,
+            db,
+            config,
+            Arc::clone(&cache),
+            store,
+        );
 
         Self {
             count,
@@ -296,15 +305,30 @@ impl Tab for TimerTab {
         ])
         .areas(inner);
 
-        SessionWidget::new(&SessionProps::new(sessions, daily_session_goal, phase_color)).render(session_row, buf);
+        SessionWidget::new(&SessionProps::new(
+            sessions,
+            daily_session_goal,
+            phase_color,
+        ))
+        .render(session_row, buf);
         PhaseWidget::new(&PhaseProps::new(phase_label, phase_color)).render(phase_row, buf);
-        ClockWidget::new(&ClockProps::new(show_millis, time_millis, phase_color)).render(time_row, buf);
+        ClockWidget::new(&ClockProps::new(show_millis, time_millis, phase_color))
+            .render(time_row, buf);
         StatusWidget::new(&StatusProps::new(running, phase_color)).render(status_row, buf);
 
         let (todo, stat) = self.todo_info();
 
-        TodoShowWidget::new(&TodoShowProps::new(todo.as_ref(), stat.as_ref(), phase_color)).render(todo_row, buf);
-        HintWidget::new(&HintProps::new(self.picker.is_some(), self.reduce_state.is_some())).render(hint_row, buf);
+        TodoShowWidget::new(&TodoShowProps::new(
+            todo.as_ref(),
+            stat.as_ref(),
+            phase_color,
+        ))
+        .render(todo_row, buf);
+        HintWidget::new(&HintProps::new(
+            self.picker.is_some(),
+            self.reduce_state.is_some(),
+        ))
+        .render(hint_row, buf);
 
         if let Some(picker) = &self.picker {
             TodoPickerWidget::new(&picker.props()).render(inner, buf);

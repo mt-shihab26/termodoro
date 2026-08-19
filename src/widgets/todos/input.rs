@@ -127,7 +127,9 @@ impl InputState {
                 )));
             }
             KeyCode::Char('e') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                self.repeat_state = Some(RepeatState::new(RepeatProps::new(self.props.repeat.as_ref())));
+                self.repeat_state = Some(RepeatState::new(RepeatProps::new(
+                    self.props.repeat.as_ref(),
+                )));
             }
             _ => {
                 self.props.textarea.input(key);
@@ -145,7 +147,9 @@ impl InputState {
 
     /// Renders the repeat-picker overlay into the buffer if it is currently open.
     pub fn render_repeat(&self, area: Rect, buf: &mut Buffer) {
-        let Some(rep) = &self.repeat_state else { return };
+        let Some(rep) = &self.repeat_state else {
+            return;
+        };
 
         let popup_w = 26u16;
         let popup_h = 14u16;
@@ -209,7 +213,10 @@ impl Widget for &InputWidget<'_> {
             .border_style(Style::default().fg(COLOR));
         let date_inner = date_block.inner(date_area);
         date_block.render(date_area, buf);
-        Paragraph::new(date_str).fg(COLOR).centered().render(date_inner, buf);
+        Paragraph::new(date_str)
+            .fg(COLOR)
+            .centered()
+            .render(date_inner, buf);
 
         let repeat_str = self
             .props

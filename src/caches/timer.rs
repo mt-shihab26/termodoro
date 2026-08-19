@@ -48,7 +48,10 @@ impl TimerCache {
             let ids: Vec<Option<i32>> = self.get_due_todos().iter().map(|t| t.id).collect();
             let stats = ids
                 .into_iter()
-                .map(|id| id.map(|id| Session::stat(&self.db, id)).unwrap_or(Stat::new(0, 0)))
+                .map(|id| {
+                    id.map(|id| Session::stat(&self.db, id))
+                        .unwrap_or(Stat::new(0, 0))
+                })
                 .collect();
             self.due_stats = Some(stats);
         }
@@ -80,7 +83,10 @@ impl TimerCache {
             let ids: Vec<Option<i32>> = self.get_todos().iter().map(|t| t.id).collect();
             let stats = ids
                 .into_iter()
-                .map(|id| id.map(|id| Session::stat(&self.db, id)).unwrap_or(Stat::new(0, 0)))
+                .map(|id| {
+                    id.map(|id| Session::stat(&self.db, id))
+                        .unwrap_or(Stat::new(0, 0))
+                })
                 .collect();
             self.stats = Some(stats);
         }
@@ -91,10 +97,19 @@ impl TimerCache {
     pub fn get_stat(&mut self, todo_id: i32) -> Option<&Stat> {
         self.get_due_stats();
         self.get_stats();
-        if let Some(idx) = self.due_todos.as_deref()?.iter().position(|t| t.id == Some(todo_id)) {
+        if let Some(idx) = self
+            .due_todos
+            .as_deref()?
+            .iter()
+            .position(|t| t.id == Some(todo_id))
+        {
             return self.due_stats.as_deref()?.get(idx);
         }
-        let idx = self.todos.as_deref()?.iter().position(|t| t.id == Some(todo_id))?;
+        let idx = self
+            .todos
+            .as_deref()?
+            .iter()
+            .position(|t| t.id == Some(todo_id))?;
         self.stats.as_deref()?.get(idx)
     }
 

@@ -77,7 +77,10 @@ impl ListWidget<'_> {
     /// Renders todos as a plain sequential list without date section headers.
     fn render_flat(&self, area: Rect, buf: &mut Buffer) {
         let dimmed = matches!(self.props.page, Page::History);
-        let serial_width = (self.props.offset + self.props.items.len()).max(1).to_string().len();
+        let serial_width = (self.props.offset + self.props.items.len())
+            .max(1)
+            .to_string()
+            .len();
 
         for (index, todo) in self.props.items.iter().enumerate() {
             let y = area.y + index as u16;
@@ -94,13 +97,23 @@ impl ListWidget<'_> {
                 index == self.props.selected,
                 self.props.color,
             ))
-            .render(Rect { y, height: 1, ..area }, buf);
+            .render(
+                Rect {
+                    y,
+                    height: 1,
+                    ..area
+                },
+                buf,
+            );
         }
     }
 
     /// Renders todos grouped under date section headers with virtual scrolling.
     fn render_index(&self, area: Rect, buf: &mut Buffer) {
-        let serial_width = (self.props.offset + self.props.items.len()).max(1).to_string().len();
+        let serial_width = (self.props.offset + self.props.items.len())
+            .max(1)
+            .to_string()
+            .len();
 
         enum Row {
             Header(Line<'static>),
@@ -212,7 +225,10 @@ fn section_line(date: Option<time::Date>, width: usize, color: Color) -> Line<'s
             "─".repeat(left_len),
             Style::default().fg(color).add_modifier(Modifier::DIM),
         ),
-        Span::styled(label, Style::default().fg(color).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            label,
+            Style::default().fg(color).add_modifier(Modifier::BOLD),
+        ),
         Span::styled(
             "─".repeat(right_len),
             Style::default().fg(color).add_modifier(Modifier::DIM),

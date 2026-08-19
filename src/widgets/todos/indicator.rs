@@ -49,7 +49,10 @@ impl Widget for &IndicatorWidget<'_> {
                 width: inner_width,
                 height: 1,
             };
-            Paragraph::new("^ more").fg(COLOR).right_aligned().render(top_area, buf);
+            Paragraph::new("^ more")
+                .fg(COLOR)
+                .right_aligned()
+                .render(top_area, buf);
         }
 
         if self.props.show_more_below && area.height > 0 {

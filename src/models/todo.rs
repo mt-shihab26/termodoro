@@ -1,9 +1,9 @@
 use std::io;
 
 use sea_orm::{
-    ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, ColumnTrait, Condition, DatabaseConnection,
-    DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, Order, PaginatorTrait, PrimaryKeyTrait,
-    QueryFilter, QueryOrder, QuerySelect, sea_query::Expr,
+    ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, ColumnTrait, Condition,
+    DatabaseConnection, DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter,
+    Order, PaginatorTrait, PrimaryKeyTrait, QueryFilter, QueryOrder, QuerySelect, sea_query::Expr,
 };
 use time::{Duration, OffsetDateTime};
 
@@ -39,7 +39,12 @@ pub struct Todo {
 
 impl Todo {
     /// Creates an unsaved in-memory Todo with default values.
-    pub fn new(text: String, due_date: Option<OffsetDateTime>, repeat: Option<Repeat>, parent_id: Option<i32>) -> Self {
+    pub fn new(
+        text: String,
+        due_date: Option<OffsetDateTime>,
+        repeat: Option<Repeat>,
+        parent_id: Option<i32>,
+    ) -> Self {
         let now = now();
 
         Self {
@@ -58,7 +63,8 @@ impl Todo {
     pub fn save(&mut self, db: &DatabaseConnection) -> bool {
         match self.id {
             Some(_) => self.update(db),
-            None => match rt().block_on(async { self.to_model().insert(db).await.map_err(io_err) }) {
+            None => match rt().block_on(async { self.to_model().insert(db).await.map_err(io_err) })
+            {
                 Ok(model) => {
                     *self = model.into();
                     true
@@ -99,7 +105,12 @@ impl Todo {
         }
 
         let next_dt = due_date.replace_date(next_date);
-        let mut next = Todo::new(self.text.clone(), Some(next_dt), Some(Repeat::of(repeat)), parent_id);
+        let mut next = Todo::new(
+            self.text.clone(),
+            Some(next_dt),
+            Some(Repeat::of(repeat)),
+            parent_id,
+        );
 
         if next.save(db) { Some(next) } else { None }
     }
@@ -108,7 +119,10 @@ impl Todo {
     pub fn list_today_pending(db: &DatabaseConnection) -> Vec<Todo> {
         let today = format_date(today());
         let query = Entity::find()
-            .filter(Expr::cust_with_values("substr(due_date, 1, 10) = ?", [today]))
+            .filter(Expr::cust_with_values(
+                "substr(due_date, 1, 10) = ?",
+                [today],
+            ))
             .filter(Column::DoneAt.is_null())
             .order_by_desc(Column::CreatedAt);
 
@@ -125,7 +139,10 @@ impl Todo {
     pub fn list_due_pending(db: &DatabaseConnection) -> Vec<Todo> {
         let today = format_date(today());
         let query = Entity::find()
-            .filter(Expr::cust_with_values("substr(due_date, 1, 10) < ?", [today]))
+            .filter(Expr::cust_with_values(
+                "substr(due_date, 1, 10) < ?",
+                [today],
+            ))
             .filter(Column::DoneAt.is_null())
             .order_by_desc(Column::DueDate)
             .order_by_desc(Column::CreatedAt);
@@ -145,7 +162,13 @@ impl Todo {
     }
 
     /// Returns a paginated list of todos matching `query` (case-insensitive) on the given page.
-    pub fn list_search(db: &DatabaseConnection, page: Page, query: &str, offset: usize, limit: usize) -> Vec<Todo> {
+    pub fn list_search(
+        db: &DatabaseConnection,
+        page: Page,
+        query: &str,
+        offset: usize,
+        limit: usize,
+    ) -> Vec<Todo> {
         if limit == 0 {
             return vec![];
         }
@@ -179,7 +202,9 @@ impl Todo {
             return vec![];
         }
 
-        let query = Self::base_query(page).offset(offset as u64).limit(limit as u64);
+        let query = Self::base_query(page)
+            .offset(offset as u64)
+            .limit(limit as u64);
 
         match rt().block_on(async { query.all(db).await.map_err(io_err) }) {
             Ok(models) => models.into_iter().map(Todo::from).collect(),
@@ -219,7 +244,10 @@ impl Todo {
         };
         let query = Entity::find().filter(done_filter).filter(
             Condition::any()
-                .add(Expr::cust_with_values("substr(due_date, 1, 10) < ?", [&today]))
+                .add(Expr::cust_with_values(
+                    "substr(due_date, 1, 10) < ?",
+                    [&today],
+                ))
                 .add(Column::DueDate.is_null()),
         );
         match rt().block_on(async { query.count(db).await.map_err(io_err) }) {
@@ -239,18 +267,27 @@ impl Todo {
         match page {
             Page::Due => Entity::find()
                 .filter(Column::DoneAt.is_null())
-                .filter(Expr::cust_with_values("substr(due_date, 1, 10) < ?", [today.clone()]))
+                .filter(Expr::cust_with_values(
+                    "substr(due_date, 1, 10) < ?",
+                    [today.clone()],
+                ))
                 .order_by_desc(Column::DueDate)
                 .order_by_desc(Column::CreatedAt),
             Page::Today => Entity::find()
-                .filter(Expr::cust_with_values("substr(due_date, 1, 10) = ?", [today.clone()]))
+                .filter(Expr::cust_with_values(
+                    "substr(due_date, 1, 10) = ?",
+                    [today.clone()],
+                ))
                 .order_by_desc(Column::CreatedAt),
             Page::Index => {
                 let null_key = format!("{}~", format_date(today_date - Duration::days(1)));
                 Entity::find()
                     .filter(Column::DoneAt.is_null())
                     .order_by(
-                        Expr::cust_with_values("CASE WHEN due_date IS NULL THEN ? ELSE due_date END", [null_key]),
+                        Expr::cust_with_values(
+                            "CASE WHEN due_date IS NULL THEN ? ELSE due_date END",
+                            [null_key],
+                        ),
                         Order::Asc,
                     )
                     .order_by_asc(Column::CreatedAt)
@@ -260,7 +297,10 @@ impl Todo {
                 Entity::find()
                     .filter(Column::DoneAt.is_not_null())
                     .order_by(
-                        Expr::cust_with_values("CASE WHEN due_date IS NULL THEN ? ELSE due_date END", [null_key]),
+                        Expr::cust_with_values(
+                            "CASE WHEN due_date IS NULL THEN ? ELSE due_date END",
+                            [null_key],
+                        ),
                         Order::Asc,
                     )
                     .order_by_asc(Column::CreatedAt)
@@ -314,7 +354,13 @@ impl Todo {
             return false;
         };
 
-        match rt().block_on(async { Entity::delete_by_id(id).exec(db).await.map_err(io_err).map(|_| ()) }) {
+        match rt().block_on(async {
+            Entity::delete_by_id(id)
+                .exec(db)
+                .await
+                .map_err(io_err)
+                .map(|_| ())
+        }) {
             Ok(()) => true,
             Err(e) => {
                 log_error!("failed to delete todo: {e}");

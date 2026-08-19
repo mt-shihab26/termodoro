@@ -41,7 +41,8 @@ impl<'a> SessionWidget<'a> {
 impl Widget for &SessionWidget<'_> {
     /// Renders the session count and a horizontally centered progress bar.
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let [text_row, gauge_row] = Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).areas(area);
+        let [text_row, gauge_row] =
+            Layout::vertical([Constraint::Length(1), Constraint::Length(1)]).areas(area);
 
         Paragraph::new(format!(
             "Session {} / {}",
@@ -51,8 +52,12 @@ impl Widget for &SessionWidget<'_> {
         .fg(self.props.color)
         .render(text_row, buf);
 
-        let [_, gauge_col, _] =
-            Layout::horizontal([Constraint::Fill(1), Constraint::Percentage(50), Constraint::Fill(1)]).areas(gauge_row);
+        let [_, gauge_col, _] = Layout::horizontal([
+            Constraint::Fill(1),
+            Constraint::Percentage(50),
+            Constraint::Fill(1),
+        ])
+        .areas(gauge_row);
 
         let ratio = if self.props.daily_session_goal == 0 {
             1.0

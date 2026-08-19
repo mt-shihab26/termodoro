@@ -2199,7 +2199,7 @@ dependencies = [
 
 [[package]]
 name = "orivo"
-version = "0.2.13"
+version = "0.3.0"
 dependencies = [
  "log",
  "notify-rust",

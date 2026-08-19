@@ -18,7 +18,12 @@ pub struct StatusProps {
 impl StatusProps {
     /// Creates new status props with pagination details.
     pub fn new(total: usize, from: usize, to: usize, page: usize) -> Self {
-        Self { total, from, to, page }
+        Self {
+            total,
+            from,
+            to,
+            page,
+        }
     }
 }
 

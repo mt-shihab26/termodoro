@@ -35,40 +35,40 @@ jobs:
             asset_suffix: ""
 
           # macOS x86_64 (Intel)
-          - target: x86_64-apple-darwin
-            os: macos-latest
-            os_tag: macos
-            arch_tag: x86_64
-            use_cross: false
-            binary_name: orivo
-            asset_suffix: ""
+          # - target: x86_64-apple-darwin
+          #   os: macos-latest
+          #   os_tag: macos
+          #   arch_tag: x86_64
+          #   use_cross: false
+          #   binary_name: orivo
+          #   asset_suffix: ""
 
           # macOS aarch64 (Apple Silicon)
-          - target: aarch64-apple-darwin
-            os: macos-latest
-            os_tag: macos
-            arch_tag: aarch64
-            use_cross: false
-            binary_name: orivo
-            asset_suffix: ""
+          # - target: aarch64-apple-darwin
+          #   os: macos-latest
+          #   os_tag: macos
+          #   arch_tag: aarch64
+          #   use_cross: false
+          #   binary_name: orivo
+          #   asset_suffix: ""
 
           # Windows x86_64
-          - target: x86_64-pc-windows-msvc
-            os: windows-latest
-            os_tag: windows
-            arch_tag: x86_64
-            use_cross: false
-            binary_name: orivo.exe
-            asset_suffix: ".exe"
+          # - target: x86_64-pc-windows-msvc
+          #   os: windows-latest
+          #   os_tag: windows
+          #   arch_tag: x86_64
+          #   use_cross: false
+          #   binary_name: orivo.exe
+          #   asset_suffix: ".exe"
 
           # Windows aarch64
-          - target: aarch64-pc-windows-msvc
-            os: windows-11-arm
-            os_tag: windows
-            arch_tag: aarch64
-            use_cross: false
-            binary_name: orivo.exe
-            asset_suffix: ".exe"
+          # - target: aarch64-pc-windows-msvc
+          #   os: windows-11-arm
+          #   os_tag: windows
+          #   arch_tag: aarch64
+          #   use_cross: false
+          #   binary_name: orivo.exe
+          #   asset_suffix: ".exe"
 
     steps:
       - name: Checkout
@@ -154,21 +154,15 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Stamp install script tag
-        run: |
-          sed -i "s|^INSTALL_SCRIPT_TAG=\"__ORIVO_RELEASE_TAG__\"$|INSTALL_SCRIPT_TAG=\"${GITHUB_REF_NAME}\"|" bin/install.sh
-
       - name: Prepare release assets
         run: |
-          cp bin/install.sh dist/install.sh
-          cp xdg/orivo-kitty.desktop dist/orivo-kitty.desktop
-          cp xdg/orivo-alacritty.desktop dist/orivo-alacritty.desktop
-          cp xdg/orivo.svg dist/orivo.svg
+          cp orivo-omarchy.desktop dist/orivo-omarchy.desktop
+          cp orivo.svg dist/orivo.svg
 
       - name: Generate checksums
         run: |
           cd dist
-          sha256sum orivo-v* install.sh orivo-kitty.desktop orivo-alacritty.desktop orivo.svg > SHA256SUMS.txt
+          sha256sum orivo-v* orivo-omarchy.desktop orivo.svg > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
       - name: Create release and upload assets
@@ -182,11 +176,42 @@ jobs:
           gh release upload "${GITHUB_REF_NAME}" \
             dist/orivo-v* \
             dist/SHA256SUMS.txt \
-            dist/install.sh \
-            dist/orivo-kitty.desktop \
-            dist/orivo-alacritty.desktop \
+            dist/orivo-omarchy.desktop \
             dist/orivo.svg \
             --clobber
+
+  aur:
+    name: Update AUR checksums
+    needs: release
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install build tools
+        run: |
+          pacman -Sy --noconfirm --needed base-devel pacman-contrib git sudo
+          useradd -m builder
+          echo "builder ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builder
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Update PKGBUILD checksums and .SRCINFO
+        run: |
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+          sudo -u builder bash -c "cd '$GITHUB_WORKSPACE' && updpkgsums && makepkg --printsrcinfo > .SRCINFO"
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add PKGBUILD .SRCINFO
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update AUR checksums for ${GITHUB_REF_NAME}"
+            git push origin HEAD:main
+          fi
 
   publish:
     name: Publish to crates.io

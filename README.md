@@ -1,5 +1,5 @@
 <p>
-  <img src="xdg/orivo.svg" width="120" alt="orivo logo"/>
+  <img src="orivo.svg" width="120" alt="orivo logo"/>
 </p>
 
 # orivo
@@ -14,47 +14,23 @@ A terminal-based (TUI) Todos + Pomodoro timer written in [Rust](https://www.rust
 
 ## Installation
 
-### Linux or macOS
+### Omarchy
 
 ```sh
-curl -fsSL https://github.com/mt-shihab26/orivo/releases/latest/download/install.sh | bash
+omarchy pkg add orivo
 ```
 
-The script will:
+Installs the AUR package (see [`PKGBUILD`](PKGBUILD)), which places `orivo` on `/usr/bin` and registers a desktop entry that launches it via `omarchy-launch-terminal` — so it opens in whatever terminal you've configured as default.
 
-- **Install sqlite3** — the only system dependency, detected and installed automatically for your distro
-- **Install the binary** — fetches the latest release for your OS and architecture, then places `orivo` in `~/.local/bin`
-- **Install the desktop entry** *(Linux only)* — registers orivo in your launcher (defaults to Kitty; pass `-s -- --terminal alacritty` to use Alacritty instead)
-- **Install the icon** *(Linux only)* — installs the app icon to the hicolor theme for the desktop entry
+Usage (app launcher):
 
-> Running the same command again will **upgrade** to the latest version, or do nothing if already up to date.
+1. Press `SUPER + ALT + SPACE` to open the app launcher
+2. Search for orivo
 
-Usage:
+Usage (terminal):
 
-1. Search for orivo in your launcher (opens in Kitty or Alacritty)
-2. Run from any terminal (`~/.local/bin` must be in your `PATH`):
 ```sh
 $ orivo
-```
-
-### Windows
-
-**Requires sqlite3** — install it and ensure it's on your `PATH` before running.
-
-Download the Windows release binary from the latest GitHub Release:
-
-- `orivo-vX.Y.Z-windows-x86_64.exe`
-- `orivo-vX.Y.Z-windows-aarch64.exe`
-
-```powershell
-> mv orivo-vX.Y.Z-windows-x86_64.exe orivo.exe
-```
-
-Then place the binary somewhere on your `PATH`.
-
-Run from any terminal:
-```powershell
-> orivo
 ```
 
 ### Cargo (any OS, builds from source)

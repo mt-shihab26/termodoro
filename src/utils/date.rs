@@ -12,7 +12,12 @@ pub fn today() -> Date {
 
 /// Formats a date as `"YYYY-MM-DD"`.
 pub fn format_date(date: Date) -> String {
-    format!("{}-{:02}-{:02}", date.year(), date.month() as u8, date.day())
+    format!(
+        "{}-{:02}-{:02}",
+        date.year(),
+        date.month() as u8,
+        date.day()
+    )
 }
 
 /// Parses a `"YYYY-MM-DD"` or `"YYYY-MM-DDTHH:MM:SSZ"` string into a `Date`. Only the first 10

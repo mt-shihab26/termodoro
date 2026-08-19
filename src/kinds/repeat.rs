@@ -103,7 +103,10 @@ impl Repeat {
             }
             Repeat::Weekdays => {
                 let mut next = from + Duration::days(1);
-                while matches!(next.weekday(), time::Weekday::Saturday | time::Weekday::Sunday) {
+                while matches!(
+                    next.weekday(),
+                    time::Weekday::Saturday | time::Weekday::Sunday
+                ) {
                     next = next + Duration::days(1);
                 }
                 next
@@ -117,7 +120,9 @@ impl Repeat {
                 };
                 Date::from_calendar_date(year, month, from.day()).unwrap_or(from)
             }
-            Repeat::Yearly => Date::from_calendar_date(from.year() + 1, from.month(), from.day()).unwrap_or(from),
+            Repeat::Yearly => {
+                Date::from_calendar_date(from.year() + 1, from.month(), from.day()).unwrap_or(from)
+            }
         }
     }
 }

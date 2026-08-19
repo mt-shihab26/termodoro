@@ -87,8 +87,18 @@ pub fn seed_todos(count: usize, db: &DatabaseConnection) -> usize {
 /// Inserts a small curated set of todos for common demo states.
 fn seed_focused(base: OffsetDateTime, db: &DatabaseConnection) -> usize {
     let items = [
-        Todo::new("Today: pay electricity bill".to_string(), Some(base), None, None),
-        Todo::new("Today: call mom".to_string(), Some(base), Some(Repeat::Weekly), None),
+        Todo::new(
+            "Today: pay electricity bill".to_string(),
+            Some(base),
+            None,
+            None,
+        ),
+        Todo::new(
+            "Today: call mom".to_string(),
+            Some(base),
+            Some(Repeat::Weekly),
+            None,
+        ),
         Todo::new(
             "Overdue: renew passport".to_string(),
             Some(base - Duration::days(2)),
@@ -107,7 +117,12 @@ fn seed_focused(base: OffsetDateTime, db: &DatabaseConnection) -> usize {
             Some(Repeat::Yearly),
             None,
         ),
-        Todo::new("No date: reorganize bookshelf".to_string(), None, None, None),
+        Todo::new(
+            "No date: reorganize bookshelf".to_string(),
+            None,
+            None,
+            None,
+        ),
     ];
 
     let mut count = 0;
