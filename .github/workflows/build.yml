@@ -180,6 +180,39 @@ jobs:
             dist/orivo.svg \
             --clobber
 
+  aur:
+    name: Update AUR checksums
+    needs: release
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - name: Install build tools
+        run: |
+          pacman -Sy --noconfirm --needed base-devel pacman-contrib git sudo
+          useradd -m builder
+          echo "builder ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builder
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Update PKGBUILD checksums and .SRCINFO
+        run: |
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+          sudo -u builder bash -c "cd '$GITHUB_WORKSPACE' && updpkgsums && makepkg --printsrcinfo > .SRCINFO"
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add PKGBUILD .SRCINFO
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update AUR checksums for ${GITHUB_REF_NAME}"
+            git push origin HEAD:main
+          fi
+
   publish:
     name: Publish to crates.io
     runs-on: ubuntu-latest
