@@ -11,8 +11,8 @@ use std::{
 use sea_orm::DatabaseConnection;
 
 use crate::{
-    caches::timer::TimerCache, config::timer::TimerConfig, kinds::event::Event, log_error, log_warn,
-    states::timer::TimerState, utils::store::Store,
+    caches::timer::TimerCache, config::timer::TimerConfig, kinds::event::Event, log_error,
+    log_warn, states::timer::TimerState, utils::store::Store,
 };
 
 /// Spawns the timer worker thread and returns a shared handle to its state.
@@ -53,7 +53,10 @@ pub fn spawn(
                     last_save = std::time::Instant::now();
                 }
 
-                (TimerConfig::tick_interval(state.show_millis()), state.is_running())
+                (
+                    TimerConfig::tick_interval(state.show_millis()),
+                    state.is_running(),
+                )
             };
 
             thread::sleep(Duration::from_millis(interval as u64));

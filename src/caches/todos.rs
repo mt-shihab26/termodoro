@@ -33,7 +33,13 @@ impl TodosCache {
     }
 
     /// Returns the cached todo at `idx`, querying the DB if needed.
-    pub fn get_item_at(&self, page: Page, offset: usize, page_size: usize, idx: usize) -> Option<Ref<'_, Todo>> {
+    pub fn get_item_at(
+        &self,
+        page: Page,
+        offset: usize,
+        page_size: usize,
+        idx: usize,
+    ) -> Option<Ref<'_, Todo>> {
         let items = self.get_items(page, offset, page_size);
         if items.get(idx).is_none() {
             return None;

@@ -46,10 +46,12 @@ impl TodoPickerProps {
         // Position cursor on the currently selected todo, default to 0.
         let cursor = selected_id
             .and_then(|id| {
-                due_todos
-                    .iter()
-                    .position(|t| t.id == Some(id))
-                    .or_else(|| todos.iter().position(|t| t.id == Some(id)).map(|i| due_todos.len() + i))
+                due_todos.iter().position(|t| t.id == Some(id)).or_else(|| {
+                    todos
+                        .iter()
+                        .position(|t| t.id == Some(id))
+                        .map(|i| due_todos.len() + i)
+                })
             })
             .unwrap_or(0);
 
@@ -204,7 +206,10 @@ impl Widget for &TodoPickerWidget<'_> {
                 }
                 Row::Item(logical_idx) => {
                     let (todo, stat) = if *logical_idx < due_len {
-                        (&self.props.due_todos[*logical_idx], &self.props.due_stats[*logical_idx])
+                        (
+                            &self.props.due_todos[*logical_idx],
+                            &self.props.due_stats[*logical_idx],
+                        )
                     } else {
                         let i = logical_idx - due_len;
                         (&self.props.todos[i], &self.props.stats[i])
@@ -240,7 +245,9 @@ impl Widget for &TodoPickerWidget<'_> {
                     } else if is_cursor {
                         buf.set_style(
                             row_rect,
-                            Style::default().fg(self.props.color).add_modifier(Modifier::BOLD),
+                            Style::default()
+                                .fg(self.props.color)
+                                .add_modifier(Modifier::BOLD),
                         );
                         Paragraph::new(text).render(row_rect, buf);
                     } else {

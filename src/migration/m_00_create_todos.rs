@@ -45,8 +45,18 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Todos::DueDate).string().null())
                     .col(ColumnDef::new(Todos::Repeat).string().null())
                     .col(ColumnDef::new(Todos::ParentId).integer().null())
-                    .col(ColumnDef::new(Todos::CreatedAt).string().not_null().default(""))
-                    .col(ColumnDef::new(Todos::UpdatedAt).string().not_null().default(""))
+                    .col(
+                        ColumnDef::new(Todos::CreatedAt)
+                            .string()
+                            .not_null()
+                            .default(""),
+                    )
+                    .col(
+                        ColumnDef::new(Todos::UpdatedAt)
+                            .string()
+                            .not_null()
+                            .default(""),
+                    )
                     .to_owned(),
             )
             .await
@@ -54,6 +64,8 @@ impl MigrationTrait for Migration {
 
     /// Drops the `todos` table, rolling back this migration.
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        manager.drop_table(Table::drop().table(Todos::Table).to_owned()).await
+        manager
+            .drop_table(Table::drop().table(Todos::Table).to_owned())
+            .await
     }
 }

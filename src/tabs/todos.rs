@@ -136,14 +136,21 @@ impl Tab for TodosTab {
                 }
                 KeyCode::Char('a') => {
                     self.mode = TodosMode::Adding;
-                    let date = if self.page == Page::Today { Some(now()) } else { None };
+                    let date = if self.page == Page::Today {
+                        Some(now())
+                    } else {
+                        None
+                    };
                     self.input_state = Some(InputState::new(InputProps::new(None, date, None)));
                 }
                 KeyCode::Char('e') => {
                     if let Some((text, due_date, repeat)) = self.state.edit_values(self.page) {
                         self.mode = TodosMode::Editing;
-                        self.input_state =
-                            Some(InputState::new(InputProps::new(Some(&text), due_date, repeat.as_ref())));
+                        self.input_state = Some(InputState::new(InputProps::new(
+                            Some(&text),
+                            due_date,
+                            repeat.as_ref(),
+                        )));
                     }
                 }
                 KeyCode::Char('/') => self.open_search(),
@@ -221,8 +228,12 @@ impl Tab for TodosTab {
                 .areas(area);
                 (tabs, list, hint, Some(bottom))
             } else {
-                let [tabs, list, hint] =
-                    Layout::vertical([Constraint::Length(1), Constraint::Fill(1), Constraint::Length(1)]).areas(area);
+                let [tabs, list, hint] = Layout::vertical([
+                    Constraint::Length(1),
+                    Constraint::Fill(1),
+                    Constraint::Length(1),
+                ])
+                .areas(area);
                 (tabs, list, hint, None)
             };
 

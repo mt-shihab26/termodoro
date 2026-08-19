@@ -1,8 +1,9 @@
 use std::io;
 
 use sea_orm::{
-    ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, DeriveEntityModel,
-    DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait, QueryFilter, QueryOrder,
+    ActiveModelBehavior, ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection,
+    DeriveEntityModel, DerivePrimaryKey, DeriveRelation, EntityTrait, EnumIter, PrimaryKeyTrait,
+    QueryFilter, QueryOrder,
 };
 use time::OffsetDateTime;
 
@@ -57,7 +58,12 @@ pub struct Session {
 
 impl Session {
     /// Creates a new completed session for the given phase and duration.
-    pub fn new(phase: &Phase, duration_millis: u32, started_at: OffsetDateTime, todo_id: Option<i32>) -> Self {
+    pub fn new(
+        phase: &Phase,
+        duration_millis: u32,
+        started_at: OffsetDateTime,
+        todo_id: Option<i32>,
+    ) -> Self {
         let now = now();
 
         Self {

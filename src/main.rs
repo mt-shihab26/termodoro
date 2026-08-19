@@ -41,7 +41,12 @@ fn main() -> Result<()> {
 /// Builds and runs the aggregated help command.
 fn help() -> Result<()> {
     #[cfg(debug_assertions)]
-    let helps = [Tui::help, orivo::cmds::seed::Seed::help, Version::help, Help::help];
+    let helps = [
+        Tui::help,
+        orivo::cmds::seed::Seed::help,
+        Version::help,
+        Help::help,
+    ];
     #[cfg(not(debug_assertions))]
     let helps = [Tui::help, Version::help, Help::help];
     Box::new(Help::new(&helps)).run()

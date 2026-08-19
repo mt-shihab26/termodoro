@@ -52,6 +52,9 @@ impl Widget for &TodoShowWidget<'_> {
             },
             None => "No todo selected  [t] pick".to_string(),
         };
-        Paragraph::new(text).centered().fg(self.props.color).render(area, buf);
+        Paragraph::new(text)
+            .centered()
+            .fg(self.props.color)
+            .render(area, buf);
     }
 }

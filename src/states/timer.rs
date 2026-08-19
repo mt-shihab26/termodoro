@@ -42,7 +42,12 @@ pub struct TimerState {
 
 impl TimerState {
     /// Creates a new `TimerState` in the initial paused work phase.
-    pub fn new(db: DatabaseConnection, config: TimerConfig, cache: Arc<Mutex<TimerCache>>, store: Store) -> Self {
+    pub fn new(
+        db: DatabaseConnection,
+        config: TimerConfig,
+        cache: Arc<Mutex<TimerCache>>,
+        store: Store,
+    ) -> Self {
         let show_millis = config.show_millis();
 
         let todo_id = store.timer_todo_id();
@@ -113,9 +118,11 @@ impl TimerState {
     pub fn set_todo_id(&mut self, todo_id: Option<i32>) {
         // Persist remaining time and phase start for the outgoing todo before switching.
         let current = self.current_millis();
-        self.store.set_timer_remaining_for_todo(self.todo_id, current);
+        self.store
+            .set_timer_remaining_for_todo(self.todo_id, current);
         if let Some(t) = self.phase_started_at {
-            self.store.set_timer_phase_started_at_for_todo(self.todo_id, t);
+            self.store
+                .set_timer_phase_started_at_for_todo(self.todo_id, t);
         }
 
         self.todo_id = todo_id;
@@ -136,7 +143,8 @@ impl TimerState {
             if self.phase_started_at.is_none() {
                 let started = now();
                 self.phase_started_at = Some(started);
-                self.store.set_timer_phase_started_at_for_todo(self.todo_id, started);
+                self.store
+                    .set_timer_phase_started_at_for_todo(self.todo_id, started);
             }
         }
 
@@ -158,9 +166,11 @@ impl TimerState {
     /// Saves the current remaining time and phase start for the active todo to the store.
     pub fn save_remaining(&mut self) {
         let millis = self.current_millis();
-        self.store.set_timer_remaining_for_todo(self.todo_id, millis);
+        self.store
+            .set_timer_remaining_for_todo(self.todo_id, millis);
         if let Some(t) = self.phase_started_at {
-            self.store.set_timer_phase_started_at_for_todo(self.todo_id, t);
+            self.store
+                .set_timer_phase_started_at_for_todo(self.todo_id, t);
         }
         self.store.save();
     }
@@ -168,7 +178,9 @@ impl TimerState {
     /// Returns the current remaining time derived from the wall clock.
     pub fn current_millis(&self) -> u32 {
         match self.started_at {
-            Some(t) => self.remaining_millis.saturating_sub(t.elapsed().as_millis() as u32),
+            Some(t) => self
+                .remaining_millis
+                .saturating_sub(t.elapsed().as_millis() as u32),
             None => self.remaining_millis,
         }
     }
@@ -186,7 +198,8 @@ impl TimerState {
             if self.phase_started_at.is_none() {
                 let started = now();
                 self.phase_started_at = Some(started);
-                self.store.set_timer_phase_started_at_for_todo(self.todo_id, started);
+                self.store
+                    .set_timer_phase_started_at_for_todo(self.todo_id, started);
                 self.store.save();
             }
             self.started_at = Some(Instant::now());
@@ -206,7 +219,8 @@ impl TimerState {
         self.phase_started_at = None;
         self.is_running = false;
         self.store.clear_timer_remaining_for_todo(self.todo_id);
-        self.store.clear_timer_phase_started_at_for_todo(self.todo_id);
+        self.store
+            .clear_timer_phase_started_at_for_todo(self.todo_id);
         self.store.save();
     }
 
@@ -223,7 +237,8 @@ impl TimerState {
 
         // `take()` clears phase_started_at in memory; clear the store entry too.
         let phase_started_at = self.phase_started_at.take().unwrap_or_else(now);
-        self.store.clear_timer_phase_started_at_for_todo(self.todo_id);
+        self.store
+            .clear_timer_phase_started_at_for_todo(self.todo_id);
 
         Session::record(
             &self.db,
@@ -251,16 +266,23 @@ impl TimerState {
         }
 
         self.remaining_millis = self.cycle_phase.duration(&self.config);
-        self.started_at = if self.is_running { Some(Instant::now()) } else { None };
+        self.started_at = if self.is_running {
+            Some(Instant::now())
+        } else {
+            None
+        };
         self.phase_started_at = if self.is_running { Some(now()) } else { None };
 
         // Persist the new phase start if the next phase auto-started (e.g. after Work completes).
         if let Some(t) = self.phase_started_at {
-            self.store.set_timer_phase_started_at_for_todo(self.todo_id, t);
+            self.store
+                .set_timer_phase_started_at_for_todo(self.todo_id, t);
         }
         // Clear saved remaining — the phase just changed, so the full duration applies.
         self.store.clear_timer_remaining_for_todo(self.todo_id);
-        self.store.set_timer_cycle_phase(self.cycle_phase.clone()).save();
+        self.store
+            .set_timer_cycle_phase(self.cycle_phase.clone())
+            .save();
     }
 
     /// Sends a desktop notification describing the completed phase.
@@ -270,11 +292,16 @@ impl TimerState {
             .and_then(|id| self.cache.lock().ok()?.get_todo(id).map(|t| t.text.clone()));
 
         let (summary, body) = match (&self.cycle_phase, todo_name.as_deref()) {
-            (Phase::Work, Some(name)) => ("Work Session Complete", format!("{name} — Time for a break!")),
+            (Phase::Work, Some(name)) => (
+                "Work Session Complete",
+                format!("{name} — Time for a break!"),
+            ),
             (Phase::Work, None) => ("Work Session Complete", "Time for a break!".to_string()),
             (Phase::Break, Some(name)) => ("Break Complete", format!("{name} — Ready to focus?")),
             (Phase::Break, None) => ("Break Complete", "Ready to focus?".to_string()),
-            (Phase::LongBreak, Some(name)) => ("Long Break Complete", format!("{name} — Ready to focus?")),
+            (Phase::LongBreak, Some(name)) => {
+                ("Long Break Complete", format!("{name} — Ready to focus?"))
+            }
             (Phase::LongBreak, None) => ("Long Break Complete", "Ready to focus?".to_string()),
         };
         notify(&summary, &body, &self.cycle_phase);

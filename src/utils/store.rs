@@ -88,7 +88,8 @@ impl Store {
 
     /// Sets the remaining milliseconds for the given todo and returns `&Self` for chaining.
     pub fn set_timer_remaining_for_todo(&mut self, todo_id: Option<i32>, millis: u32) -> &Self {
-        self.timer_remaining_millis.insert(todo_key(todo_id), millis);
+        self.timer_remaining_millis
+            .insert(todo_key(todo_id), millis);
         self
     }
 
@@ -104,8 +105,13 @@ impl Store {
     }
 
     /// Sets the phase start timestamp for the given todo and returns `&Self` for chaining.
-    pub fn set_timer_phase_started_at_for_todo(&mut self, todo_id: Option<i32>, started_at: OffsetDateTime) -> &Self {
-        self.timer_phase_started_at.insert(todo_key(todo_id), started_at);
+    pub fn set_timer_phase_started_at_for_todo(
+        &mut self,
+        todo_id: Option<i32>,
+        started_at: OffsetDateTime,
+    ) -> &Self {
+        self.timer_phase_started_at
+            .insert(todo_key(todo_id), started_at);
         self
     }
 

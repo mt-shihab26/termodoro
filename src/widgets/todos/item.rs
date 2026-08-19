@@ -95,7 +95,9 @@ impl<'a> ItemWidget<'a> {
     /// Returns the base text style, applying dim/strikethrough for done or history rows.
     fn base_style(&self) -> Style {
         if self.props.dimmed || self.props.todo.done_at.is_some() {
-            Style::default().fg(Color::DarkGray).add_modifier(Modifier::CROSSED_OUT)
+            Style::default()
+                .fg(Color::DarkGray)
+                .add_modifier(Modifier::CROSSED_OUT)
         } else {
             Style::default().fg(Color::White)
         }
@@ -110,7 +112,9 @@ impl Widget for &ItemWidget<'_> {
         let prefix = if self.props.selected { "> " } else { "  " };
         let text = format!("{prefix}{serial:>width$}. {}", self.label());
         let style = if self.props.selected {
-            self.base_style().fg(self.props.color).add_modifier(Modifier::BOLD)
+            self.base_style()
+                .fg(self.props.color)
+                .add_modifier(Modifier::BOLD)
         } else {
             self.base_style()
         };

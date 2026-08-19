@@ -119,7 +119,13 @@ impl Widget for &ReducePickerWidget<'_> {
         ])
         .areas(inner);
 
-        let ch = |i: usize| self.props.digits.get(i).map(|d| (b'0' + d) as char).unwrap_or('_');
+        let ch = |i: usize| {
+            self.props
+                .digits
+                .get(i)
+                .map(|d| (b'0' + d) as char)
+                .unwrap_or('_')
+        };
         let display = format!("{}{}:{}{}", ch(0), ch(1), ch(2), ch(3));
 
         Paragraph::new(display)
