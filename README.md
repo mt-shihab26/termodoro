@@ -39,6 +39,12 @@ Usage (terminal):
 $ orivo
 ```
 
+Uninstall:
+
+```sh
+omarchy pkg drop orivo
+```
+
 ### Cargo (any OS, builds from source)
 
 **Requires sqlite3** — install it for your OS and ensure it's on your `PATH` before building.
