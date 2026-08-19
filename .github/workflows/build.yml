@@ -141,7 +141,7 @@ jobs:
           path: ${{ env.BINARY_ASSET }}
 
   release:
-    name: Upload Release Assets
+    name: Create or Update GitHub Release
     needs: build
     runs-on: ubuntu-latest
     steps:
