@@ -69,17 +69,6 @@ Config file location: `~/.config/orivo/config.toml`
 show_fps = false # show the FPS counter in the TUI header on startup
 
 
-# Database connection — Orivo uses Turso (libSQL/SQLite) for syncing todos across machines.
-[db]
-url   = "libsql://your-db-name.turso.io"   # libSQL URL from: turso db show orivo --url
-token = "your-auth-token"                  # auth token from: turso db tokens create orivo
-# Get your Turso credentials:
-#   turso auth login
-#   turso db create orivo
-#   turso db show orivo --url
-#   turso db tokens create orivo
-
-
 # Pomodoro timer settings — controls session lengths and when long breaks are triggered.
 [timer]
 show_millis         = false   # show milliseconds in the timer display
@@ -94,17 +83,6 @@ daily_session_goal  = 16      # target work sessions to complete today (min: 1, 
 ### Root Options
 
 - `show_fps` → show the FPS counter when the TUI starts. You can still toggle it at runtime with `Ctrl+F`.
-
-### Database (`[db]`)
-
-Orivo uses [Turso](https://turso.tech) as its database — a libSQL-compatible SQLite database. You need a `url` and `token` to connect.
-
-```sh
-$ turso auth login
-$ turso db create orivo
-$ turso db show orivo --url      # → paste as url
-$ turso db tokens create orivo   # → paste as token
-```
 
 ### Timer (`[timer]`)
 
@@ -124,3 +102,47 @@ work → break → work → break → work → break → work → LONG BREAK  (c
 
 - Default: `16` sessions
 - Range: `1` – `24` sessions
+
+## Backup & Restore
+
+orivo can back up its local database to Google Drive, WhatsApp-style: a single gzip-compressed snapshot in Drive's hidden app-data folder, overwritten in place each time.
+
+```sh
+$ orivo login    # sign in to Google Drive
+$ orivo backup   # upload the current database (skipped if nothing changed)
+$ orivo restore  # download the backup and overwrite the local database (asks for confirmation)
+```
+
+The first sign-in prints a Google sign-in URL — open it in a browser **on the same machine** running orivo and approve access; orivo catches the redirect on a local address and finishes automatically. The resulting token is stored in your OS keyring, so this only happens once. Only the `drive.appdata` scope is requested, so orivo never sees the rest of your Drive.
+
+## Development
+
+```sh
+$ git clone https://github.com/mt-shihab26/orivo.git
+$ cd orivo
+```
+
+To work on backup/restore locally, you need a Google OAuth client:
+
+1. In the [Google Cloud Console](https://console.cloud.google.com), create a project (or select an existing one).
+2. Go to **APIs & Services → Library**, search for **Google Drive API**, and enable it.
+3. Go to **APIs & Services → OAuth consent screen**: choose **External**, fill in the required fields (app name, support email), and under **Test users** add your own Google account — the app stays unverified during development, so only listed test users can sign in.
+4. Go to **APIs & Services → Credentials → Create Credentials → OAuth client ID**, and choose application type **"Desktop app"**. This gives you a **Client ID** and **Client secret**.
+5. Copy `.env.example` to `.env` and fill in `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` with those two values.
+
+No extra scope configuration is needed on the Google Cloud side — orivo only ever requests `https://www.googleapis.com/auth/drive.appdata` at sign-in time (see `src/utils/drive/auth.rs`), which is Drive's restricted per-app storage scope, not general Drive access.
+
+CI sets the same two variables as real environment variables from GitHub Actions secrets. Without either set, everything still builds and runs — `login`/`backup`/`restore` just fail with a clear error.
+
+```sh
+$ cargo run
+```
+
+Debug builds keep config, database, and log files under `./local/` instead of the real system paths, so you can inspect or wipe local state freely.
+
+```sh
+$ cargo run seed    # reset the local database and fill it with sample todos/sessions
+$ cargo test        # run the test suite
+$ cargo fmt          # format code
+$ cargo clippy       # lint
+```

@@ -2,6 +2,8 @@
 pub mod date;
 /// Database connection, migration bootstrapping, and Tokio runtime helpers.
 pub mod db;
+/// Google Drive backup authentication and API client.
+pub mod drive;
 /// File-backed logging utilities and app log macros.
 pub mod log;
 /// Desktop notification helpers for timer phase transitions.

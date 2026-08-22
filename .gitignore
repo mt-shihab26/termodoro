@@ -3,3 +3,4 @@
 !/local/config.toml
 .codex
 .junie
+.env
