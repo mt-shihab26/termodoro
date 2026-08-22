@@ -19,8 +19,8 @@ source_aarch64=("orivo-v$pkgver-linux-aarch64::$_base/orivo-v$pkgver-linux-aarch
 sha256sums=('4a3d287c9308636fb243c9785a195a800c577b49f44ef658ff4c61143be313a1'
             'fc4896283c369009fa10a5d7d6f43e7bb406b7ec471db7cff509669ba61ff1d0'
             '27174eda039a68a18fa6e8df9981b44e381fbd85d88d2c6c62505766eff60671')
-sha256sums_x86_64=('e55c1309eadeb7e2018797869040b1b6bc6d354e033b673aa2c36948054a9c51')
-sha256sums_aarch64=('60b5ccc15df3831ebaaf7dcfe5fe5285c74774cde4da16a61a085a6f4894ff07')
+sha256sums_x86_64=('16d9836253e405cd177d161c91596054c501845ffb62a18bf6fb65f060509992')
+sha256sums_aarch64=('0b85bc4b31bee6c3baf509d788a2af3c2ff1678a26a85e442222191929bf8447')
 
 source=("LICENSE::https://raw.githubusercontent.com/mt-shihab26/orivo/v$pkgver/LICENSE"
         "orivo-omarchy.desktop::$_base/orivo-omarchy.desktop"
