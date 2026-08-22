@@ -1,6 +1,7 @@
 use std::{
     io::{BufRead, BufReader, Error, ErrorKind, Result, Write},
     net::TcpListener,
+    process::{Command, Stdio},
 };
 
 use oauth2::{
@@ -65,6 +66,18 @@ fn entry() -> Result<keyring::Entry> {
     keyring::Entry::new(KEYRING_SERVICE, KEYRING_USERNAME).map_err(io_err)
 }
 
+/// Best-effort attempt to open `url` in the system's default browser via `xdg-open`. Failures
+/// are silently ignored — the URL is always printed too, so this is a convenience, not a
+/// requirement (e.g. it does nothing useful over a headless SSH session).
+fn open_in_browser(url: &str) {
+    let _ = Command::new("xdg-open")
+        .arg(url)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn();
+}
+
 /// Runs the OAuth2 authorization-code flow with a local loopback redirect: prints a Google
 /// sign-in URL, waits for the browser to redirect back after approval, exchanges the code for
 /// tokens, then stores the returned refresh token in the OS keyring. Requires a browser on
@@ -88,6 +101,7 @@ async fn browser_login() -> Result<RefreshToken> {
     println!(
         "To back up orivo's data to Google Drive, open this URL in a browser on this machine and approve access:\n  {authorize_url}"
     );
+    open_in_browser(authorize_url.as_str());
 
     let (code, state) = wait_for_redirect(&listener)?;
     if state.secret() != csrf_state.secret() {
