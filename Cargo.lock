@@ -2542,6 +2542,7 @@ dependencies = [
 name = "orivo"
 version = "0.3.1"
 dependencies = [
+ "dotenvy",
  "flate2",
  "keyring",
  "log",

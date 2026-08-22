@@ -30,6 +30,8 @@ use orivo::{
 
 /// Parses the CLI argument list and dispatches to the selected command.
 fn main() -> Result<()> {
+    let _ = dotenvy::dotenv();
+
     match env::args().nth(1).as_deref() {
         None | Some("tui") => Box::new(Tui::new(Config::load()?, db::connect()?)).run(),
         #[cfg(debug_assertions)]

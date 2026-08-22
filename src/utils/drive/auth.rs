@@ -6,14 +6,6 @@ use oauth2::{
     basic::BasicClient,
 };
 
-/// Public OAuth2 client id for orivo's "TVs and Limited Input devices" client, registered
-/// once in Google Cloud Console (see README's "For maintainers" section). Not confidential
-/// for this client type, but injected via `ORIVO_GOOGLE_CLIENT_ID` at build time rather than
-/// hardcoded, so the real value never lands in git history and doesn't trip secret scanners.
-const CLIENT_ID: Option<&str> = option_env!("ORIVO_GOOGLE_CLIENT_ID");
-/// Accompanying public client "secret" for the installed-app OAuth client type, injected via
-/// `ORIVO_GOOGLE_CLIENT_SECRET` at build time for the same reason.
-const CLIENT_SECRET: Option<&str> = option_env!("ORIVO_GOOGLE_CLIENT_SECRET");
 /// Limited scope: only the app-data folder, not the user's full Drive.
 const SCOPE: &str = "https://www.googleapis.com/auth/drive.appdata";
 
@@ -23,19 +15,34 @@ const KEYRING_USERNAME: &str = "google-drive-refresh-token";
 type OrivoClient =
     BasicClient<EndpointSet, EndpointSet, EndpointNotSet, EndpointNotSet, EndpointSet>;
 
+/// Reads the Google OAuth client id at runtime: a `GOOGLE_CLIENT_ID` env var (set directly,
+/// or via `.env` — see `main()`'s `dotenvy::dotenv()` call) overrides the value baked into
+/// the binary at compile time for official release builds (see README's "For maintainers"
+/// section). Not confidential for this "TVs and Limited Input devices" client type, but kept
+/// out of source so the real value never lands in git history and doesn't trip secret scanners.
+fn client_id() -> Option<String> {
+    std::env::var("GOOGLE_CLIENT_ID")
+        .ok()
+        .or_else(|| option_env!("GOOGLE_CLIENT_ID").map(str::to_string))
+}
+
+/// Reads the accompanying public client "secret" the same way, via `GOOGLE_CLIENT_SECRET`.
+fn client_secret() -> Option<String> {
+    std::env::var("GOOGLE_CLIENT_SECRET")
+        .ok()
+        .or_else(|| option_env!("GOOGLE_CLIENT_SECRET").map(str::to_string))
+}
+
 /// Builds the Google OAuth2 client configured for the device authorization grant.
 fn build_client() -> Result<OrivoClient> {
-    let client_id = CLIENT_ID.ok_or_else(|| {
-        io_err("orivo was built without ORIVO_GOOGLE_CLIENT_ID set; Google Drive backup is unavailable")
-    })?;
-    let client_secret = CLIENT_SECRET.ok_or_else(|| {
-        io_err(
-            "orivo was built without ORIVO_GOOGLE_CLIENT_SECRET set; Google Drive backup is unavailable",
-        )
+    let client_id = client_id()
+        .ok_or_else(|| io_err("GOOGLE_CLIENT_ID is not set; Google Drive backup is unavailable"))?;
+    let client_secret = client_secret().ok_or_else(|| {
+        io_err("GOOGLE_CLIENT_SECRET is not set; Google Drive backup is unavailable")
     })?;
 
-    let client_id = ClientId::new(client_id.to_string());
-    let client_secret = ClientSecret::new(client_secret.to_string());
+    let client_id = ClientId::new(client_id);
+    let client_secret = ClientSecret::new(client_secret);
     let auth_url =
         AuthUrl::new("https://accounts.google.com/o/oauth2/v2/auth".to_string()).map_err(io_err)?;
     let token_url =

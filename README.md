@@ -105,28 +105,40 @@ work → break → work → break → work → break → work → LONG BREAK  (c
 
 ## Backup & Restore
 
-orivo can back up its local database to your Google Drive, WhatsApp-style: a single gzip-compressed snapshot stored in Drive's hidden **app-data folder** (invisible in the normal Drive UI), overwritten in place on every backup rather than piling up copies.
+orivo can back up its local database to Google Drive, WhatsApp-style: a single gzip-compressed snapshot in Drive's hidden app-data folder, overwritten in place each time.
 
 ```sh
-$ orivo login    # sign in to Google Drive and save credentials for later backup/restore
-$ orivo backup   # upload the current database, skipped if nothing changed since the last backup
-$ orivo restore  # download the backup and overwrite the local database (destructive, asks for confirmation)
+$ orivo login    # sign in to Google Drive
+$ orivo backup   # upload the current database (skipped if nothing changed)
+$ orivo restore  # download the backup and overwrite the local database (asks for confirmation)
 ```
 
-The first `orivo login` (or `orivo backup` / `orivo restore`, which trigger sign-in automatically if needed) starts a one-time Google sign-in using the OAuth **device code** flow: the terminal prints a URL and a short code, which you open and enter on any browser (phone, another computer, etc.) to grant access. After that, the resulting refresh token is stored in your OS's secret service (gnome-keyring/kwallet on Linux) and reused automatically — no browser needed again unless access is revoked.
+The first sign-in uses Google's OAuth **device code** flow: orivo prints a URL and a short code, you approve it on any browser, and the resulting token is stored in your OS keyring — no browser needed again after that. Only the `drive.appdata` scope is requested, so orivo never sees the rest of your Drive.
 
-Only the `drive.appdata` scope is requested, so orivo can never see or touch the rest of your Drive.
-
-### For maintainers: one-time OAuth client setup
-
-Backup/restore requires a Google Cloud OAuth client of type **"TVs and Limited Input devices"**, registered once in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials) to obtain a client ID and its accompanying public client secret. This secret isn't confidential for this client type — the same model `gh`/`docker`/`gcloud` use — but we still don't commit the literal value to git, since automated secret scanners (GitHub push protection, gitleaks, etc.) can't tell a "public by design" OAuth secret from a leaked one and will flag/block on it regardless.
-
-Instead, the value is baked into the binary at **build time** via environment variables, so `git blame`/history never contains it:
+## Development
 
 ```sh
-$ ORIVO_GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com \
-  ORIVO_GOOGLE_CLIENT_SECRET=yyy \
-  cargo build --release
+$ git clone https://github.com/mt-shihab26/orivo.git
+$ cd orivo
 ```
 
-Building without these set still succeeds — `login`/`backup`/`restore` just fail at runtime with a clear "orivo was built without ORIVO_GOOGLE_CLIENT_ID set" error, so regular contributors working on unrelated features don't need Google credentials to build the project. Whoever cuts release binaries (CI, AUR packaging, etc.) needs to supply both as secrets in that build environment.
+To work on backup/restore locally, you need a Google OAuth client:
+
+1. Create an OAuth client of type **"TVs and Limited Input devices"** in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
+2. Copy `.env.example` to `.env`.
+3. Fill in `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` with the values from step 1.
+
+CI sets the same two variables as real environment variables from GitHub Actions secrets. Without either set, everything still builds and runs — `login`/`backup`/`restore` just fail with a clear error.
+
+```sh
+$ cargo run
+```
+
+Debug builds keep config, database, and log files under `./local/` instead of the real system paths, so you can inspect or wipe local state freely.
+
+```sh
+$ cargo run seed    # reset the local database and fill it with sample todos/sessions
+$ cargo test        # run the test suite
+$ cargo fmt          # format code
+$ cargo clippy       # lint
+```
