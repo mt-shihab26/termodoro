@@ -113,7 +113,7 @@ $ orivo backup   # upload the current database (skipped if nothing changed)
 $ orivo restore  # download the backup and overwrite the local database (asks for confirmation)
 ```
 
-The first sign-in uses Google's OAuth **device code** flow: orivo prints a URL and a short code, you approve it on any browser, and the resulting token is stored in your OS keyring — no browser needed again after that. Only the `drive.appdata` scope is requested, so orivo never sees the rest of your Drive.
+The first sign-in prints a Google sign-in URL — open it in a browser **on the same machine** running orivo and approve access; orivo catches the redirect on a local address and finishes automatically. The resulting token is stored in your OS keyring, so this only happens once. Only the `drive.appdata` scope is requested, so orivo never sees the rest of your Drive.
 
 ## Development
 
@@ -127,7 +127,7 @@ To work on backup/restore locally, you need a Google OAuth client:
 1. In the [Google Cloud Console](https://console.cloud.google.com), create a project (or select an existing one).
 2. Go to **APIs & Services → Library**, search for **Google Drive API**, and enable it.
 3. Go to **APIs & Services → OAuth consent screen**: choose **External**, fill in the required fields (app name, support email), and under **Test users** add your own Google account — the app stays unverified during development, so only listed test users can sign in.
-4. Go to **APIs & Services → Credentials → Create Credentials → OAuth client ID**, and choose application type **"TVs and Limited Input devices"**. This gives you a **Client ID** and **Client secret**.
+4. Go to **APIs & Services → Credentials → Create Credentials → OAuth client ID**, and choose application type **"Desktop app"**. This gives you a **Client ID** and **Client secret**.
 5. Copy `.env.example` to `.env` and fill in `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` with those two values.
 
 No extra scope configuration is needed on the Google Cloud side — orivo only ever requests `https://www.googleapis.com/auth/drive.appdata` at sign-in time (see `src/utils/drive/auth.rs`), which is Drive's restricted per-app storage scope, not general Drive access.
