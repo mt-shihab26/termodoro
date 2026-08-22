@@ -7,10 +7,13 @@ use oauth2::{
 };
 
 /// Public OAuth2 client id for orivo's "TVs and Limited Input devices" client, registered
-/// once in Google Cloud Console. Not confidential for this client type (see PLAN.md).
-const CLIENT_ID: &str = "REPLACE_WITH_GOOGLE_OAUTH_CLIENT_ID.apps.googleusercontent.com";
-/// Accompanying public client "secret" for the installed-app OAuth client type.
-const CLIENT_SECRET: &str = "REPLACE_WITH_GOOGLE_OAUTH_CLIENT_SECRET";
+/// once in Google Cloud Console (see README's "For maintainers" section). Not confidential
+/// for this client type, but injected via `ORIVO_GOOGLE_CLIENT_ID` at build time rather than
+/// hardcoded, so the real value never lands in git history and doesn't trip secret scanners.
+const CLIENT_ID: Option<&str> = option_env!("ORIVO_GOOGLE_CLIENT_ID");
+/// Accompanying public client "secret" for the installed-app OAuth client type, injected via
+/// `ORIVO_GOOGLE_CLIENT_SECRET` at build time for the same reason.
+const CLIENT_SECRET: Option<&str> = option_env!("ORIVO_GOOGLE_CLIENT_SECRET");
 /// Limited scope: only the app-data folder, not the user's full Drive.
 const SCOPE: &str = "https://www.googleapis.com/auth/drive.appdata";
 
@@ -22,8 +25,17 @@ type OrivoClient =
 
 /// Builds the Google OAuth2 client configured for the device authorization grant.
 fn build_client() -> Result<OrivoClient> {
-    let client_id = ClientId::new(CLIENT_ID.to_string());
-    let client_secret = ClientSecret::new(CLIENT_SECRET.to_string());
+    let client_id = CLIENT_ID.ok_or_else(|| {
+        io_err("orivo was built without ORIVO_GOOGLE_CLIENT_ID set; Google Drive backup is unavailable")
+    })?;
+    let client_secret = CLIENT_SECRET.ok_or_else(|| {
+        io_err(
+            "orivo was built without ORIVO_GOOGLE_CLIENT_SECRET set; Google Drive backup is unavailable",
+        )
+    })?;
+
+    let client_id = ClientId::new(client_id.to_string());
+    let client_secret = ClientSecret::new(client_secret.to_string());
     let auth_url =
         AuthUrl::new("https://accounts.google.com/o/oauth2/v2/auth".to_string()).map_err(io_err)?;
     let token_url =

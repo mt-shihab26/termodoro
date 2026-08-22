@@ -119,4 +119,14 @@ Only the `drive.appdata` scope is requested, so orivo can never see or touch the
 
 ### For maintainers: one-time OAuth client setup
 
-Backup/restore requires a Google Cloud OAuth client of type **"TVs and Limited Input devices"**, registered once in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials) to obtain a client ID (and its accompanying public client secret, which isn't confidential for this client type — the same model `gh`/`docker` use). These are embedded as constants in `src/utils/drive/auth.rs` (`CLIENT_ID` / `CLIENT_SECRET`) and must be replaced with real values before `backup`/`restore` will work.
+Backup/restore requires a Google Cloud OAuth client of type **"TVs and Limited Input devices"**, registered once in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials) to obtain a client ID and its accompanying public client secret. This secret isn't confidential for this client type — the same model `gh`/`docker`/`gcloud` use — but we still don't commit the literal value to git, since automated secret scanners (GitHub push protection, gitleaks, etc.) can't tell a "public by design" OAuth secret from a leaked one and will flag/block on it regardless.
+
+Instead, the value is baked into the binary at **build time** via environment variables, so `git blame`/history never contains it:
+
+```sh
+$ ORIVO_GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com \
+  ORIVO_GOOGLE_CLIENT_SECRET=yyy \
+  cargo build --release
+```
+
+Building without these set still succeeds — `login`/`backup`/`restore` just fail at runtime with a clear "orivo was built without ORIVO_GOOGLE_CLIENT_ID set" error, so regular contributors working on unrelated features don't need Google credentials to build the project. Whoever cuts release binaries (CI, AUR packaging, etc.) needs to supply both as secrets in that build environment.
