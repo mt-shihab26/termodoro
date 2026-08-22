@@ -1,5 +1,3 @@
-/// Database connection configuration loaded from `config.toml`.
-pub mod db;
 /// Pomodoro timer configuration loaded from `config.toml`.
 pub mod timer;
 
@@ -10,10 +8,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    config::{db::DBConfig, timer::TimerConfig},
-    utils::path::config_path,
-};
+use crate::{config::timer::TimerConfig, utils::path::config_path};
 
 /// Top-level application configuration, loaded from `~/.config/orivo/config.toml`.
 #[derive(Debug, Deserialize, Serialize)]
@@ -21,9 +16,6 @@ pub struct Config {
     /// Whether to show the FPS counter in the UI.
     #[serde(default)]
     pub show_fps: bool,
-    /// Database connection settings.
-    #[serde(default)]
-    pub db: DBConfig,
     /// Pomodoro timer settings.
     #[serde(default)]
     pub timer: TimerConfig,
@@ -34,7 +26,6 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             show_fps: false,
-            db: Default::default(),
             timer: Default::default(),
         }
     }

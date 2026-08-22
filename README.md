@@ -69,17 +69,6 @@ Config file location: `~/.config/orivo/config.toml`
 show_fps = false # show the FPS counter in the TUI header on startup
 
 
-# Database connection — Orivo uses Turso (libSQL/SQLite) for syncing todos across machines.
-[db]
-url   = "libsql://your-db-name.turso.io"   # libSQL URL from: turso db show orivo --url
-token = "your-auth-token"                  # auth token from: turso db tokens create orivo
-# Get your Turso credentials:
-#   turso auth login
-#   turso db create orivo
-#   turso db show orivo --url
-#   turso db tokens create orivo
-
-
 # Pomodoro timer settings — controls session lengths and when long breaks are triggered.
 [timer]
 show_millis         = false   # show milliseconds in the timer display
@@ -94,17 +83,6 @@ daily_session_goal  = 16      # target work sessions to complete today (min: 1, 
 ### Root Options
 
 - `show_fps` → show the FPS counter when the TUI starts. You can still toggle it at runtime with `Ctrl+F`.
-
-### Database (`[db]`)
-
-Orivo uses [Turso](https://turso.tech) as its database — a libSQL-compatible SQLite database. You need a `url` and `token` to connect.
-
-```sh
-$ turso auth login
-$ turso db create orivo
-$ turso db show orivo --url      # → paste as url
-$ turso db tokens create orivo   # → paste as token
-```
 
 ### Timer (`[timer]`)
 
