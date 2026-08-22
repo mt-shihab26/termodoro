@@ -9,7 +9,7 @@ use sha2::{Digest, Sha256};
 use time::OffsetDateTime;
 
 use crate::utils::{
-    date::now,
+    date::{format_datetime, now},
     db::rt,
     drive::{auth, client},
     path::{backup_state_path, db_path},
@@ -58,13 +58,45 @@ pub fn run_login() -> Result<()> {
     })
 }
 
-/// Prints whether orivo currently has a stored Google Drive refresh token.
+/// Prints Google Drive sign-in status plus the local backup state: last backup time, the
+/// Drive file id it's stored under, and whether the local database has changed since then.
 pub fn run_status() -> Result<()> {
-    if auth::is_signed_in()? {
-        println!("signed in to Google Drive");
-    } else {
-        println!("not signed in — run `orivo login` to sign in");
+    println!(
+        "signed in: {}",
+        if auth::is_signed_in()? {
+            "yes"
+        } else {
+            "no (run `orivo login`)"
+        }
+    );
+
+    let state = BackupState::load();
+
+    println!(
+        "last backup: {}",
+        match state.last_backup_at {
+            Some(at) => format_datetime(at),
+            None => "never".to_string(),
+        }
+    );
+
+    println!(
+        "drive file: {}",
+        state.drive_file_id.as_deref().unwrap_or("none yet")
+    );
+
+    if let Ok(raw) = fs::read(db_path()) {
+        let up_to_date = state.last_backup_hash.as_deref() == Some(hash(&gzip(&raw)?).as_str());
+        println!(
+            "local database: {}",
+            if up_to_date {
+                "up to date"
+            } else {
+                "changed since last backup"
+            }
+        );
     }
+
     Ok(())
 }
 
