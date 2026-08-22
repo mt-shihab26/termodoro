@@ -46,8 +46,8 @@ impl BackupState {
     }
 }
 
-/// Runs the Google OAuth device-code flow (prints a verification URL and code, then
-/// waits for approval) and stores the resulting refresh token in the OS keyring, so
+/// Runs the Google OAuth browser sign-in flow (prints/opens an authorize URL, then waits
+/// for the local redirect) and stores the resulting refresh token in the OS keyring, so
 /// later `backup`/`restore` runs authenticate silently. If a refresh token is already
 /// stored, this just confirms it's still valid instead of prompting again.
 pub fn run_login() -> Result<()> {
@@ -56,6 +56,23 @@ pub fn run_login() -> Result<()> {
         println!("signed in to Google Drive");
         Ok(())
     })
+}
+
+/// Prints whether orivo currently has a stored Google Drive refresh token.
+pub fn run_status() -> Result<()> {
+    if auth::is_signed_in()? {
+        println!("signed in to Google Drive");
+    } else {
+        println!("not signed in — run `orivo login` to sign in");
+    }
+    Ok(())
+}
+
+/// Removes the stored Google refresh token, signing orivo out of Google Drive.
+pub fn run_logout() -> Result<()> {
+    auth::sign_out()?;
+    println!("signed out of Google Drive");
+    Ok(())
 }
 
 /// Gzip-compresses, hashes, and (unless unchanged) uploads the local database to the

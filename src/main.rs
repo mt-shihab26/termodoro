@@ -22,7 +22,8 @@ use std::{
 
 use orivo::{
     cmds::{
-        Cmd, backup::Backup, help::Help, login::Login, restore::Restore, tui::Tui, version::Version,
+        Cmd, backup::Backup, help::Help, login::Login, logout::Logout, restore::Restore,
+        status::Status, tui::Tui, version::Version,
     },
     config::Config,
     utils::db,
@@ -37,6 +38,8 @@ fn main() -> Result<()> {
         #[cfg(debug_assertions)]
         Some("seed") => Box::new(orivo::cmds::seed::Seed::new()).run(),
         Some("login") => Box::new(Login::new()).run(),
+        Some("logout") => Box::new(Logout::new()).run(),
+        Some("status") => Box::new(Status::new()).run(),
         Some("backup") => Box::new(Backup::new()).run(),
         Some("restore") => Box::new(Restore::new()).run(),
         Some("version") | Some("--version") | Some("-V") => Box::new(Version::new()).run(),
@@ -52,6 +55,8 @@ fn help() -> Result<()> {
         Tui::help,
         orivo::cmds::seed::Seed::help,
         Login::help,
+        Logout::help,
+        Status::help,
         Backup::help,
         Restore::help,
         Version::help,
@@ -61,6 +66,8 @@ fn help() -> Result<()> {
     let helps = [
         Tui::help,
         Login::help,
+        Logout::help,
+        Status::help,
         Backup::help,
         Restore::help,
         Version::help,

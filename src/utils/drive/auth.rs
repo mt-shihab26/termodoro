@@ -66,6 +66,23 @@ fn entry() -> Result<keyring::Entry> {
     keyring::Entry::new(KEYRING_SERVICE, KEYRING_USERNAME).map_err(io_err)
 }
 
+/// Returns whether a Google refresh token is currently stored, i.e. `login` has completed.
+pub fn is_signed_in() -> Result<bool> {
+    match entry()?.get_password() {
+        Ok(_) => Ok(true),
+        Err(keyring::Error::NoEntry) => Ok(false),
+        Err(e) => Err(io_err(e)),
+    }
+}
+
+/// Deletes the stored Google refresh token, signing orivo out of Google Drive.
+pub fn sign_out() -> Result<()> {
+    match entry()?.delete_credential() {
+        Ok(()) | Err(keyring::Error::NoEntry) => Ok(()),
+        Err(e) => Err(io_err(e)),
+    }
+}
+
 /// Best-effort attempt to open `url` in the system's default browser via `xdg-open`. Failures
 /// are silently ignored — the URL is always printed too, so this is a convenience, not a
 /// requirement (e.g. it does nothing useful over a headless SSH session).

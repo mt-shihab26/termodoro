@@ -2,13 +2,17 @@
 pub mod backup;
 /// Help command that prints usage for all available commands.
 pub mod help;
-/// Command that signs in to Google Drive without backing up or restoring.
+/// Command that signs in to Google Drive and saves credentials for later backup/restore.
 pub mod login;
+/// Command that signs out of Google Drive by removing the stored refresh token.
+pub mod logout;
 /// Command that restores the local database from the Google Drive backup.
 pub mod restore;
 /// Development command that resets and seeds the database (excluded from release builds).
 #[cfg(debug_assertions)]
 pub mod seed;
+/// Command that shows whether orivo is currently signed in to Google Drive.
+pub mod status;
 /// Command that launches the terminal UI.
 pub mod tui;
 /// Command that prints the application version.
