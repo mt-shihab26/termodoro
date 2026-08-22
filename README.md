@@ -102,3 +102,21 @@ work → break → work → break → work → break → work → LONG BREAK  (c
 
 - Default: `16` sessions
 - Range: `1` – `24` sessions
+
+## Backup & Restore
+
+orivo can back up its local database to your Google Drive, WhatsApp-style: a single gzip-compressed snapshot stored in Drive's hidden **app-data folder** (invisible in the normal Drive UI), overwritten in place on every backup rather than piling up copies.
+
+```sh
+$ orivo login    # sign in to Google Drive and save credentials for later backup/restore
+$ orivo backup   # upload the current database, skipped if nothing changed since the last backup
+$ orivo restore  # download the backup and overwrite the local database (destructive, asks for confirmation)
+```
+
+The first `orivo login` (or `orivo backup` / `orivo restore`, which trigger sign-in automatically if needed) starts a one-time Google sign-in using the OAuth **device code** flow: the terminal prints a URL and a short code, which you open and enter on any browser (phone, another computer, etc.) to grant access. After that, the resulting refresh token is stored in your OS's secret service (gnome-keyring/kwallet on Linux) and reused automatically — no browser needed again unless access is revoked.
+
+Only the `drive.appdata` scope is requested, so orivo can never see or touch the rest of your Drive.
+
+### For maintainers: one-time OAuth client setup
+
+Backup/restore requires a Google Cloud OAuth client of type **"TVs and Limited Input devices"**, registered once in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials) to obtain a client ID (and its accompanying public client secret, which isn't confidential for this client type — the same model `gh`/`docker` use). These are embedded as constants in `src/utils/drive/auth.rs` (`CLIENT_ID` / `CLIENT_SECRET`) and must be replaced with real values before `backup`/`restore` will work.

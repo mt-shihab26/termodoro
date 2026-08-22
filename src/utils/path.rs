@@ -20,6 +20,11 @@ pub fn store_path() -> PathBuf {
     state_base_path().join("store.json")
 }
 
+/// Returns the path to the persisted Google Drive backup state file.
+pub fn backup_state_path() -> PathBuf {
+    state_base_path().join("backup.json")
+}
+
 /// The base directory for config files.
 #[cfg_attr(debug_assertions, allow(dead_code))]
 fn config_base_path() -> PathBuf {

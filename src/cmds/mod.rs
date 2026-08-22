@@ -1,5 +1,11 @@
+/// Command that backs up the local database to Google Drive.
+pub mod backup;
 /// Help command that prints usage for all available commands.
 pub mod help;
+/// Command that signs in to Google Drive without backing up or restoring.
+pub mod login;
+/// Command that restores the local database from the Google Drive backup.
+pub mod restore;
 /// Development command that resets and seeds the database (excluded from release builds).
 #[cfg(debug_assertions)]
 pub mod seed;
