@@ -12,8 +12,8 @@ use crate::{
     config::Config,
     utils::{
         date::{format_datetime, now},
+        gh,
         path::{db_path, sync_dir, sync_state_path},
-        sync::{gh, repo},
     },
 };
 
@@ -62,14 +62,14 @@ pub fn run_sync() -> Result<()> {
     let config = Config::load()?;
     let repo_name = gh::ensure_repo(config.sync.repo_name())?;
     let dir = sync_dir();
-    repo::ensure_clone(&dir, &repo_name)?;
-    let branch = repo::current_branch(&dir)?;
+    gh::ensure_clone(&dir, &repo_name)?;
+    let branch = gh::current_branch(&dir)?;
 
     println!("comparing local database with GitHub...");
     let local_gz = gzip(&fs::read(db_path())?)?;
     let local_hash = hash(&local_gz);
 
-    let remote_gz = repo::read_remote_file(&dir, &branch);
+    let remote_gz = gh::read_remote_file(&dir, &branch);
     let remote_hash = remote_gz.as_deref().map(hash);
 
     let state = SyncState::load();
@@ -122,7 +122,7 @@ fn resolve_conflict(
 /// snapshot in place, then records the new hash as synced.
 fn push(dir: &Path, branch: &str, gz: Vec<u8>, hash: String) -> Result<()> {
     let message = format!("sync: {}", format_datetime(now()));
-    repo::commit_and_push(dir, branch, &gz, &message)?;
+    gh::commit_and_push(dir, branch, &gz, &message)?;
 
     let mut state = SyncState::load();
     state.last_synced_hash = Some(hash);

@@ -8,12 +8,58 @@ use std::{
 /// Fixed name of the synced database blob inside the sync repo.
 const FILE_NAME: &str = "orivo.sqlite.gz";
 
+/// Returns whether the `gh` CLI is installed and signed in to a GitHub account.
+pub fn is_authenticated() -> bool {
+    Command::new("gh")
+        .args(["auth", "status"])
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false)
+}
+
+/// Returns the signed-in GitHub username.
+fn username() -> Result<String> {
+    run_gh(&["api", "user", "-q", ".login"])
+}
+
+/// Returns whether `owner/orivo-data` already exists on GitHub.
+fn repo_exists(full_name: &str) -> bool {
+    Command::new("gh")
+        .args(["repo", "view", full_name])
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false)
+}
+
+/// Returns `owner/<repo_name>` for the signed-in user, creating the repo as private if it
+/// doesn't exist yet.
+pub fn ensure_repo(repo_name: &str) -> Result<String> {
+    println!("checking for GitHub repo {repo_name}...");
+    let full_name = format!("{}/{repo_name}", username()?);
+
+    if repo_exists(&full_name) {
+        println!("found existing repo {full_name}");
+    } else {
+        println!("creating private repo {full_name}...");
+        run_gh(&[
+            "repo",
+            "create",
+            &full_name,
+            "--private",
+            "--description",
+            "orivo sync data \u{2014} managed automatically by `orivo sync`, do not edit",
+        ])?;
+    }
+
+    Ok(full_name)
+}
+
 /// Ensures `dir` is a local clone of `repo_full_name` (`owner/name`): clones it via `gh` if
 /// missing, otherwise fetches the latest remote state into it.
 pub fn ensure_clone(dir: &Path, repo_full_name: &str) -> Result<()> {
     if dir.join(".git").exists() {
         println!("fetching latest changes from {repo_full_name}...");
-        run(dir, &["fetch", "origin"])?;
+        run_git(dir, &["fetch", "origin"])?;
         return Ok(());
     }
 
@@ -39,7 +85,7 @@ pub fn ensure_clone(dir: &Path, repo_full_name: &str) -> Result<()> {
 /// Returns the clone's current branch name (works even for a freshly created, commit-less
 /// repo, since `HEAD` still symbolically points at the default branch).
 pub fn current_branch(dir: &Path) -> Result<String> {
-    run(dir, &["symbolic-ref", "--short", "HEAD"])
+    run_git(dir, &["symbolic-ref", "--short", "HEAD"])
 }
 
 /// Reads the sync file's bytes as committed on `origin/<branch>`, or `None` if it doesn't
@@ -60,17 +106,17 @@ pub fn read_remote_file(dir: &Path, branch: &str) -> Option<Vec<u8>> {
 /// rather than growing the repo's history forever.
 pub fn commit_and_push(dir: &Path, branch: &str, bytes: &[u8], message: &str) -> Result<()> {
     fs::write(dir.join(FILE_NAME), bytes)?;
-    run(dir, &["add", FILE_NAME])?;
+    run_git(dir, &["add", FILE_NAME])?;
 
-    let has_commit = run(dir, &["rev-parse", "--verify", "-q", "HEAD"]).is_ok();
+    let has_commit = run_git(dir, &["rev-parse", "--verify", "-q", "HEAD"]).is_ok();
     if has_commit {
-        run(dir, &["commit", "--amend", "-m", message])?;
+        run_git(dir, &["commit", "--amend", "-m", message])?;
     } else {
-        run(dir, &["commit", "-m", message])?;
+        run_git(dir, &["commit", "-m", message])?;
     }
 
     println!("pushing to GitHub...");
-    run(
+    run_git(
         dir,
         &[
             "push",
@@ -83,8 +129,24 @@ pub fn commit_and_push(dir: &Path, branch: &str, bytes: &[u8], message: &str) ->
     Ok(())
 }
 
+/// Runs `gh` with the given args, returning trimmed stdout on success.
+fn run_gh(args: &[&str]) -> Result<String> {
+    let output = Command::new("gh")
+        .args(args)
+        .output()
+        .map_err(|_| io_err("`gh` (GitHub CLI) is not installed; see https://cli.github.com"))?;
+
+    if !output.status.success() {
+        return Err(io_err(
+            String::from_utf8_lossy(&output.stderr).trim().to_string(),
+        ));
+    }
+
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+}
+
 /// Runs `git -C dir <args>`, returning trimmed stdout on success.
-fn run(dir: &Path, args: &[&str]) -> Result<String> {
+fn run_git(dir: &Path, args: &[&str]) -> Result<String> {
     let output = Command::new("git")
         .arg("-C")
         .arg(dir)
