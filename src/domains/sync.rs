@@ -70,6 +70,15 @@ pub fn run_sync() -> Result<()> {
     let local_hash = hash(&local_gz);
 
     let remote_gz = gh::read_remote_file(&dir, &branch);
+
+    // Nothing has ever been pushed to this repo — there's no remote data to lose, so push
+    // unconditionally instead of falling through to the conflict check below (a stale local
+    // `SyncState` from an earlier failed sync would otherwise look like a real conflict here).
+    if remote_gz.is_none() {
+        println!("GitHub repo is empty — pushing");
+        return push(&dir, &branch, local_gz, local_hash);
+    }
+
     let remote_hash = remote_gz.as_deref().map(hash);
 
     let state = SyncState::load();

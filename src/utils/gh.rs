@@ -116,14 +116,16 @@ pub fn commit_and_push(dir: &Path, branch: &str, bytes: &[u8], message: &str) ->
     }
 
     println!("pushing to GitHub...");
+
+    // Plain `--force` rather than `--force-with-lease`: the lease compares against the local
+    // `refs/remotes/origin/<branch>` tracking ref, which is easy to end up stale (e.g. it
+    // doesn't exist at all before this branch has ever been fetched) and then rejects a push
+    // that's perfectly safe. The actual "is this safe to overwrite" check already happened one
+    // layer up, in `run_sync`'s content-hash comparison against `SyncState` — by the time this
+    // runs, we've already established the remote is safe to overwrite.
     run_git(
         dir,
-        &[
-            "push",
-            "--force-with-lease",
-            "origin",
-            &format!("HEAD:{branch}"),
-        ],
+        &["push", "--force", "-u", "origin", &format!("HEAD:{branch}")],
     )?;
 
     Ok(())
