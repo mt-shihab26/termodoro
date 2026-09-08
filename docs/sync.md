@@ -35,11 +35,11 @@ signed-in `gh` user's own account — there's no way to point it at someone else
 
 ## Where things live on disk
 
-| What | Path (release) | Path (debug) |
-|---|---|---|
-| Database | `~/.local/state/orivo/orivo.sqlite` | `./.dev/orivo.sqlite` |
-| Sync state (`sync.json`) | `~/.local/state/orivo/sync.json` | `./.dev/sync.json` |
-| Local git clone | `~/.local/state/orivo/sync/` | `./.dev/sync/` |
+| What                     | Path (release)                      | Path (debug)          |
+| ------------------------ | ----------------------------------- | --------------------- |
+| Database                 | `~/.local/state/orivo/orivo.sqlite` | `./.dev/orivo.sqlite` |
+| Sync state (`sync.json`) | `~/.local/state/orivo/sync.json`    | `./.dev/sync.json`    |
+| Local git clone          | `~/.local/state/orivo/sync/`        | `./.dev/sync/`        |
 
 The local git clone is reused across runs (`git fetch` instead of a fresh `gh repo clone`
 every time), so a sync after the first one only downloads new commits, not the whole
@@ -84,8 +84,8 @@ everything:
 2. **`remote_hash`** — `git show origin/<branch>:orivo.sqlite.gz` inside the local clone (reads
    the committed blob straight out of git's object store — no checkout needed), hash the
    result. `None` if the repo has never had anything pushed to it.
-3. **`last_synced_hash`** — loaded from `sync.json`: the hash recorded after the *last
-   successful* sync. This is orivo's own memory of "what I already synced," independent of
+3. **`last_synced_hash`** — loaded from `sync.json`: the hash recorded after the _last
+   successful_ sync. This is orivo's own memory of "what I already synced," independent of
    git.
 
 ```rust
@@ -94,16 +94,16 @@ let remote_changed = remote_hash      != last_synced_hash;
 ```
 
 Local and remote are never compared to each other directly — both are compared against the
-last-known-synced hash. That's what lets orivo tell *which side* changed instead of just *that*
+last-known-synced hash. That's what lets orivo tell _which side_ changed instead of just _that_
 they differ.
 
-| Repo state | `local_changed` | `remote_changed` | Action |
-|---|:-:|:-:|---|
-| Repo has nothing pushed yet | — | — | **push**, unconditionally (see below) |
-| Neither side changed | no | no | nothing — "already up to date" |
-| Only the local database changed | yes | no | **push** |
-| Only the GitHub repo changed (e.g. synced from another machine) | no | yes | **pull** |
-| Both changed | yes | yes | **prompt**: keep local or keep remote |
+| Repo state                                                      | `local_changed` | `remote_changed` | Action                                |
+| --------------------------------------------------------------- | :-------------: | :--------------: | ------------------------------------- |
+| Repo has nothing pushed yet                                     |        —        |        —         | **push**, unconditionally (see below) |
+| Neither side changed                                            |       no        |        no        | nothing — "already up to date"        |
+| Only the local database changed                                 |       yes       |        no        | **push**                              |
+| Only the GitHub repo changed (e.g. synced from another machine) |       no        |       yes        | **pull**                              |
+| Both changed                                                    |       yes       |       yes        | **prompt**: keep local or keep remote |
 
 ### The empty-repo special case
 
@@ -162,7 +162,11 @@ one side has to be chosen to fully overwrite the other.
 ## Terminal output
 
 Every step prints as it happens (rather than staying silent until the end), so a slow network
-call doesn't look like a hang:
+call doesn't look like a hang. The shared setup steps (sign-in check, repo lookup, clone/fetch,
+"comparing...") are the same every time — what differs is the line printed right after the
+compare step, which announces what the hash comparison found before acting on it:
+
+**Only the local database changed → push**
 
 ```
 checking github CLI sign-in...
@@ -171,6 +175,55 @@ found existing repo <owner>/orivo-data
 fetching latest changes from <owner>/orivo-data...
 comparing local database with github...
 local database changed, github did not — pushing
+pushing to github...
+pushed local changes to github
+```
+
+**Only the GitHub repo changed → pull**
+
+```
+checking github CLI sign-in...
+checking for github repo orivo-data...
+found existing repo <owner>/orivo-data
+fetching latest changes from <owner>/orivo-data...
+comparing local database with github...
+database on github changed, local did not — pulling
+restoring database from github...
+pulled latest data from github
+```
+
+**Neither side changed → no-op**
+
+```
+checking github CLI sign-in...
+checking for github repo orivo-data...
+found existing repo <owner>/orivo-data
+fetching latest changes from <owner>/orivo-data...
+comparing local database with github...
+nothing changed since the last sync, already up to date
+```
+
+**Both sides changed → conflict prompt**
+
+```
+checking github CLI sign-in...
+checking for github repo orivo-data...
+found existing repo <owner>/orivo-data
+fetching latest changes from <owner>/orivo-data...
+comparing local database with github...
+both the local database and the github repo have changed since the last sync.
+keep [l]ocal (push, overwriting the repo) or [r]emote (pull, overwriting local)?
+```
+
+**Repo has nothing pushed to it yet → push, skipping the compare table entirely**
+
+```
+checking github CLI sign-in...
+checking for github repo orivo-data...
+creating private repo <owner>/orivo-data...
+cloning <owner>/orivo-data...
+comparing local database with github...
+repo on github is empty — pushing
 pushing to github...
 pushed local changes to github
 ```
