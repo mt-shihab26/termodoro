@@ -118,6 +118,8 @@ $ orivo sync
 
 The first run creates a private repo under your GitHub account (named `orivo-data` by default — see `[sync] repo_name` in Configuration) via `gh repo create`, and uploads the database to it. Later runs compare the local database and the repo against the last synced snapshot: pulls if only the repo changed (e.g. you synced from another machine), pushes if only the local database changed, does nothing if neither did, and asks which side to keep if both did.
 
+See [`docs/sync.md`](docs/sync.md) for the full mechanics (change detection, push/pull, conflict handling, error cases).
+
 ## Development
 
 ```sh
