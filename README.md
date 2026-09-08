@@ -54,6 +54,7 @@ $ cargo install orivo
 ```
 
 Run from any terminal:
+
 ```sh
 $ orivo
 ```
@@ -65,9 +66,7 @@ Config file location: `~/.config/orivo/config.toml`
 ```toml
 # Orivo configuration
 
-
 show_fps = false # show the FPS counter in the TUI header on startup
-
 
 # Pomodoro timer settings — controls session lengths and when long breaks are triggered.
 [timer]
@@ -138,7 +137,7 @@ CI sets the same two variables as real environment variables from GitHub Actions
 $ cargo run
 ```
 
-Debug builds keep config, database, and log files under `./local/` instead of the real system paths, so you can inspect or wipe local state freely.
+Debug builds keep config, database, and log files under `./.dev/` instead of the real system paths, so you can inspect or wipe local state freely.
 
 ```sh
 $ cargo run seed    # reset the local database and fill it with sample todos/sessions

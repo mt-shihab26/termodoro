@@ -1,8 +1,6 @@
 # Orivo configuration
 
-
 show_fps = true # show the FPS counter in the TUI header on startup
-
 
 # Pomodoro timer settings — controls session lengths and when long breaks are triggered.
 [timer]

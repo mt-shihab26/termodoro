@@ -1,6 +1,6 @@
 /target
-/local/*
-!/local/config.toml
+/.dev/*
+!/.dev/config.toml
 .codex
 .junie
 .env
