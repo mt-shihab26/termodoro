@@ -1,6 +1,3 @@
-[build.env]
-passthrough = ["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]
-
 [target.aarch64-unknown-linux-gnu]
 pre-build = [
     "dpkg --add-architecture arm64",

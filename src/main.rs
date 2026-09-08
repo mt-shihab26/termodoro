@@ -21,27 +21,18 @@ use std::{
 };
 
 use orivo::{
-    cmds::{
-        Cmd, backup::Backup, help::Help, login::Login, logout::Logout, restore::Restore,
-        status::Status, tui::Tui, version::Version,
-    },
+    cmds::{Cmd, help::Help, sync::Sync, tui::Tui, version::Version},
     config::Config,
     utils::db,
 };
 
 /// Parses the CLI argument list and dispatches to the selected command.
 fn main() -> Result<()> {
-    let _ = dotenvy::dotenv();
-
     match env::args().nth(1).as_deref() {
         None | Some("tui") => Box::new(Tui::new(Config::load()?, db::connect()?)).run(),
         #[cfg(debug_assertions)]
         Some("seed") => Box::new(orivo::cmds::seed::Seed::new()).run(),
-        Some("login") => Box::new(Login::new()).run(),
-        Some("logout") => Box::new(Logout::new()).run(),
-        Some("status") => Box::new(Status::new()).run(),
-        Some("backup") => Box::new(Backup::new()).run(),
-        Some("restore") => Box::new(Restore::new()).run(),
+        Some("sync") => Box::new(Sync::new()).run(),
         Some("version") | Some("--version") | Some("-V") => Box::new(Version::new()).run(),
         Some("help") | Some("--help") | Some("-h") => help(),
         Some(cmd) => unknown(cmd),
@@ -54,25 +45,12 @@ fn help() -> Result<()> {
     let helps = [
         Tui::help,
         orivo::cmds::seed::Seed::help,
-        Login::help,
-        Logout::help,
-        Status::help,
-        Backup::help,
-        Restore::help,
+        Sync::help,
         Version::help,
         Help::help,
     ];
     #[cfg(not(debug_assertions))]
-    let helps = [
-        Tui::help,
-        Login::help,
-        Logout::help,
-        Status::help,
-        Backup::help,
-        Restore::help,
-        Version::help,
-        Help::help,
-    ];
+    let helps = [Tui::help, Sync::help, Version::help, Help::help];
     Box::new(Help::new(&helps)).run()
 }
 

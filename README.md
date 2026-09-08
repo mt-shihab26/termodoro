@@ -77,6 +77,10 @@ long_break_duration = 15      # long break length in minutes           (min: 1, 
 long_break_interval = 4       # work sessions before a long break      (min: 1, max: 10)
 daily_session_goal  = 16      # target work sessions to complete today (min: 1, max: 24)
 
+# `orivo sync` settings — see the Sync section below.
+[sync]
+repo_name = "orivo-data" # name of the GitHub repo (under your account) synced with
+
 ```
 
 ### Root Options
@@ -102,17 +106,17 @@ work → break → work → break → work → break → work → LONG BREAK  (c
 - Default: `16` sessions
 - Range: `1` – `24` sessions
 
-## Backup & Restore
+## Sync
 
-orivo can back up its local database to Google Drive, WhatsApp-style: a single gzip-compressed snapshot in Drive's hidden app-data folder, overwritten in place each time.
+orivo can sync its local database with a private GitHub repo, WhatsApp-style: a single gzip-compressed snapshot, overwritten in place each time.
+
+**Requires the [GitHub CLI](https://cli.github.com) (`gh`), signed in** — run `gh auth login` once before your first sync.
 
 ```sh
-$ orivo login    # sign in to Google Drive
-$ orivo backup   # upload the current database (skipped if nothing changed)
-$ orivo restore  # download the backup and overwrite the local database (asks for confirmation)
+$ orivo sync
 ```
 
-The first sign-in prints a Google sign-in URL — open it in a browser **on the same machine** running orivo and approve access; orivo catches the redirect on a local address and finishes automatically. The resulting token is stored in your OS keyring, so this only happens once. Only the `drive.appdata` scope is requested, so orivo never sees the rest of your Drive.
+The first run creates a private repo under your GitHub account (named `orivo-data` by default — see `[sync] repo_name` in Configuration) via `gh repo create`, and uploads the database to it. Later runs compare the local database and the repo against the last synced snapshot: pulls if only the repo changed (e.g. you synced from another machine), pushes if only the local database changed, does nothing if neither did, and asks which side to keep if both did.
 
 ## Development
 
@@ -120,18 +124,6 @@ The first sign-in prints a Google sign-in URL — open it in a browser **on the 
 $ git clone https://github.com/mt-shihab26/orivo.git
 $ cd orivo
 ```
-
-To work on backup/restore locally, you need a Google OAuth client:
-
-1. In the [Google Cloud Console](https://console.cloud.google.com), create a project (or select an existing one).
-2. Go to **APIs & Services → Library**, search for **Google Drive API**, and enable it.
-3. Go to **APIs & Services → OAuth consent screen**: choose **External**, fill in the required fields (app name, support email), and under **Test users** add your own Google account — the app stays unverified during development, so only listed test users can sign in.
-4. Go to **APIs & Services → Credentials → Create Credentials → OAuth client ID**, and choose application type **"Desktop app"**. This gives you a **Client ID** and **Client secret**.
-5. Copy `.env.example` to `.env` and fill in `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` with those two values.
-
-No extra scope configuration is needed on the Google Cloud side — orivo only ever requests `https://www.googleapis.com/auth/drive.appdata` at sign-in time (see `src/utils/drive/auth.rs`), which is Drive's restricted per-app storage scope, not general Drive access.
-
-CI sets the same two variables as real environment variables from GitHub Actions secrets. Without either set, everything still builds and runs — `login`/`backup`/`restore` just fail with a clear error.
 
 ```sh
 $ cargo run

@@ -1,3 +1,5 @@
+/// Sync command configuration loaded from `config.toml`.
+pub mod sync;
 /// Pomodoro timer configuration loaded from `config.toml`.
 pub mod timer;
 
@@ -8,7 +10,10 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{config::timer::TimerConfig, utils::path::config_path};
+use crate::{
+    config::{sync::SyncConfig, timer::TimerConfig},
+    utils::path::config_path,
+};
 
 /// Top-level application configuration, loaded from `~/.config/orivo/config.toml`.
 #[derive(Debug, Deserialize, Serialize)]
@@ -19,6 +24,9 @@ pub struct Config {
     /// Pomodoro timer settings.
     #[serde(default)]
     pub timer: TimerConfig,
+    /// Sync command settings.
+    #[serde(default)]
+    pub sync: SyncConfig,
 }
 
 impl Default for Config {
@@ -27,6 +35,7 @@ impl Default for Config {
         Self {
             show_fps: false,
             timer: Default::default(),
+            sync: Default::default(),
         }
     }
 }

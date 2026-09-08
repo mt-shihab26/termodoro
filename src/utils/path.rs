@@ -20,9 +20,15 @@ pub fn store_path() -> PathBuf {
     state_base_path().join("store.json")
 }
 
-/// Returns the path to the persisted Google Drive backup state file.
-pub fn backup_state_path() -> PathBuf {
-    state_base_path().join("backup.json")
+/// Returns the path to the persisted sync state file (hash of the database as of the last
+/// successful `orivo sync`).
+pub fn sync_state_path() -> PathBuf {
+    state_base_path().join("sync.json")
+}
+
+/// Returns the local git working copy used to sync the database with GitHub.
+pub fn sync_dir() -> PathBuf {
+    state_base_path().join("sync")
 }
 
 /// The base directory for config files.
