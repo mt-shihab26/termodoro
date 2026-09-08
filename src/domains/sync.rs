@@ -52,10 +52,10 @@ impl SyncState {
 /// pushes if this machine has changes the repo doesn't have, does nothing if neither changed,
 /// or asks which side to keep if both did.
 pub fn run_sync() -> Result<()> {
-    println!("checking GitHub CLI sign-in...");
+    println!("checking github CLI sign-in...");
     if !gh::is_authenticated() {
         return Err(io_err(
-            "not signed in to the GitHub CLI; run `gh auth login` first",
+            "not signed in to the github CLI; run `gh auth login` first",
         ));
     }
 
@@ -65,7 +65,7 @@ pub fn run_sync() -> Result<()> {
     gh::ensure_clone(&dir, &repo_name)?;
     let branch = gh::current_branch(&dir)?;
 
-    println!("comparing local database with GitHub...");
+    println!("comparing local database with github...");
     let local_gz = gzip(&fs::read(db_path())?)?;
     let local_hash = hash(&local_gz);
 
@@ -75,7 +75,7 @@ pub fn run_sync() -> Result<()> {
     // unconditionally instead of falling through to the conflict check below (a stale local
     // `SyncState` from an earlier failed sync would otherwise look like a real conflict here).
     if remote_gz.is_none() {
-        println!("GitHub repo is empty — pushing");
+        println!("repo on github is empty — pushing");
         return push(&dir, &branch, local_gz, local_hash);
     }
 
@@ -93,11 +93,11 @@ pub fn run_sync() -> Result<()> {
             Ok(())
         }
         (true, false) => {
-            println!("local database changed, GitHub did not — pushing");
+            println!("local database changed, github did not — pushing");
             push(&dir, &branch, local_gz, local_hash)
         }
         (false, true) => {
-            println!("GitHub changed, local database did not — pulling");
+            println!("database on github changed, local did not — pulling");
             pull(remote_gz, remote_hash)
         }
         (true, true) => {
@@ -116,8 +116,8 @@ fn resolve_conflict(
     remote_gz: Option<Vec<u8>>,
     remote_hash: Option<String>,
 ) -> Result<()> {
-    println!("both the local database and the GitHub repo have changed since the last sync.");
-    print!("Keep [l]ocal (push, overwriting the repo) or [r]emote (pull, overwriting local)? ");
+    println!("both the local database and the github repo have changed since the last sync.");
+    print!("keep [l]ocal (push, overwriting the repo) or [r]emote (pull, overwriting local)? ");
     io::stdout().flush()?;
 
     let mut answer = String::new();
@@ -143,13 +143,13 @@ fn push(dir: &Path, branch: &str, gz: Vec<u8>, hash: String) -> Result<()> {
     state.last_synced_hash = Some(hash);
     state.save();
 
-    println!("pushed local changes to GitHub");
+    println!("pushed local changes to github");
     Ok(())
 }
 
 /// Overwrites the local database with the sync repo's copy, then records its hash as synced.
 fn pull(gz: Option<Vec<u8>>, hash: Option<String>) -> Result<()> {
-    println!("restoring database from GitHub...");
+    println!("restoring database from github...");
     let gz = gz.ok_or_else(|| io_err("the sync repo's database file is missing"))?;
     let raw = gunzip(&gz)?;
 
@@ -162,7 +162,7 @@ fn pull(gz: Option<Vec<u8>>, hash: Option<String>) -> Result<()> {
     state.last_synced_hash = hash;
     state.save();
 
-    println!("pulled latest data from GitHub");
+    println!("pulled latest data from github");
     Ok(())
 }
 

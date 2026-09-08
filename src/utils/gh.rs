@@ -34,7 +34,7 @@ fn repo_exists(full_name: &str) -> bool {
 /// Returns `owner/<repo_name>` for the signed-in user, creating the repo as private if it
 /// doesn't exist yet.
 pub fn ensure_repo(repo_name: &str) -> Result<String> {
-    println!("checking for GitHub repo {repo_name}...");
+    println!("checking for github repo {repo_name}...");
     let full_name = format!("{}/{repo_name}", username()?);
 
     if repo_exists(&full_name) {
@@ -71,7 +71,7 @@ pub fn ensure_clone(dir: &Path, repo_full_name: &str) -> Result<()> {
     let output = Command::new("gh")
         .args(["repo", "clone", repo_full_name, &dir.to_string_lossy()])
         .output()
-        .map_err(|_| io_err("`gh` (GitHub CLI) is not installed; see https://cli.github.com"))?;
+        .map_err(|_| io_err("`gh` (github CLI) is not installed; see https://cli.github.com"))?;
 
     if !output.status.success() {
         return Err(io_err(
@@ -115,7 +115,7 @@ pub fn commit_and_push(dir: &Path, branch: &str, bytes: &[u8], message: &str) ->
         run_git(dir, &["commit", "-m", message])?;
     }
 
-    println!("pushing to GitHub...");
+    println!("pushing to github...");
 
     // Plain `--force` rather than `--force-with-lease`: the lease compares against the local
     // `refs/remotes/origin/<branch>` tracking ref, which is easy to end up stale (e.g. it
@@ -136,7 +136,7 @@ fn run_gh(args: &[&str]) -> Result<String> {
     let output = Command::new("gh")
         .args(args)
         .output()
-        .map_err(|_| io_err("`gh` (GitHub CLI) is not installed; see https://cli.github.com"))?;
+        .map_err(|_| io_err("`gh` (github CLI) is not installed; see https://cli.github.com"))?;
 
     if !output.status.success() {
         return Err(io_err(
