@@ -80,11 +80,17 @@ pub fn run_sync() -> Result<()> {
 
     match (local_changed, remote_changed) {
         (false, false) => {
-            println!("already up to date");
+            println!("nothing changed since the last sync, already up to date");
             Ok(())
         }
-        (true, false) => push(&dir, &branch, local_gz, local_hash),
-        (false, true) => pull(remote_gz, remote_hash),
+        (true, false) => {
+            println!("local database changed, GitHub did not — pushing");
+            push(&dir, &branch, local_gz, local_hash)
+        }
+        (false, true) => {
+            println!("GitHub changed, local database did not — pulling");
+            pull(remote_gz, remote_hash)
+        }
         (true, true) => {
             resolve_conflict(&dir, &branch, local_gz, local_hash, remote_gz, remote_hash)
         }
