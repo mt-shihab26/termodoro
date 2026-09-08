@@ -29,9 +29,13 @@ fn repo_exists(full_name: &str) -> bool {
 /// Returns `owner/<repo_name>` for the signed-in user, creating the repo as private if it
 /// doesn't exist yet.
 pub fn ensure_repo(repo_name: &str) -> Result<String> {
+    println!("checking for GitHub repo {repo_name}...");
     let full_name = format!("{}/{repo_name}", username()?);
 
-    if !repo_exists(&full_name) {
+    if repo_exists(&full_name) {
+        println!("found existing repo {full_name}");
+    } else {
+        println!("creating private repo {full_name}...");
         run(&[
             "repo",
             "create",

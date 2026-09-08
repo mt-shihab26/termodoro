@@ -52,6 +52,7 @@ impl SyncState {
 /// pushes if this machine has changes the repo doesn't have, does nothing if neither changed,
 /// or asks which side to keep if both did.
 pub fn run_sync() -> Result<()> {
+    println!("checking GitHub CLI sign-in...");
     if !gh::is_authenticated() {
         return Err(io_err(
             "not signed in to the GitHub CLI; run `gh auth login` first",
@@ -64,6 +65,7 @@ pub fn run_sync() -> Result<()> {
     repo::ensure_clone(&dir, &repo_name)?;
     let branch = repo::current_branch(&dir)?;
 
+    println!("comparing local database with GitHub...");
     let local_gz = gzip(&fs::read(db_path())?)?;
     let local_hash = hash(&local_gz);
 
@@ -132,6 +134,7 @@ fn push(dir: &Path, branch: &str, gz: Vec<u8>, hash: String) -> Result<()> {
 
 /// Overwrites the local database with the sync repo's copy, then records its hash as synced.
 fn pull(gz: Option<Vec<u8>>, hash: Option<String>) -> Result<()> {
+    println!("restoring database from GitHub...");
     let gz = gz.ok_or_else(|| io_err("the sync repo's database file is missing"))?;
     let raw = gunzip(&gz)?;
 

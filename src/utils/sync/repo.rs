@@ -12,10 +12,12 @@ const FILE_NAME: &str = "orivo.sqlite.gz";
 /// missing, otherwise fetches the latest remote state into it.
 pub fn ensure_clone(dir: &Path, repo_full_name: &str) -> Result<()> {
     if dir.join(".git").exists() {
+        println!("fetching latest changes from {repo_full_name}...");
         run(dir, &["fetch", "origin"])?;
         return Ok(());
     }
 
+    println!("cloning {repo_full_name}...");
     if let Some(parent) = dir.parent() {
         fs::create_dir_all(parent)?;
     }
@@ -67,6 +69,7 @@ pub fn commit_and_push(dir: &Path, branch: &str, bytes: &[u8], message: &str) ->
         run(dir, &["commit", "-m", message])?;
     }
 
+    println!("pushing to GitHub...");
     run(
         dir,
         &[
